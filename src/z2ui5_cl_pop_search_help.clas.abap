@@ -482,8 +482,13 @@ CLASS z2ui5_cl_pop_search_help IMPLEMENTATION.
         TRY.
             <line_content> = result_line+result_desc-offset(result_desc-outputlen).
           CATCH cx_root.
+
+             Try.
             " Sting table will crash if value length <> outputlen
             <line_content> = result_line+result_desc-offset.
+            catch cx_root.
+            " rest of the fields are empty.
+            ENDTRY.
         ENDTRY.
 
       ENDLOOP.
