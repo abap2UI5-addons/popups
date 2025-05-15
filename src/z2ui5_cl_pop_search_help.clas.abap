@@ -3,7 +3,6 @@ CLASS z2ui5_cl_pop_search_help DEFINITION
   CREATE PUBLIC.
 
   PUBLIC SECTION.
-    INTERFACES if_serializable_object.
     INTERFACES z2ui5_if_app.
 
     DATA mv_table        TYPE string.
@@ -15,9 +14,11 @@ CLASS z2ui5_cl_pop_search_help DEFINITION
     DATA mt_data         TYPE REF TO data.
     DATA ms_data_row     TYPE REF TO data.
     DATA mo_layout       TYPE REF TO z2ui5_cl_layo_manager.
-    DATA ms_shlp         TYPE shlp_descr.
-    DATA mt_result_desc  TYPE TABLE OF dfies.
+    DATA ms_shlp         TYPE z2ui5_cl_util_abap_new=>ty_shlp_descr.
+    DATA mt_result_desc  TYPE z2ui5_cl_util_abap_new=>ty_t_dfies_2. "dfies.
     DATA mr_data         TYPE REF TO data.
+
+    TYPES ty_t_dfies TYPE z2ui5_cl_util_abap_new=>ty_t_dfies_2.
 
     CLASS-METHODS factory
       IMPORTING
@@ -29,46 +30,18 @@ CLASS z2ui5_cl_pop_search_help DEFINITION
         VALUE(result) TYPE REF TO z2ui5_cl_pop_search_help.
 
   PROTECTED SECTION.
-    TYPES ty_return_tab   TYPE STANDARD TABLE OF ddshretval WITH DEFAULT KEY.
-    TYPES ty_recdescr_tab TYPE STANDARD TABLE OF dfies WITH DEFAULT KEY.
 
     DATA client  TYPE REF TO z2ui5_if_client.
-    DATA mv_init TYPE abap_bool.
-
     METHODS on_init.
-
     METHODS render_view.
-
     METHODS on_event.
-
-    METHODS set_row_id.
-
-    METHODS get_txt
-      IMPORTING
-        roll          TYPE string
-      RETURNING
-        VALUE(result) TYPE z2ui5_cl_util_abap=>ty_s_data_element_text.
-
-    METHODS get_txt_l
-      IMPORTING
-        roll          TYPE string
-      RETURNING
-        VALUE(result) TYPE string.
-
-    METHODS get_comp
-      RETURNING
-        VALUE(result) TYPE abap_component_tab.
-
     METHODS on_after_layout.
-
-    METHODS get_search_help_data.
-
     METHODS get_layout.
-
     METHODS set_selopt.
-
-PRIVATE SECTION.
     METHODS set_init_selopt.
+
+  PRIVATE SECTION.
+
 ENDCLASS.
 
 
@@ -78,24 +51,29 @@ CLASS z2ui5_cl_pop_search_help IMPLEMENTATION.
 
     me->client = client.
 
-    IF mv_init = abap_false.
-      mv_init = abap_true.
-
+    IF client->check_on_init( ).
       on_init( ).
-
       render_view( ).
-
+    ELSE.
+      on_event( ).
+      on_after_layout( ).
     ENDIF.
-
-    on_event( ).
-
-    on_after_layout( ).
 
   ENDMETHOD.
 
   METHOD on_init.
 
-    get_search_help_data( ).
+    z2ui5_cl_util_abap_new=>bus_search_help_read(
+         CHANGING
+           ms_shlp        = ms_shlp
+           mv_fname       = mv_fname
+           mv_table       = mv_table
+           mr_data        = mr_data
+           mt_result_desc = mt_result_desc
+           mv_shlpfield   = mv_shlpfield
+           mt_data        = mt_data
+           ms_data_row    = ms_data_row
+       ).
 
     get_layout( ).
 
@@ -103,8 +81,7 @@ CLASS z2ui5_cl_pop_search_help IMPLEMENTATION.
 
   METHOD get_layout.
 
-    DATA(class) = cl_abap_classdescr=>get_class_name( me ).
-    SHIFT class LEFT DELETING LEADING '\CLASS='.
+    DATA(class) = z2ui5_cl_util=>rtti_get_classname_by_ref( me ).
     DATA(app) = z2ui5_cl_util=>url_param_get( val = 'app'
                                               url = client->get( )-s_config-search ).
 
@@ -121,11 +98,10 @@ CLASS z2ui5_cl_pop_search_help IMPLEMENTATION.
 
     DATA(popup) = z2ui5_cl_xml_view=>factory_popup( ).
 
-    DATA(simple_form) = popup->dialog( title        = 'Search-Help'
+    DATA(simple_form) = popup->dialog( title        = z2ui5_cl_util=>rtti_get_data_element_texts( `SCRFMTCH`  )-medium
                                        contentwidth = '70%'
                                        afterclose   = client->_event( 'SHLP_CLOSE' )
-          )->simple_form( title    = 'Search-Help'
-                          layout   = 'ResponsiveGridLayout'
+          )->simple_form( layout   = 'ResponsiveGridLayout'
                           editable = abap_true
           )->content( ns = 'form' ).
 
@@ -141,7 +117,7 @@ CLASS z2ui5_cl_pop_search_help IMPLEMENTATION.
 
       ASSIGN COMPONENT dfies->fieldname OF STRUCTURE ms_data_row->* TO FIELD-SYMBOL(<val>).
 
-      simple_form->label( text = get_txt( CONV #( dfies->rollname ) )-long ).
+      simple_form->label( text = z2ui5_cl_util=>rtti_get_data_element_text_l( dfies->rollname ) ).
 
       simple_form->input( value         = client->_bind_edit( <val> )
                           showvaluehelp = abap_false
@@ -153,12 +129,12 @@ CLASS z2ui5_cl_pop_search_help IMPLEMENTATION.
     DATA(table) = popup->get_child( )->table( growing    = 'true'
                                               width      = 'auto'
                                               items      = client->_bind( val = mt_data->* )
-                                              headertext = Z2UI5_CL_UTIL_ABAP=>rtti_get_table_desrc( mv_table ) ).
+                                              headertext = z2ui5_cl_util_abap=>rtti_get_table_desrc( mv_table ) ).
 
     " TODO: variable is assigned but never used (ABAP cleaner)
     DATA(headder) = table->header_toolbar(
                  )->overflow_toolbar(
-                 )->title( text = Z2UI5_CL_UTIL_ABAP=>rtti_get_table_desrc( mv_table )
+                 )->title( text = z2ui5_cl_util_abap=>rtti_get_table_desrc( mv_table )
                  )->toolbar_spacer( ).
 
     headder = z2ui5_cl_layo_pop=>render_layout_function( xml    = headder
@@ -185,7 +161,7 @@ CLASS z2ui5_cl_pop_search_help IMPLEMENTATION.
                        minscreenwidth  = client->_bind( val       = layout->width
                                                         tab       = mo_layout->ms_layout-t_layout
                                                         tab_index = lv_index )
-       )->text( get_txt( CONV #( layout->rollname ) )-long ).
+       )->text( z2ui5_cl_util=>rtti_get_data_element_text_l( layout->rollname ) ).
 
     ENDLOOP.
 
@@ -239,7 +215,17 @@ CLASS z2ui5_cl_pop_search_help IMPLEMENTATION.
 
         set_selopt( ).
 
-        get_search_help_data( ).
+        z2ui5_cl_util_abap_new=>bus_search_help_read(
+          CHANGING
+            ms_shlp        = ms_shlp
+            mv_fname       = mv_fname
+            mv_table       = mv_table
+            mr_data        = mr_data
+            mt_result_desc = mt_result_desc
+            mv_shlpfield   = mv_shlpfield
+            mt_data        = mt_data
+            ms_data_row    = ms_data_row
+        ).
 
         client->popup_model_update( ).
 
@@ -249,23 +235,6 @@ CLASS z2ui5_cl_pop_search_help IMPLEMENTATION.
                                                       layout = mo_layout ).
 
     ENDCASE.
-
-  ENDMETHOD.
-
-  METHOD set_row_id.
-
-    FIELD-SYMBOLS <tab>  TYPE STANDARD TABLE.
-    FIELD-SYMBOLS <line> TYPE any.
-
-    ASSIGN mt_data->* TO <tab>.
-
-    LOOP AT <tab> ASSIGNING <line>.
-
-      ASSIGN COMPONENT 'ROW_ID' OF STRUCTURE <line> TO FIELD-SYMBOL(<row>).
-      IF <row> IS ASSIGNED.
-        <row> = sy-tabix.
-      ENDIF.
-    ENDLOOP.
 
   ENDMETHOD.
 
@@ -280,9 +249,7 @@ CLASS z2ui5_cl_pop_search_help IMPLEMENTATION.
     IF i_data IS SUPPLIED.
 
       DATA(t_comp) = z2ui5_cl_util=>rtti_get_t_attri_by_any( i_data ).
-
       DATA(struct_desc) = cl_abap_structdescr=>create( t_comp ).
-
       CREATE DATA result->mr_data TYPE HANDLE struct_desc.
 
       result->mr_data->* = i_data->*.
@@ -291,260 +258,17 @@ CLASS z2ui5_cl_pop_search_help IMPLEMENTATION.
 
   ENDMETHOD.
 
-  METHOD get_txt.
-
-    result = z2ui5_cl_util=>rtti_get_data_element_texts(  roll  ).
-
-  ENDMETHOD.
-
-  METHOD get_txt_l.
-
-    result = z2ui5_cl_util=>rtti_get_data_element_texts( roll )-long.
-
-  ENDMETHOD.
 
   METHOD on_after_layout.
 
-    " Kommen wir aus einer anderen APP
-    IF client->get( )-check_on_navigated = abap_false.
+    IF client->check_on_navigated( ).
       RETURN.
     ENDIF.
 
     TRY.
-        " War es das Layout?
         DATA(app) = CAST z2ui5_cl_layo_pop( client->get_app( client->get( )-s_draft-id_prev_app ) ).
-
         mo_layout = app->mo_layout.
-
         render_view( ).
-
-      CATCH cx_root.
-    ENDTRY.
-
-  ENDMETHOD.
-
-  METHOD get_search_help_data.
-
-    DATA lt_shlp       TYPE shlp_desct.
-    DATA lt_result_tab TYPE TABLE OF string.
-    DATA ls_comp       TYPE abap_componentdescr.
-    DATA lt_comps      TYPE abap_component_tab.
-    DATA lo_datadescr  TYPE REF TO cl_abap_datadescr.
-    DATA lr_line       TYPE REF TO data.
-
-    IF ms_shlp IS INITIAL.
-      " Suchhilfe lesen
-      CALL FUNCTION 'F4IF_DETERMINE_SEARCHHELP'
-        EXPORTING
-          tabname           = CONV tabname( mv_table )
-          fieldname         = CONV fieldname( mv_fname )
-        IMPORTING
-          shlp              = ms_shlp
-        EXCEPTIONS
-          field_not_found   = 1
-          no_help_for_field = 2
-          inconsistent_help = 3
-          OTHERS            = 4.
-      IF sy-subrc <> 0.
-        " FEHLER
-      ENDIF.
-
-      IF ms_shlp-intdescr-issimple = abap_false.
-        CALL FUNCTION 'F4IF_EXPAND_SEARCHHELP'
-          EXPORTING
-            shlp_top = ms_shlp
-          IMPORTING
-            shlp_tab = lt_shlp.
-
-        ms_shlp = VALUE #( lt_shlp[ 1 ] OPTIONAL ).
-      ENDIF.
-    ENDIF.
-
-    IF mr_data IS BOUND.
-      " Values from Caller app to Interface Values
-      LOOP AT ms_shlp-interface REFERENCE INTO DATA(r_interface) WHERE value IS INITIAL.
-
-        ASSIGN COMPONENT r_interface->shlpfield OF STRUCTURE mr_data->* TO FIELD-SYMBOL(<value>).
-
-        IF sy-subrc <> 0.
-          CONTINUE.
-        ENDIF.
-
-        r_interface->value = <value>.
-
-      ENDLOOP.
-    ENDIF.
-
-    " Interface Fixed Values to Selopt
-    LOOP AT ms_shlp-interface INTO DATA(interface).
-
-      " Match the name of the SH Field to the Input field name
-      IF interface-valfield = mv_fname.
-        mv_shlpfield = interface-shlpfield.
-      ENDIF.
-
-      IF interface-value IS NOT INITIAL.
-
-        ms_shlp-selopt = VALUE #( BASE ms_shlp-selopt
-                                  ( shlpfield = interface-shlpfield
-                                    shlpname  = interface-valtabname
-                                    option    = COND #( WHEN interface-value CA `*` THEN 'CP' ELSE 'EQ' )
-                                    sign      = 'I'
-                                    low       = interface-value  ) ).
-
-      ENDIF.
-
-    ENDLOOP.
-
-    LOOP AT ms_shlp-fieldprop INTO DATA(fieldrop).
-
-      IF fieldrop-defaultval IS INITIAL.
-        CONTINUE.
-      ENDIF.
-
-      DATA(valule) = fieldrop-defaultval.
-      REPLACE ALL OCCURRENCES OF `'` IN valule WITH ``.
-
-      ms_shlp-selopt = VALUE #( BASE ms_shlp-selopt
-                                ( shlpfield = fieldrop-fieldname
-*                                  shlpname  =
-                                  option    = COND #( WHEN fieldrop-defaultval CA `*` THEN 'CP' ELSE 'EQ' )
-                                  sign      = 'I'
-                                  low       = valule  ) ).
-
-    ENDLOOP.
-
-    CALL FUNCTION 'F4IF_SELECT_VALUES'
-      EXPORTING
-        shlp           = ms_shlp
-        sort           = space
-        call_shlp_exit = abap_true
-      TABLES
-        record_tab     = lt_result_tab
-        recdescr_tab   = mt_result_desc.
-
-    SORT ms_shlp-fieldprop BY shlplispos ASCENDING.
-
-    LOOP AT ms_shlp-fieldprop INTO DATA(field_props) WHERE shlplispos IS NOT INITIAL.
-
-      DATA(descption) = VALUE #( mt_result_desc[ fieldname = field_props-fieldname ] OPTIONAL ).
-
-      ls_comp-name  = descption-fieldname.
-      ls_comp-type ?= cl_abap_datadescr=>describe_by_name( descption-rollname ).
-      APPEND ls_comp TO lt_comps.
-
-    ENDLOOP.
-
-    IF NOT line_exists( lt_comps[ name = 'ROW_ID' ] ).
-      lo_datadescr ?= cl_abap_datadescr=>describe_by_name( 'INT4' ).
-      ls_comp-name  = 'ROW_ID'.
-      ls_comp-type ?= lo_datadescr.
-      APPEND ls_comp TO lt_comps.
-    ENDIF.
-
-    DATA(strucdescr) = cl_abap_structdescr=>create( p_components = lt_comps ).
-
-    DATA(tabdescr) = cl_abap_tabledescr=>create( p_line_type = strucdescr ).
-
-    IF mt_data IS NOT BOUND.
-      CREATE DATA mt_data TYPE HANDLE tabdescr.
-    ENDIF.
-
-    ASSIGN mt_data->* TO FIELD-SYMBOL(<fs_target_tab>).
-
-    CLEAR <fs_target_tab>.
-
-    " we dont want to loose all inputs in row ...
-    IF ms_data_row IS NOT BOUND.
-      CREATE DATA ms_data_row TYPE HANDLE strucdescr.
-    ENDIF.
-
-    LOOP AT lt_result_tab INTO DATA(result_line).
-
-      CREATE DATA lr_line TYPE HANDLE strucdescr.
-      ASSIGN lr_line->* TO FIELD-SYMBOL(<fs_line>).
-
-      LOOP AT mt_result_desc INTO DATA(result_desc).
-
-        ASSIGN COMPONENT result_desc-fieldname OF STRUCTURE <fs_line>
-               TO FIELD-SYMBOL(<line_content>).
-
-        IF sy-subrc <> 0.
-          CONTINUE.
-        ENDIF.
-
-        IF result_desc-leng < result_desc-intlen.
-          " interne Darstellung anders als externe Darstellung
-          " UNICODE, offset halbieren
-          result_desc-offset /= 2.
-        ENDIF.
-
-        TRY.
-            <line_content> = result_line+result_desc-offset(result_desc-outputlen).
-          CATCH cx_root.
-
-             Try.
-            " Sting table will crash if value length <> outputlen
-            <line_content> = result_line+result_desc-offset.
-            catch cx_root.
-            " rest of the fields are empty.
-            ENDTRY.
-        ENDTRY.
-
-      ENDLOOP.
-
-      INSERT <fs_line> INTO TABLE <fs_target_tab>.
-
-    ENDLOOP.
-
-    " Set default values
-    LOOP AT ms_shlp-interface INTO interface.
-
-      IF interface-value IS NOT INITIAL.
-
-        ASSIGN COMPONENT interface-shlpfield OF STRUCTURE ms_data_row->* TO <value>.
-
-        IF sy-subrc <> 0.
-          CONTINUE.
-        ENDIF.
-        <value> = interface-value.
-
-      ENDIF.
-
-    ENDLOOP.
-
-*    LOOP AT ms_shlp-fieldprop INTO fieldrop.
-*
-*      IF fieldrop-defaultval IS NOT INITIAL.
-*
-*        ASSIGN COMPONENT fieldrop-fieldname OF STRUCTURE ms_data_row->* TO <value>.
-*
-*        IF sy-subrc <> 0.
-*          CONTINUE.
-*        ENDIF.
-*        <value> = fieldrop-defaultval.
-*       REPLACE ALL OCCURRENCES OF `'` in <value> with ``.
-*      ENDIF.
-*
-*    ENDLOOP.
-
-    set_row_id( ).
-
-  ENDMETHOD.
-
-  METHOD get_comp.
-
-    DATA index TYPE int4.
-
-    TRY.
-
-        DATA(comp) = z2ui5_cl_util=>rtti_get_t_attri_by_table_name( mv_table ).
-
-        result = VALUE cl_abap_structdescr=>component_table(
-                           ( name = 'ROW_ID'
-                             type = CAST #( cl_abap_datadescr=>describe_by_data( index ) ) ) ).
-
-        APPEND LINES OF comp TO result.
 
       CATCH cx_root.
     ENDTRY.

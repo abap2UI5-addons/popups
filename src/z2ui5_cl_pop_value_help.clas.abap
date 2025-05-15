@@ -3,7 +3,6 @@ CLASS z2ui5_cl_pop_value_help DEFINITION
   CREATE PUBLIC.
 
   PUBLIC SECTION.
-    INTERFACES if_serializable_object.
     INTERFACES z2ui5_if_app.
 
     DATA mt_data         TYPE REF TO data.
@@ -27,7 +26,6 @@ CLASS z2ui5_cl_pop_value_help DEFINITION
 
   PROTECTED SECTION.
     DATA client             TYPE REF TO z2ui5_if_client.
-    DATA mv_init            TYPE abap_bool.
     DATA mv_check_tab_field TYPE string.
     DATA mv_check_tab       TYPE string.
 
@@ -41,19 +39,11 @@ CLASS z2ui5_cl_pop_value_help DEFINITION
 
     METHODS set_row_id.
 
-    METHODS get_txt
-      IMPORTING
-        roll          TYPE string
-      RETURNING
-        VALUE(result) TYPE string.
-
     METHODS get_data
       IMPORTING
         !where TYPE string.
 
-    METHODS get_where_tab
-      RETURNING
-        VALUE(result) TYPE string.
+
 
     METHODS prefill_inputs.
 
@@ -71,21 +61,17 @@ CLASS z2ui5_cl_pop_value_help IMPLEMENTATION.
 
     me->client = client.
 
-    IF mv_init = abap_false.
-      mv_init = abap_true.
-
+    IF client->check_on_init( ).
       on_init( ).
 
       IF mv_check_tab IS INITIAL.
         RETURN.
       ENDIF.
-
       render_view( ).
 
     ENDIF.
 
     on_event( ).
-
     on_after_layout( ).
 
   ENDMETHOD.
@@ -99,56 +85,24 @@ CLASS z2ui5_cl_pop_value_help IMPLEMENTATION.
     ENDIF.
 
     create_objects( ).
-
     prefill_inputs( ).
 
-    get_data( get_where_tab( ) ).
+    DATA(result) = z2ui5_cl_util=>tab_get_where_by_dfies(
+         mv_check_tab_field = mv_check_tab_field
+         ms_data_row        = ms_data_row
+         it_dfies           = mt_dfies
+*      RECEIVING
+*        result             =
+     ).
 
+*    ( mt_dfies )
+
+    get_data( result ).
     get_layout( ).
 
   ENDMETHOD.
 
-  METHOD get_where_tab.
 
-    DATA val TYPE string.
-
-    LOOP AT mt_dfies REFERENCE INTO DATA(dfies).
-
-      IF NOT ( dfies->keyflag = abap_true OR dfies->fieldname = mv_check_tab_field ).
-        CONTINUE.
-      ENDIF.
-
-      ASSIGN ms_data_row->* TO FIELD-SYMBOL(<row>).
-
-      ASSIGN COMPONENT dfies->fieldname OF STRUCTURE <row> TO FIELD-SYMBOL(<value>).
-      IF <value> IS NOT ASSIGNED.
-        CONTINUE.
-      ENDIF.
-      IF <value> IS INITIAL.
-        CONTINUE.
-      ENDIF.
-
-      IF result IS NOT INITIAL.
-        DATA(and) = ` AND `.
-      ENDIF.
-
-      IF <value> CA `_`.
-        DATA(escape) = `ESCAPE '#'`.
-      ELSE.
-        CLEAR escape.
-      ENDIF.
-
-      val = <value>.
-
-      IF val CA `_`.
-        REPLACE ALL OCCURRENCES OF `_` IN val WITH `#_`.
-      ENDIF.
-
-      result = |{ result }{ and } ( { dfies->fieldname } LIKE '%{ val }%' { escape } )|.
-
-    ENDLOOP.
-
-  ENDMETHOD.
 
   METHOD create_objects.
 
@@ -205,11 +159,10 @@ CLASS z2ui5_cl_pop_value_help IMPLEMENTATION.
 
     DATA(popup) = z2ui5_cl_xml_view=>factory_popup( ).
 
-    DATA(simple_form) = popup->dialog( title        = 'F4-Help'
+    DATA(simple_form) = popup->dialog( title        = z2ui5_cl_util=>rtti_get_data_element_texts( `/IWFND/SU_GWC_RH_VH`  )-medium
                                        contentwidth = '90%'
                                        afterclose   = client->_event( 'F4_CLOSE' )
-          )->simple_form( title    = 'F4-Help'
-                          layout   = 'ResponsiveGridLayout'
+          )->simple_form( layout   = 'ResponsiveGridLayout'
                           editable = abap_true
           )->content( 'form' ).
 
@@ -229,7 +182,7 @@ CLASS z2ui5_cl_pop_value_help IMPLEMENTATION.
         CONTINUE.
       ENDIF.
 
-      simple_form->label( get_txt( CONV #( dfies->rollname ) ) ).
+      simple_form->label( z2ui5_cl_util=>rtti_get_data_element_text_l(  dfies->rollname ) ).
 
       simple_form->input( value         = client->_bind_edit( <val> )
                           showvaluehelp = abap_false
@@ -237,7 +190,7 @@ CLASS z2ui5_cl_pop_value_help IMPLEMENTATION.
 
     ENDLOOP.
 
-    simple_form->label( get_txt( 'SYST_TABIX' ) ).
+    simple_form->label( z2ui5_cl_util=>rtti_get_data_element_text_l( 'SYST_TABIX' ) ).
 
     simple_form->input( value         = client->_bind_edit( mv_rows )
                         showvaluehelp = abap_false
@@ -336,7 +289,15 @@ CLASS z2ui5_cl_pop_value_help IMPLEMENTATION.
 
       WHEN 'F4_INPUT_DONE'.
 
-        get_data( get_where_tab( ) ).
+        DATA(result) = z2ui5_cl_util=>tab_get_where_by_dfies(
+             mv_check_tab_field = mv_check_tab_field
+             ms_data_row        = ms_data_row
+             it_dfies           = mt_dfies
+*      RECEIVING
+*        result             =
+         ).
+
+        get_data( result ).
 
         client->popup_model_update( ).
 
@@ -373,12 +334,6 @@ CLASS z2ui5_cl_pop_value_help IMPLEMENTATION.
     result->mv_table = i_table.
     result->mv_field = i_fname.
     result->mv_value = i_value.
-
-  ENDMETHOD.
-
-  METHOD get_txt.
-
-    result = z2ui5_cl_util=>rtti_get_data_element_texts( roll )-long.
 
   ENDMETHOD.
 
