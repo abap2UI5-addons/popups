@@ -6,17 +6,17 @@ CLASS z2ui5_cl_pop_show_tr DEFINITION
     INTERFACES z2ui5_if_app.
 
     DATA client       TYPE REF TO z2ui5_if_client.
-    DATA ms_transport TYPE z2ui5_cl_util_abap_new=>ty_s_transport.
+    DATA ms_transport TYPE z2ui5_cl_util=>ty_s_transport.
 
     CLASS-METHODS add_data_to_tranport
       IMPORTING
         ir_data      TYPE REF TO data
         iv_tabname   TYPE string
-        is_transport TYPE z2ui5_cl_util_abap_new=>ty_s_transport
+        is_transport TYPE z2ui5_cl_util=>ty_s_transport
       EXCEPTIONS
         ob_check_obj_error.
 
-    CLASS-DATA mt_data TYPE STANDARD TABLE OF z2ui5_cl_util_abap_new=>ty_s_transport WITH EMPTY KEY.
+    CLASS-DATA mt_data TYPE STANDARD TABLE OF z2ui5_cl_util=>ty_s_transport WITH EMPTY KEY.
 
     CLASS-METHODS factory
       RETURNING
@@ -49,9 +49,11 @@ CLASS z2ui5_cl_pop_show_tr IMPLEMENTATION.
 
   METHOD on_init.
 
-    mt_data = z2ui5_cl_util_abap_new=>transport_read( ).
+    mt_data = z2ui5_cl_util_abap=>bus_tr_read( ).
 
   ENDMETHOD.
+
+
 
   METHOD render_view.
     DATA(popup) = z2ui5_cl_xml_view=>factory_popup( ).
@@ -109,7 +111,7 @@ CLASS z2ui5_cl_pop_show_tr IMPLEMENTATION.
 
   METHOD add_data_to_tranport.
 
-    z2ui5_cl_util_abap_new=>transport_add( ir_data      = ir_data
+    z2ui5_cl_util=>bus_tr_add( ir_data      = ir_data
                              iv_tabname   = iv_tabname
                              is_transport = is_transport ).
 

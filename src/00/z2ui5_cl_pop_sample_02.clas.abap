@@ -5,7 +5,6 @@ CLASS z2ui5_cl_pop_sample_02 DEFINITION
   PUBLIC SECTION.
     INTERFACES z2ui5_if_app.
 
-*    DATA mv_arbgb TYPE string.
     DATA ms_USR01 TYPE usr01.
 
   PROTECTED SECTION.
