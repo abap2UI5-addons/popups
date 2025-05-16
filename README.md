@@ -1,3 +1,8 @@
+[![ABAP_STANDARD](https://github.com/abap2UI5-addons/popups/actions/workflows/ABAP_STANDARD.yaml/badge.svg)](https://github.com/abap2UI5-addons/popups/actions/workflows/ABAP_STANDARD.yaml)
+[![ABAP_CLOUD](https://github.com/abap2UI5-addons/popups/actions/workflows/ABAP_CLOUD.yaml/badge.svg)](https://github.com/abap2UI5-addons/popups/actions/workflows/ABAP_CLOUD.yaml)
+<br>
+[![rename_test](https://github.com/abap2UI5-addons/popups/actions/workflows/rename_test.yaml/badge.svg)](https://github.com/abap2UI5-addons/popups/actions/workflows/rename_test.yaml)
+
 # Popups
 
 #### Key Features
