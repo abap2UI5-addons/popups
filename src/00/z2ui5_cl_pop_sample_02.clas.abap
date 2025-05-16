@@ -5,7 +5,8 @@ CLASS z2ui5_cl_pop_sample_02 DEFINITION
   PUBLIC SECTION.
     INTERFACES z2ui5_if_app.
 
-    DATA ms_USR01 TYPE usr01.
+    DATA ms_usr01 TYPE z2ui5_cl_util=>ty_usr01.
+
 
   PROTECTED SECTION.
     DATA client            TYPE REF TO z2ui5_if_client.
@@ -29,7 +30,7 @@ CLASS z2ui5_cl_pop_sample_02 IMPLEMENTATION.
     CASE client->get( )-event.
 
       WHEN 'BACK'.
-        client->nav_app_leave( client->get_app( client->get( )-s_draft-id_prev_app_stack ) ).
+        client->nav_app_leave( ).
 
       WHEN `CALL_POPUP_SEARCH`.
         call_SEARCH( ).
