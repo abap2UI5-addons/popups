@@ -5,7 +5,7 @@
    <VSEOCLASS>
     <CLSNAME>Z2UI5_CL_POP_SHOW_TR</CLSNAME>
     <LANGU>E</LANGU>
-    <DESCRIPT>Display Transport Requests</DESCRIPT>
+    <DESCRIPT>Transport Requests</DESCRIPT>
     <STATE>1</STATE>
     <CLSCCINCL>X</CLSCCINCL>
     <FIXPT>X</FIXPT>
