@@ -12,16 +12,13 @@ CLASS z2ui5_cl_pop_show_tr DEFINITION
       IMPORTING
         ir_data      TYPE REF TO data
         iv_tabname   TYPE string
-        is_transport TYPE z2ui5_cl_util=>ty_s_transport
-      EXCEPTIONS
-        ob_check_obj_error.
+        is_transport TYPE z2ui5_cl_util=>ty_s_transport.
 
     CLASS-DATA mt_data TYPE STANDARD TABLE OF z2ui5_cl_util=>ty_s_transport WITH EMPTY KEY.
 
     CLASS-METHODS factory
       RETURNING
         VALUE(result) TYPE REF TO z2ui5_cl_pop_show_tr.
-
 
   PROTECTED SECTION.
 
@@ -114,7 +111,6 @@ CLASS z2ui5_cl_pop_show_tr IMPLEMENTATION.
     z2ui5_cl_util=>bus_tr_add( ir_data      = ir_data
                              iv_tabname   = iv_tabname
                              is_transport = is_transport ).
-
 
   ENDMETHOD.
 
