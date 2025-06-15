@@ -95,7 +95,7 @@ CLASS z2ui5_cl_pop_show_tr IMPLEMENTATION.
         ENDIF.
 
         client->popup_destroy( ).
-        client->nav_app_leave( client->get_app( client->get( )-s_draft-id_prev_app_stack ) ).
+        client->nav_app_leave( ).
 
       WHEN OTHERS.
 
