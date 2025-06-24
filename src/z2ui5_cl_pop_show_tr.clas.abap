@@ -21,7 +21,6 @@ CLASS z2ui5_cl_pop_show_tr DEFINITION
         VALUE(result) TYPE REF TO z2ui5_cl_pop_show_tr.
 
   PROTECTED SECTION.
-
     METHODS on_init.
     METHODS render_view.
     METHODS on_event.
@@ -50,15 +49,13 @@ CLASS z2ui5_cl_pop_show_tr IMPLEMENTATION.
 
   ENDMETHOD.
 
-
-
   METHOD render_view.
     DATA(popup) = z2ui5_cl_xml_view=>factory_popup( ).
 
     popup->dialog( contentwidth = '40%'
                    afterclose   = client->_event( 'CLOSE' )
 
-                   title = z2ui5_cl_util=>rtti_get_data_element_texts( `SRET_TRORD`  )-long
+                   title        = z2ui5_cl_util=>rtti_get_data_element_texts( `SRET_TRORD`  )-long
     )->table( mode  = 'SingleSelectLeft'
               items = client->_bind_edit( mt_data )
         )->columns(
@@ -71,9 +68,12 @@ CLASS z2ui5_cl_pop_show_tr IMPLEMENTATION.
                     )->text( '{TRANSPORT}'
                     )->text( '{SHORT_DESCRIPTION}'
     )->get_parent( )->get_parent( )->get_parent( )->get_parent(
-    )->buttons( )->button( text  = 'Select'
-                           press = client->_event( 'TRANSPORT_SELECT' )
-                           type  = 'Emphasized' ).
+    )->buttons( )->button( text  = 'no transport'
+                           press = client->_event( 'LOCL' )
+                           type  = 'Default'
+                  )->button( text  = 'Select'
+                             press = client->_event( 'SELECT' )
+                             type  = 'Emphasized' ).
 
     client->popup_display( popup->stringify( ) ).
   ENDMETHOD.
@@ -87,12 +87,19 @@ CLASS z2ui5_cl_pop_show_tr IMPLEMENTATION.
         client->popup_destroy( ).
         client->nav_app_leave( client->get_app( client->get( )-s_draft-id_prev_app_stack ) ).
 
-      WHEN `TRANSPORT_SELECT`.
+      WHEN `SELECT`.
 
         READ TABLE mt_data INTO DATA(line) WITH KEY selkz = abap_true.
         IF sy-subrc = 0.
           ms_transport = line.
         ENDIF.
+
+        client->popup_destroy( ).
+        client->nav_app_leave( ).
+
+      WHEN 'LOCL'.
+
+        ms_transport-locl = abap_true.
 
         client->popup_destroy( ).
         client->nav_app_leave( ).
@@ -108,11 +115,14 @@ CLASS z2ui5_cl_pop_show_tr IMPLEMENTATION.
 
   METHOD add_data_to_tranport.
 
+    IF is_transport-locl = abap_true.
+      RETURN.
+    ENDIF.
+
     z2ui5_cl_util=>bus_tr_add( ir_data      = ir_data
-                             iv_tabname   = iv_tabname
-                             is_transport = is_transport ).
+                               iv_tabname   = iv_tabname
+                               is_transport = is_transport ).
 
   ENDMETHOD.
-
 
 ENDCLASS.
