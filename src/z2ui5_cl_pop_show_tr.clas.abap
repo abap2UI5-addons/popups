@@ -14,7 +14,7 @@ CLASS z2ui5_cl_pop_show_tr DEFINITION
         iv_tabname   TYPE string
         is_transport TYPE z2ui5_cl_util=>ty_s_transport.
 
-    CLASS-DATA mt_data TYPE STANDARD TABLE OF z2ui5_cl_util=>ty_s_transport WITH EMPTY KEY.
+    DATA mt_data TYPE STANDARD TABLE OF z2ui5_cl_util=>ty_s_transport WITH EMPTY KEY.
 
     CLASS-METHODS factory
       RETURNING
@@ -50,7 +50,8 @@ CLASS z2ui5_cl_pop_show_tr IMPLEMENTATION.
   ENDMETHOD.
 
   METHOD render_view.
-    DATA(popup) = z2ui5_cl_xml_view=>factory_popup( ).
+
+  DATA(popup) = z2ui5_cl_xml_view=>factory_popup( ).
 
     popup->dialog( contentwidth = '40%'
                    afterclose   = client->_event( 'CLOSE' )
@@ -76,6 +77,7 @@ CLASS z2ui5_cl_pop_show_tr IMPLEMENTATION.
                              type  = 'Emphasized' ).
 
     client->popup_display( popup->stringify( ) ).
+
   ENDMETHOD.
 
   METHOD on_event.
