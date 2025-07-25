@@ -14,7 +14,7 @@ CLASS z2ui5_cl_pop_value_help DEFINITION
     DATA mv_value        TYPE string.
     DATA mv_return_value TYPE string.
     DATA mv_rows         TYPE int1 VALUE '50'.
-    DATA mt_dfies        TYPE z2ui5_cl_util=>ty_t_dfies.
+    DATA mt_dfies        TYPE z2ui5_cl_util_ext=>ty_t_dfies.
 
     CLASS-METHODS factory
       IMPORTING
@@ -42,8 +42,6 @@ CLASS z2ui5_cl_pop_value_help DEFINITION
     METHODS get_data
       IMPORTING
         !where TYPE string.
-
-
 
     METHODS prefill_inputs.
 
@@ -87,12 +85,11 @@ CLASS z2ui5_cl_pop_value_help IMPLEMENTATION.
     create_objects( ).
     prefill_inputs( ).
 
-    DATA(result) = z2ui5_cl_util=>tab_get_where_by_dfies(
-         mv_check_tab_field = mv_check_tab_field
-         ms_data_row        = ms_data_row
-         it_dfies           = mt_dfies
+    DATA(result) = z2ui5_cl_util_ext=>tab_get_where_by_dfies( mv_check_tab_field = mv_check_tab_field
+                                                              ms_data_row        = ms_data_row
+                                                              it_dfies           = mt_dfies
 *      RECEIVING
-*        result             =
+*                                                              result             =
      ).
 
 *    ( mt_dfies )
@@ -101,8 +98,6 @@ CLASS z2ui5_cl_pop_value_help IMPLEMENTATION.
     get_layout( ).
 
   ENDMETHOD.
-
-
 
   METHOD create_objects.
 
@@ -159,9 +154,10 @@ CLASS z2ui5_cl_pop_value_help IMPLEMENTATION.
 
     DATA(popup) = z2ui5_cl_xml_view=>factory_popup( ).
 
-    DATA(simple_form) = popup->dialog( title        = z2ui5_cl_util=>rtti_get_data_element_texts( `/IWFND/SU_GWC_RH_VH`  )-medium
-                                       contentwidth = '90%'
-                                       afterclose   = client->_event( 'F4_CLOSE' )
+    DATA(simple_form) = popup->dialog(
+                            title        = z2ui5_cl_util=>rtti_get_data_element_texts( `/IWFND/SU_GWC_RH_VH`  )-medium
+                            contentwidth = '90%'
+                            afterclose   = client->_event( 'F4_CLOSE' )
           )->simple_form( layout   = 'ResponsiveGridLayout'
                           editable = abap_true
           )->content( 'form' ).
@@ -182,7 +178,7 @@ CLASS z2ui5_cl_pop_value_help IMPLEMENTATION.
         CONTINUE.
       ENDIF.
 
-      simple_form->label( z2ui5_cl_util=>rtti_get_data_element_text_l(  dfies->rollname ) ).
+      simple_form->label( z2ui5_cl_util=>rtti_get_data_element_text_l( dfies->rollname ) ).
 
       simple_form->input( value         = client->_bind_edit( <val> )
                           showvaluehelp = abap_false
@@ -211,8 +207,8 @@ CLASS z2ui5_cl_pop_value_help IMPLEMENTATION.
                  )->toolbar_spacer( ).
 
     headder = z2ui5_cl_layo_pop=>render_layout_function( xml    = headder
-                                                                   client = client
-                                                                   layout = mo_layout ).
+                                                         client = client
+                                                         layout = mo_layout ).
 
     DATA(columns) = table->columns( ).
 
@@ -223,11 +219,11 @@ CLASS z2ui5_cl_pop_value_help IMPLEMENTATION.
                                                         tab       = mo_layout->ms_layout-t_layout
                                                         tab_index = lv_index )
 *                       halign          = client->_bind( val       = layout->halign
-*                                                        tab       = mo_layout->ms_layout-t_layout
-*                                                        tab_index = lv_index )
+*                       tab             = mo_layout->ms_layout-t_layout
+*                       tab_index       = lv_index )
 *                       importance      = client->_bind( val       = layout->importance
-*                                                        tab       = mo_layout->ms_layout-t_layout
-*                                                        tab_index = lv_index )
+*                       tab             = mo_layout->ms_layout-t_layout
+*                       tab_index       = lv_index )
                        mergeduplicates = client->_bind( val       = layout->merge
                                                         tab       = mo_layout->ms_layout-t_layout
                                                         tab_index = lv_index )
@@ -289,12 +285,11 @@ CLASS z2ui5_cl_pop_value_help IMPLEMENTATION.
 
       WHEN 'F4_INPUT_DONE'.
 
-        DATA(result) = z2ui5_cl_util=>tab_get_where_by_dfies(
-             mv_check_tab_field = mv_check_tab_field
-             ms_data_row        = ms_data_row
-             it_dfies           = mt_dfies
+        DATA(result) = z2ui5_cl_util_ext=>tab_get_where_by_dfies( mv_check_tab_field = mv_check_tab_field
+                                                                  ms_data_row        = ms_data_row
+                                                                  it_dfies           = mt_dfies
 *      RECEIVING
-*        result             =
+*                                                                  result             =
          ).
 
         get_data( result ).
@@ -304,7 +299,7 @@ CLASS z2ui5_cl_pop_value_help IMPLEMENTATION.
       WHEN OTHERS.
 
         z2ui5_cl_layo_pop=>on_event_layout( client = client
-                                                      layout = mo_layout ).
+                                            layout = mo_layout ).
 
     ENDCASE.
 
@@ -339,7 +334,7 @@ CLASS z2ui5_cl_pop_value_help IMPLEMENTATION.
 
   METHOD get_dfies.
 
-    DATA(t_dfies) = z2ui5_cl_util=>rtti_get_t_dfies_by_table_name( mv_table ).
+    DATA(t_dfies) = z2ui5_cl_util_ext=>rtti_get_t_dfies_by_table_name( mv_table ).
 
     READ TABLE t_dfies REFERENCE INTO DATA(dfies) WITH KEY fieldname = mv_field.
     IF sy-subrc <> 0.
@@ -353,7 +348,7 @@ CLASS z2ui5_cl_pop_value_help IMPLEMENTATION.
       RETURN.
     ENDIF.
 
-    mt_dfies = z2ui5_cl_util=>rtti_get_t_dfies_by_table_name( CONV #( dfies->checktable ) ).
+    mt_dfies = z2ui5_cl_util_ext=>rtti_get_t_dfies_by_table_name( CONV #( dfies->checktable ) ).
     "
     " ASSIGNMENT --- this may not be 100% certain ... :(
     mv_check_tab_field = VALUE #( mt_dfies[ rollname = dfies->rollname ]-fieldname OPTIONAL ).
@@ -418,10 +413,10 @@ CLASS z2ui5_cl_pop_value_help IMPLEMENTATION.
     SHIFT class LEFT DELETING LEADING '\CLASS='.
 
     mo_layout = z2ui5_cl_layo_manager=>factory( control  = z2ui5_cl_layo_manager=>m_table
-                                          data     = mt_data
-                                          handle01 = class
-                                          handle02 = mv_table
-                                          handle03 = 'F4'  ).
+                                                data     = mt_data
+                                                handle01 = class
+                                                handle02 = mv_table
+                                                handle03 = 'F4'  ).
 
   ENDMETHOD.
 

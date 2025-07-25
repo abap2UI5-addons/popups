@@ -14,11 +14,11 @@ CLASS z2ui5_cl_pop_search_help DEFINITION
     DATA mt_data         TYPE REF TO data.
     DATA ms_data_row     TYPE REF TO data.
     DATA mo_layout       TYPE REF TO z2ui5_cl_layo_manager.
-    DATA ms_shlp         TYPE z2ui5_cl_util=>ty_shlp_descr.
-    DATA mt_result_desc  TYPE z2ui5_cl_util=>ty_t_dfies_2. "dfies.
+    DATA ms_shlp         TYPE z2ui5_cl_util_ext=>ty_shlp_descr.
+    DATA mt_result_desc  TYPE z2ui5_cl_util_ext=>ty_t_dfies_2. " dfies.
     DATA mr_data         TYPE REF TO data.
 
-    TYPES ty_t_dfies TYPE z2ui5_cl_util=>ty_t_dfies_2.
+    TYPES ty_t_dfies TYPE z2ui5_cl_util_ext=>ty_t_dfies_2.
 
     CLASS-METHODS factory
       IMPORTING
@@ -30,8 +30,8 @@ CLASS z2ui5_cl_pop_search_help DEFINITION
         VALUE(result) TYPE REF TO z2ui5_cl_pop_search_help.
 
   PROTECTED SECTION.
+    DATA client TYPE REF TO z2ui5_if_client.
 
-    DATA client  TYPE REF TO z2ui5_if_client.
     METHODS on_init.
     METHODS render_view.
     METHODS on_event.
@@ -39,8 +39,6 @@ CLASS z2ui5_cl_pop_search_help DEFINITION
     METHODS get_layout.
     METHODS set_selopt.
     METHODS set_init_selopt.
-
-  PRIVATE SECTION.
 
 ENDCLASS.
 
@@ -63,17 +61,14 @@ CLASS z2ui5_cl_pop_search_help IMPLEMENTATION.
 
   METHOD on_init.
 
-    z2ui5_cl_util_abap=>bus_search_help_read(
-         CHANGING
-           ms_shlp        = ms_shlp
-           mv_fname       = mv_fname
-           mv_table       = mv_table
-           mr_data        = mr_data
-           mt_result_desc = mt_result_desc
-           mv_shlpfield   = mv_shlpfield
-           mt_data        = mt_data
-           ms_data_row    = ms_data_row
-       ).
+    z2ui5_cl_util_ext=>bus_search_help_read( CHANGING ms_shlp        = ms_shlp
+                                                      mv_fname       = mv_fname
+                                                      mv_table       = mv_table
+                                                      mr_data        = mr_data
+                                                      mt_result_desc = mt_result_desc
+                                                      mv_shlpfield   = mv_shlpfield
+                                                      mt_data        = mt_data
+                                                      ms_data_row    = ms_data_row ).
 
     get_layout( ).
 
@@ -86,11 +81,11 @@ CLASS z2ui5_cl_pop_search_help IMPLEMENTATION.
                                               url = client->get( )-s_config-search ).
 
     mo_layout = z2ui5_cl_layo_manager=>factory( control  = z2ui5_cl_layo_manager=>m_table
-                                          data     = mt_data
-                                          handle01 = class
-                                          handle02 = mv_shlpfield
-                                          handle03 = app
-                                          handle04 = ``  ).
+                                                data     = mt_data
+                                                handle01 = class
+                                                handle02 = mv_shlpfield
+                                                handle03 = app
+                                                handle04 = ``  ).
 
   ENDMETHOD.
 
@@ -126,9 +121,11 @@ CLASS z2ui5_cl_pop_search_help IMPLEMENTATION.
 
     ENDLOOP.
 
+    ASSIGN mt_data->* TO FIELD-SYMBOL(<mt_data>).
+
     DATA(table) = popup->get_child( )->table( growing    = 'true'
                                               width      = 'auto'
-                                              items      = client->_bind( val = mt_data->* )
+                                              items      = client->_bind( <mt_data> )
                                               headertext = z2ui5_cl_util_abap=>rtti_get_table_desrc( mv_table ) ).
 
     " TODO: variable is assigned but never used (ABAP cleaner)
@@ -138,8 +135,8 @@ CLASS z2ui5_cl_pop_search_help IMPLEMENTATION.
                  )->toolbar_spacer( ).
 
     headder = z2ui5_cl_layo_pop=>render_layout_function( xml    = headder
-                                                                   client = client
-                                                                   layout = mo_layout ).
+                                                         client = client
+                                                         layout = mo_layout ).
 
     DATA(columns) = table->columns( ).
 
@@ -150,11 +147,11 @@ CLASS z2ui5_cl_pop_search_help IMPLEMENTATION.
                                                         tab       = mo_layout->ms_layout-t_layout
                                                         tab_index = lv_index )
 *                       halign          = client->_bind( val       = layout->halign
-*                                                        tab       = mo_layout->ms_layout-t_layout
-*                                                        tab_index = lv_index )
+*                       tab             = mo_layout->ms_layout-t_layout
+*                       tab_index       = lv_index )
 *                       importance      = client->_bind( val       = layout->importance
-*                                                        tab       = mo_layout->ms_layout-t_layout
-*                                                        tab_index = lv_index )
+*                       tab             = mo_layout->ms_layout-t_layout
+*                       tab_index       = lv_index )
                        mergeduplicates = client->_bind( val       = layout->merge
                                                         tab       = mo_layout->ms_layout-t_layout
                                                         tab_index = lv_index )
@@ -215,24 +212,21 @@ CLASS z2ui5_cl_pop_search_help IMPLEMENTATION.
 
         set_selopt( ).
 
-        z2ui5_cl_util_abap=>bus_search_help_read(
-          CHANGING
-            ms_shlp        = ms_shlp
-            mv_fname       = mv_fname
-            mv_table       = mv_table
-            mr_data        = mr_data
-            mt_result_desc = mt_result_desc
-            mv_shlpfield   = mv_shlpfield
-            mt_data        = mt_data
-            ms_data_row    = ms_data_row
-        ).
+        z2ui5_cl_util_ext=>bus_search_help_read( CHANGING ms_shlp        = ms_shlp
+                                                          mv_fname       = mv_fname
+                                                          mv_table       = mv_table
+                                                          mr_data        = mr_data
+                                                          mt_result_desc = mt_result_desc
+                                                          mv_shlpfield   = mv_shlpfield
+                                                          mt_data        = mt_data
+                                                          ms_data_row    = ms_data_row ).
 
         client->popup_model_update( ).
 
       WHEN OTHERS.
 
         z2ui5_cl_layo_pop=>on_event_layout( client = client
-                                                      layout = mo_layout ).
+                                            layout = mo_layout ).
 
     ENDCASE.
 
@@ -252,12 +246,14 @@ CLASS z2ui5_cl_pop_search_help IMPLEMENTATION.
       DATA(struct_desc) = cl_abap_structdescr=>create( t_comp ).
       CREATE DATA result->mr_data TYPE HANDLE struct_desc.
 
-      result->mr_data->* = i_data->*.
+      ASSIGN i_data->* TO FIELD-SYMBOL(<i_data>).
+      ASSIGN result->mr_data->* TO FIELD-SYMBOL(<mr_data>).
+
+      <mr_data> = <i_data>.
 
     ENDIF.
 
   ENDMETHOD.
-
 
   METHOD on_after_layout.
 
