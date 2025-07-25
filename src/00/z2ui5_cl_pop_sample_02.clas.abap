@@ -5,7 +5,7 @@ CLASS z2ui5_cl_pop_sample_02 DEFINITION
   PUBLIC SECTION.
     INTERFACES z2ui5_if_app.
 
-    DATA ms_usr01 TYPE z2ui5_cl_util=>ty_usr01.
+    DATA ms_usr01 TYPE z2ui5_cl_util_ext=>ty_usr01.
 
 
   PROTECTED SECTION.
