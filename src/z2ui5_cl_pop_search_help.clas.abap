@@ -14,11 +14,11 @@ CLASS z2ui5_cl_pop_search_help DEFINITION
     DATA mt_data         TYPE REF TO data.
     DATA ms_data_row     TYPE REF TO data.
     DATA mo_layout       TYPE REF TO z2ui5_cl_layo_manager.
-    DATA ms_shlp         TYPE z2ui5_cl_util=>ty_shlp_descr.
-    DATA mt_result_desc  TYPE z2ui5_cl_util=>ty_t_dfies_2. "dfies.
+    DATA ms_shlp         TYPE z2ui5_cl_util_ext=>ty_shlp_descr.
+    DATA mt_result_desc  TYPE z2ui5_cl_util_ext=>ty_t_dfies_2. "dfies.
     DATA mr_data         TYPE REF TO data.
 
-    TYPES ty_t_dfies TYPE z2ui5_cl_util=>ty_t_dfies_2.
+    TYPES ty_t_dfies TYPE z2ui5_cl_util_ext=>ty_t_dfies_2.
 
     CLASS-METHODS factory
       IMPORTING
@@ -63,7 +63,7 @@ CLASS z2ui5_cl_pop_search_help IMPLEMENTATION.
 
   METHOD on_init.
 
-    z2ui5_cl_util_abap=>bus_search_help_read(
+    z2ui5_cl_util_ext=>bus_search_help_read(
          CHANGING
            ms_shlp        = ms_shlp
            mv_fname       = mv_fname
@@ -215,7 +215,7 @@ CLASS z2ui5_cl_pop_search_help IMPLEMENTATION.
 
         set_selopt( ).
 
-        z2ui5_cl_util_abap=>bus_search_help_read(
+        z2ui5_cl_util_ext=>bus_search_help_read(
           CHANGING
             ms_shlp        = ms_shlp
             mv_fname       = mv_fname
