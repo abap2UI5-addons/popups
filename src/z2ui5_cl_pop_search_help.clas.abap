@@ -126,12 +126,12 @@ CLASS z2ui5_cl_pop_search_help IMPLEMENTATION.
     DATA(table) = popup->get_child( )->table( growing    = 'true'
                                               width      = 'auto'
                                               items      = client->_bind( <mt_data> )
-                                              headertext = z2ui5_cl_util_abap=>rtti_get_table_desrc( mv_table ) ).
+                                              headertext = z2ui5_cl_util=>rtti_get_table_desrc( mv_table ) ).
 
     " TODO: variable is assigned but never used (ABAP cleaner)
     DATA(headder) = table->header_toolbar(
                  )->overflow_toolbar(
-                 )->title( text = z2ui5_cl_util_abap=>rtti_get_table_desrc( mv_table )
+                 )->title( text = z2ui5_cl_util=>rtti_get_table_desrc( mv_table )
                  )->toolbar_spacer( ).
 
     headder = z2ui5_cl_layo_pop=>render_layout_function( xml    = headder
