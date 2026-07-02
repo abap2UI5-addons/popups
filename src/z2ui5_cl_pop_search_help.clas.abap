@@ -100,6 +100,8 @@ CLASS z2ui5_cl_pop_search_help IMPLEMENTATION.
                           editable = abap_true
           )->content( ns = 'form' ).
 
+    ASSIGN ms_data_row->* TO FIELD-SYMBOL(<data_row>).
+
     " Gehe über alle Comps
     LOOP AT mt_result_desc REFERENCE INTO DATA(dfies).
 
@@ -110,7 +112,7 @@ CLASS z2ui5_cl_pop_search_help IMPLEMENTATION.
         enabled = abap_false.
       ENDIF.
 
-      ASSIGN COMPONENT dfies->fieldname OF STRUCTURE ms_data_row->* TO FIELD-SYMBOL(<val>).
+      ASSIGN COMPONENT dfies->fieldname OF STRUCTURE <data_row> TO FIELD-SYMBOL(<val>).
 
       simple_form->label( text = z2ui5_cl_util=>rtti_get_data_element_text_l( dfies->rollname ) ).
 
@@ -275,9 +277,11 @@ CLASS z2ui5_cl_pop_search_help IMPLEMENTATION.
 
     CLEAR ms_shlp-selopt.
 
+    ASSIGN ms_data_row->* TO FIELD-SYMBOL(<data_row>).
+
     LOOP AT mt_result_desc INTO DATA(dfies).
 
-      ASSIGN COMPONENT dfies-fieldname OF STRUCTURE ms_data_row->* TO FIELD-SYMBOL(<value>).
+      ASSIGN COMPONENT dfies-fieldname OF STRUCTURE <data_row> TO FIELD-SYMBOL(<value>).
 
       IF sy-subrc <> 0.
         CONTINUE.
@@ -301,9 +305,11 @@ CLASS z2ui5_cl_pop_search_help IMPLEMENTATION.
 
     CLEAR ms_shlp-selopt.
 
+    ASSIGN mr_data->* TO FIELD-SYMBOL(<data>).
+
     LOOP AT mt_result_desc INTO DATA(dfies).
 
-      ASSIGN COMPONENT dfies-fieldname OF STRUCTURE mr_data->* TO FIELD-SYMBOL(<value>).
+      ASSIGN COMPONENT dfies-fieldname OF STRUCTURE <data> TO FIELD-SYMBOL(<value>).
 
       IF sy-subrc <> 0.
         CONTINUE.
