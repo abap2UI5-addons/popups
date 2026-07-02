@@ -16,6 +16,7 @@
   
 #### Dependencies
 * [abap2UI5](https://github.com/abap2UI5/abap2UI5)
+* [layout-management](https://github.com/abap2UI5-addons/layout-management)
 
 #### Limitations & Todo
 * Transports currently only work in On-Premise
