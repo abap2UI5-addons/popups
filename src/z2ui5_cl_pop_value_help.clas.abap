@@ -87,12 +87,7 @@ CLASS z2ui5_cl_pop_value_help IMPLEMENTATION.
 
     DATA(result) = z2ui5_cl_util_ext=>tab_get_where_by_dfies( mv_check_tab_field = mv_check_tab_field
                                                               ms_data_row        = ms_data_row
-                                                              it_dfies           = mt_dfies
-*      RECEIVING
-*                                                              result             =
-     ).
-
-*    ( mt_dfies )
+                                                              it_dfies           = mt_dfies ).
 
     get_data( result ).
     get_layout( ).
@@ -144,7 +139,7 @@ CLASS z2ui5_cl_pop_value_help IMPLEMENTATION.
 
         set_row_id( ).
 
-      CATCH cx_root INTO DATA(cx). " TODO: variable is assigned but never used (ABAP cleaner)
+      CATCH cx_root.
         client->message_toast_display( 'Table not released.' ).
     ENDTRY.
 
@@ -174,7 +169,7 @@ CLASS z2ui5_cl_pop_value_help IMPLEMENTATION.
       ASSIGN ms_data_row->* TO FIELD-SYMBOL(<row>).
 
       ASSIGN COMPONENT dfies->fieldname OF STRUCTURE <row> TO FIELD-SYMBOL(<val>).
-      IF <val> IS NOT ASSIGNED.
+      IF sy-subrc <> 0.
         CONTINUE.
       ENDIF.
 
@@ -200,15 +195,14 @@ CLASS z2ui5_cl_pop_value_help IMPLEMENTATION.
                                               items      = client->_bind( val = <table> )
                                               headertext = mv_check_tab  ).
 
-    " TODO: variable is assigned but never used (ABAP cleaner)
-    DATA(headder) = table->header_toolbar(
-                 )->overflow_toolbar(
-                 )->title( mv_check_tab
-                 )->toolbar_spacer( ).
+    DATA(header) = table->header_toolbar(
+                )->overflow_toolbar(
+                )->title( mv_check_tab
+                )->toolbar_spacer( ).
 
-    headder = z2ui5_cl_layo_pop=>render_layout_function( xml    = headder
-                                                         client = client
-                                                         layout = mo_layout ).
+    header = z2ui5_cl_layo_pop=>render_layout_function( xml    = header
+                                                        client = client
+                                                        layout = mo_layout ).
 
     DATA(columns) = table->columns( ).
 
@@ -273,7 +267,7 @@ CLASS z2ui5_cl_pop_value_help IMPLEMENTATION.
         ASSIGN <tab>[ lt_arg[ 1 ] ] TO FIELD-SYMBOL(<row>).
 
         ASSIGN COMPONENT mv_check_tab_field OF STRUCTURE <row> TO FIELD-SYMBOL(<value>).
-        IF <value> IS NOT ASSIGNED.
+        IF sy-subrc <> 0.
           RETURN.
         ENDIF.
 
@@ -287,10 +281,7 @@ CLASS z2ui5_cl_pop_value_help IMPLEMENTATION.
 
         DATA(result) = z2ui5_cl_util_ext=>tab_get_where_by_dfies( mv_check_tab_field = mv_check_tab_field
                                                                   ms_data_row        = ms_data_row
-                                                                  it_dfies           = mt_dfies
-*      RECEIVING
-*                                                                  result             =
-         ).
+                                                                  it_dfies           = mt_dfies ).
 
         get_data( result ).
 
@@ -314,9 +305,11 @@ CLASS z2ui5_cl_pop_value_help IMPLEMENTATION.
 
     LOOP AT <tab> ASSIGNING <line>.
 
+      DATA(lv_tabix) = sy-tabix.
+
       ASSIGN COMPONENT 'ROW_ID' OF STRUCTURE <line> TO FIELD-SYMBOL(<row>).
-      IF <row> IS ASSIGNED.
-        <row> = sy-tabix.
+      IF sy-subrc = 0.
+        <row> = lv_tabix.
       ENDIF.
     ENDLOOP.
 
@@ -341,6 +334,7 @@ CLASS z2ui5_cl_pop_value_help IMPLEMENTATION.
 
       client->popup_destroy( ).
       client->nav_app_leave( client->get_app( client->get( )-s_draft-id_prev_app_stack ) ).
+      RETURN.
 
     ENDIF.
 
@@ -349,11 +343,11 @@ CLASS z2ui5_cl_pop_value_help IMPLEMENTATION.
     ENDIF.
 
     mt_dfies = z2ui5_cl_util_ext=>rtti_get_t_dfies_by_table_name( CONV #( dfies->checktable ) ).
-    "
-    " ASSIGNMENT --- this may not be 100% certain ... :(
-    mv_check_tab_field = VALUE #( mt_dfies[ rollname = dfies->rollname ]-fieldname OPTIONAL ).
-    "  we have to go via Domname ..
 
+    " determine the field of the check table, first via the data element
+    mv_check_tab_field = VALUE #( mt_dfies[ rollname = dfies->rollname ]-fieldname OPTIONAL ).
+
+    " as a fallback, try to find it via the domain
     IF mv_check_tab_field IS INITIAL.
       mv_check_tab_field = VALUE #( mt_dfies[ domname = dfies->domname ]-fieldname OPTIONAL ).
     ENDIF.
@@ -372,7 +366,7 @@ CLASS z2ui5_cl_pop_value_help IMPLEMENTATION.
       ASSIGN ms_data_row->* TO FIELD-SYMBOL(<row>).
 
       ASSIGN COMPONENT dfies->fieldname OF STRUCTURE <row> TO FIELD-SYMBOL(<val>).
-      IF <val> IS NOT ASSIGNED.
+      IF sy-subrc <> 0.
         CONTINUE.
       ENDIF.
 
@@ -388,13 +382,13 @@ CLASS z2ui5_cl_pop_value_help IMPLEMENTATION.
 
   METHOD on_after_layout.
 
-    " Kommen wir aus einer anderen APP
+    " only relevant when returning from another app
     IF client->get( )-check_on_navigated = abap_false.
       RETURN.
     ENDIF.
 
     TRY.
-        " War es das Layout?
+        " check if the previous app was the layout popup
         DATA(app) = CAST z2ui5_cl_layo_pop( client->get_app( client->get( )-s_draft-id_prev_app ) ).
 
         mo_layout = app->mo_layout.
@@ -408,9 +402,7 @@ CLASS z2ui5_cl_pop_value_help IMPLEMENTATION.
 
   METHOD get_layout.
 
-    DATA(class) = ``.
-    class = cl_abap_classdescr=>get_class_name( me ).
-    SHIFT class LEFT DELETING LEADING '\CLASS='.
+    DATA(class) = z2ui5_cl_util=>rtti_get_classname_by_ref( me ).
 
     mo_layout = z2ui5_cl_layo_manager=>factory( control  = z2ui5_cl_layo_manager=>m_table
                                                 data     = mt_data

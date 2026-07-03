@@ -7,18 +7,16 @@ CLASS z2ui5_cl_pop_sample_02 DEFINITION
 
     DATA ms_usr01 TYPE z2ui5_cl_util_ext=>ty_usr01.
 
-
   PROTECTED SECTION.
-    DATA client            TYPE REF TO z2ui5_if_client.
-    DATA check_initialized TYPE abap_bool.
+    DATA client TYPE REF TO z2ui5_if_client.
 
     METHODS on_init.
     METHODS on_event.
     METHODS render_main.
-    METHODS call_SEARCH.
+    METHODS call_search.
 
   PRIVATE SECTION.
-    METHODS on_after_SEARCH.
+    METHODS on_after_search.
 
 ENDCLASS.
 
@@ -33,7 +31,7 @@ CLASS z2ui5_cl_pop_sample_02 IMPLEMENTATION.
         client->nav_app_leave( ).
 
       WHEN `CALL_POPUP_SEARCH`.
-        call_SEARCH( ).
+        call_search( ).
 
       WHEN OTHERS.
 
@@ -51,7 +49,7 @@ CLASS z2ui5_cl_pop_sample_02 IMPLEMENTATION.
 
     DATA(view) = z2ui5_cl_xml_view=>factory( ).
     DATA(page) = view->shell( )->page(
-                     title          = 'Layout'
+                     title          = 'Search-Help'
                      navbuttonpress = client->_event( 'BACK' )
                      shownavbutton  = xsdbool( client->get( )-s_draft-id_prev_app_stack IS NOT INITIAL )
                      class          = 'sapUiContentPadding' ).
@@ -61,7 +59,7 @@ CLASS z2ui5_cl_pop_sample_02 IMPLEMENTATION.
                     )->content( 'form'
                         )->text( `Table USR01 field SPLD has a Search-Help.`
                         )->label( `SPLD`
-                        )->input( value            = client->_bind_edit( ms_USR01-spld )
+                        )->input( value            = client->_bind_edit( ms_usr01-spld )
                                   showvaluehelp    = abap_true
                                   valuehelprequest = client->_event( val   = 'CALL_POPUP_SEARCH'
                                                                      t_arg = VALUE #( ( `SPLD` ) ( `USR01` ) ) ) ).
@@ -73,30 +71,29 @@ CLASS z2ui5_cl_pop_sample_02 IMPLEMENTATION.
   METHOD z2ui5_if_app~main.
     me->client = client.
 
-    IF check_initialized = abap_false.
-      check_initialized = abap_true.
+    IF client->check_on_init( ).
       on_init( ).
     ENDIF.
 
     on_event( ).
-    on_after_SEARCH( ).
+    on_after_search( ).
 
   ENDMETHOD.
 
-  METHOD call_SEARCH.
+  METHOD call_search.
 
     DATA(lt_arg) = client->get( )-t_event_arg.
-    DATA(SEARCH_field) = VALUE string( lt_arg[ 1 ] ).
-    DATA(SEARCH_table) = VALUE string( lt_arg[ 2 ] ).
+    DATA(search_field) = VALUE string( lt_arg[ 1 ] ).
+    DATA(search_table) = VALUE string( lt_arg[ 2 ] ).
 
-    client->nav_app_call( z2ui5_cl_pop_search_help=>factory( i_table = SEARCH_table
-                                                             i_fname = SEARCH_field
-                                                             i_value = CONV #(  ms_usr01-spld )
-                                                             i_data  = REF #( ms_usr01 )  ) ).
+    client->nav_app_call( z2ui5_cl_pop_search_help=>factory( i_table = search_table
+                                                             i_fname = search_field
+                                                             i_value = CONV #( ms_usr01-spld )
+                                                             i_data  = REF #( ms_usr01 ) ) ).
 
   ENDMETHOD.
 
-  METHOD on_after_SEARCH.
+  METHOD on_after_search.
 
     IF client->get( )-check_on_navigated = abap_false.
       RETURN.
