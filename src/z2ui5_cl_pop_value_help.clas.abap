@@ -169,7 +169,7 @@ CLASS z2ui5_cl_pop_value_help IMPLEMENTATION.
       ASSIGN ms_data_row->* TO FIELD-SYMBOL(<row>).
 
       ASSIGN COMPONENT dfies->fieldname OF STRUCTURE <row> TO FIELD-SYMBOL(<val>).
-      IF <val> IS NOT ASSIGNED.
+      IF sy-subrc <> 0.
         CONTINUE.
       ENDIF.
 
@@ -267,7 +267,7 @@ CLASS z2ui5_cl_pop_value_help IMPLEMENTATION.
         ASSIGN <tab>[ lt_arg[ 1 ] ] TO FIELD-SYMBOL(<row>).
 
         ASSIGN COMPONENT mv_check_tab_field OF STRUCTURE <row> TO FIELD-SYMBOL(<value>).
-        IF <value> IS NOT ASSIGNED.
+        IF sy-subrc <> 0.
           RETURN.
         ENDIF.
 
@@ -305,9 +305,11 @@ CLASS z2ui5_cl_pop_value_help IMPLEMENTATION.
 
     LOOP AT <tab> ASSIGNING <line>.
 
+      DATA(lv_tabix) = sy-tabix.
+
       ASSIGN COMPONENT 'ROW_ID' OF STRUCTURE <line> TO FIELD-SYMBOL(<row>).
-      IF <row> IS ASSIGNED.
-        <row> = sy-tabix.
+      IF sy-subrc = 0.
+        <row> = lv_tabix.
       ENDIF.
     ENDLOOP.
 
@@ -364,7 +366,7 @@ CLASS z2ui5_cl_pop_value_help IMPLEMENTATION.
       ASSIGN ms_data_row->* TO FIELD-SYMBOL(<row>).
 
       ASSIGN COMPONENT dfies->fieldname OF STRUCTURE <row> TO FIELD-SYMBOL(<val>).
-      IF <val> IS NOT ASSIGNED.
+      IF sy-subrc <> 0.
         CONTINUE.
       ENDIF.
 

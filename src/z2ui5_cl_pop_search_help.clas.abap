@@ -201,6 +201,9 @@ CLASS z2ui5_cl_pop_search_help IMPLEMENTATION.
         ASSIGN <tab>[ lt_arg[ 1 ] ] TO FIELD-SYMBOL(<row>).
 
         ASSIGN COMPONENT mv_shlpfield OF STRUCTURE <row> TO FIELD-SYMBOL(<value>).
+        IF sy-subrc <> 0.
+          RETURN.
+        ENDIF.
 
         mv_return_value = <value>.
 
@@ -257,7 +260,8 @@ CLASS z2ui5_cl_pop_search_help IMPLEMENTATION.
 
   METHOD on_after_layout.
 
-    IF client->check_on_navigated( ).
+    " only relevant when returning from another app
+    IF client->check_on_navigated( ) = abap_false.
       RETURN.
     ENDIF.
 
