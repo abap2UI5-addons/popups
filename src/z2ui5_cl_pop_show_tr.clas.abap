@@ -55,7 +55,6 @@ CLASS z2ui5_cl_pop_show_tr IMPLEMENTATION.
 
     popup->dialog( contentwidth = '40%'
                    afterclose   = client->_event( 'CLOSE' )
-
                    title        = z2ui5_cl_util=>rtti_get_data_element_texts( `SRET_TRORD`  )-long
     )->table( mode  = 'SingleSelectLeft'
               items = client->_bind_edit( mt_data )
@@ -69,7 +68,7 @@ CLASS z2ui5_cl_pop_show_tr IMPLEMENTATION.
                     )->text( '{TRANSPORT}'
                     )->text( '{SHORT_DESCRIPTION}'
     )->get_parent( )->get_parent( )->get_parent( )->get_parent(
-    )->buttons( )->button( text  = 'no transport'
+    )->buttons( )->button( text  = 'No Transport'
                            press = client->_event( 'LOCL' )
                            type  = 'Default'
                   )->button( text  = 'Select'

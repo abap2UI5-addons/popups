@@ -1,5 +1,5 @@
 CLASS z2ui5_cl_pop_sample_01 DEFINITION
-PUBLIC
+  PUBLIC
   CREATE PUBLIC.
 
   PUBLIC SECTION.
@@ -7,8 +7,7 @@ PUBLIC
     DATA mv_arbgb TYPE string.
 
   PROTECTED SECTION.
-    DATA client            TYPE REF TO z2ui5_if_client.
-    DATA check_initialized TYPE abap_bool.
+    DATA client TYPE REF TO z2ui5_if_client.
 
     METHODS on_init.
     METHODS on_event.
@@ -49,7 +48,7 @@ CLASS z2ui5_cl_pop_sample_01 IMPLEMENTATION.
 
     DATA(view) = z2ui5_cl_xml_view=>factory( ).
     DATA(page) = view->shell( )->page(
-                     title          = 'Layout'
+                     title          = 'Value-Help'
                      navbuttonpress = client->_event( 'BACK' )
                      shownavbutton  = xsdbool( client->get( )-s_draft-id_prev_app_stack IS NOT INITIAL )
                      class          = 'sapUiContentPadding' ).
@@ -71,8 +70,7 @@ CLASS z2ui5_cl_pop_sample_01 IMPLEMENTATION.
   METHOD z2ui5_if_app~main.
     me->client = client.
 
-    IF check_initialized = abap_false.
-      check_initialized = abap_true.
+    IF client->check_on_init( ).
       on_init( ).
     ENDIF.
 
@@ -88,8 +86,8 @@ CLASS z2ui5_cl_pop_sample_01 IMPLEMENTATION.
     DATA(f4_table) = VALUE string( lt_arg[ 2 ] ).
 
     client->nav_app_call( z2ui5_cl_pop_value_help=>factory( i_table = f4_table
-                                                         i_fname = f4_field
-                                                         i_value = mv_arbgb ) ).
+                                                            i_fname = f4_field
+                                                            i_value = mv_arbgb ) ).
 
   ENDMETHOD.
 

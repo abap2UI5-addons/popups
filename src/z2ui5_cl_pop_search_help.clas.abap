@@ -15,7 +15,7 @@ CLASS z2ui5_cl_pop_search_help DEFINITION
     DATA ms_data_row     TYPE REF TO data.
     DATA mo_layout       TYPE REF TO z2ui5_cl_layo_manager.
     DATA ms_shlp         TYPE z2ui5_cl_util_ext=>ty_shlp_descr.
-    DATA mt_result_desc  TYPE z2ui5_cl_util_ext=>ty_t_dfies_2. " dfies.
+    DATA mt_result_desc  TYPE z2ui5_cl_util_ext=>ty_t_dfies_2.
     DATA mr_data         TYPE REF TO data.
 
     TYPES ty_t_dfies TYPE z2ui5_cl_util_ext=>ty_t_dfies_2.
@@ -38,7 +38,6 @@ CLASS z2ui5_cl_pop_search_help DEFINITION
     METHODS on_after_layout.
     METHODS get_layout.
     METHODS set_selopt.
-    METHODS set_init_selopt.
 
 ENDCLASS.
 
@@ -102,10 +101,10 @@ CLASS z2ui5_cl_pop_search_help IMPLEMENTATION.
 
     ASSIGN ms_data_row->* TO FIELD-SYMBOL(<data_row>).
 
-    " Gehe über alle Comps
+    " loop over all components
     LOOP AT mt_result_desc REFERENCE INTO DATA(dfies).
 
-      " Fixed Value in Searchhelp
+      " fixed values of the search help are not editable
       IF VALUE #( ms_shlp-interface[ shlpfield = dfies->fieldname ]-value OPTIONAL ) IS INITIAL.
         DATA(enabled) = abap_true.
       ELSE.
@@ -130,15 +129,14 @@ CLASS z2ui5_cl_pop_search_help IMPLEMENTATION.
                                               items      = client->_bind( <mt_data> )
                                               headertext = z2ui5_cl_util=>rtti_get_table_desrc( mv_table ) ).
 
-    " TODO: variable is assigned but never used (ABAP cleaner)
-    DATA(headder) = table->header_toolbar(
-                 )->overflow_toolbar(
-                 )->title( text = z2ui5_cl_util=>rtti_get_table_desrc( mv_table )
-                 )->toolbar_spacer( ).
+    DATA(header) = table->header_toolbar(
+                )->overflow_toolbar(
+                )->title( text = z2ui5_cl_util=>rtti_get_table_desrc( mv_table )
+                )->toolbar_spacer( ).
 
-    headder = z2ui5_cl_layo_pop=>render_layout_function( xml    = headder
-                                                         client = client
-                                                         layout = mo_layout ).
+    header = z2ui5_cl_layo_pop=>render_layout_function( xml    = header
+                                                        client = client
+                                                        layout = mo_layout ).
 
     DATA(columns) = table->columns( ).
 
@@ -282,34 +280,6 @@ CLASS z2ui5_cl_pop_search_help IMPLEMENTATION.
     LOOP AT mt_result_desc INTO DATA(dfies).
 
       ASSIGN COMPONENT dfies-fieldname OF STRUCTURE <data_row> TO FIELD-SYMBOL(<value>).
-
-      IF sy-subrc <> 0.
-        CONTINUE.
-      ENDIF.
-      IF <value> IS INITIAL.
-        CONTINUE.
-      ENDIF.
-
-      ms_shlp-selopt = VALUE #( BASE ms_shlp-selopt
-                                ( shlpfield = dfies-fieldname
-                                  shlpname  = ''
-                                  sign      = 'I'
-                                  option    = 'CP'
-                                  low       = |*{ <value> }*|  ) ).
-
-    ENDLOOP.
-
-  ENDMETHOD.
-
-  METHOD set_init_selopt.
-
-    CLEAR ms_shlp-selopt.
-
-    ASSIGN mr_data->* TO FIELD-SYMBOL(<data>).
-
-    LOOP AT mt_result_desc INTO DATA(dfies).
-
-      ASSIGN COMPONENT dfies-fieldname OF STRUCTURE <data> TO FIELD-SYMBOL(<value>).
 
       IF sy-subrc <> 0.
         CONTINUE.
