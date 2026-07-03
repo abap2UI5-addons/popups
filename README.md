@@ -9,11 +9,11 @@
 * Value-Help
 * Search-Help
 * Transport Requests
-  
+
 #### Compatibility
 * S/4 Private Cloud or On-Premise (Standard ABAP)
 * R/3 NetWeaver AS ABAP 7.50 or higher (Standard ABAP)
-  
+
 #### Dependencies
 * [abap2UI5](https://github.com/abap2UI5/abap2UI5)
 * [layout-management](https://github.com/abap2UI5-addons/layout-management)
