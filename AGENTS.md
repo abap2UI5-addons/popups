@@ -22,7 +22,7 @@ Ready-to-use popup and dialog apps for [abap2UI5](https://github.com/abap2UI5/ab
 
 ## The Utility Copy Principle (`src/00/`)
 
-`z2ui5_cl_popup_context` is a **renamed copy** of `zabaputil_cl_util_context` from the [abap-util](https://github.com/abap-util/abap-util) **master repository**, **trimmed to the methods the popup apps actually use**. This repo has no install-time dependency on abap-util — abapGit has no dependency management, so utilities are vendored instead of referenced. The same pattern is used by the abap2UI5 core (`z2ui5_cl_abap2ui5_context` in its `src/00/03/`).
+`z2ui5_cl_popup_context` is a **renamed copy** of `zabaputil_cl_util_context` from the [abap-util](https://github.com/abap-util/abap-util) **master repository**, **trimmed to the methods the popup apps actually use**. This repo has no install-time dependency on abap-util — abapGit has no dependency management, so utilities are vendored instead of referenced. The same pattern is used by the abap2UI5 core (`z2ui5_cl_a2ui5_context` in its `src/00/03/`).
 
 **Rules — these are hard constraints:**
 
