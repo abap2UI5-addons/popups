@@ -2,7 +2,7 @@
   "name": "abap2ui5-popups",
   "private": true,
   "version": "1.0.0",
-  "description": "Value-Help, Search-Help and Transport Request popups for abap2UI5.",
+  "description": "Popup and dialog apps for abap2UI5 - confirm, inform, select, file up-/download, table, text edit, PDF, HTML, messages and more.",
   "scripts": {
     "rename": "abaplint .github/abaplint/rename.json --rename"
   },
