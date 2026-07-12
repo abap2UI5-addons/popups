@@ -1,4 +1,4 @@
-CLASS z2ui5_cl_popup_sample_152 DEFINITION PUBLIC.
+CLASS z2ui5_cl_popup_sample_07 DEFINITION PUBLIC.
 
   PUBLIC SECTION.
     INTERFACES z2ui5_if_app.
@@ -26,7 +26,7 @@ CLASS z2ui5_cl_popup_sample_152 DEFINITION PUBLIC.
 ENDCLASS.
 
 
-CLASS z2ui5_cl_popup_sample_152 IMPLEMENTATION.
+CLASS z2ui5_cl_popup_sample_07 IMPLEMENTATION.
 
   METHOD on_event.
 

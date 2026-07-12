@@ -1,4 +1,4 @@
-CLASS z2ui5_cl_popup_sample_168 DEFINITION PUBLIC.
+CLASS z2ui5_cl_popup_sample_04 DEFINITION PUBLIC.
 
   PUBLIC SECTION.
     INTERFACES z2ui5_if_app.
@@ -10,24 +10,18 @@ CLASS z2ui5_cl_popup_sample_168 DEFINITION PUBLIC.
   PROTECTED SECTION.
     DATA client TYPE REF TO z2ui5_if_client.
 
-    METHODS get_file
-      RETURNING
-        VALUE(result) TYPE string.
-
   PRIVATE SECTION.
 ENDCLASS.
 
 
-CLASS z2ui5_cl_popup_sample_168 IMPLEMENTATION.
+CLASS z2ui5_cl_popup_sample_04 IMPLEMENTATION.
 
   METHOD on_navigation.
 
     TRY.
         DATA(lo_prev) = client->get_app( client->get( )-s_draft-id_prev_app ).
-
-        IF CAST z2ui5_cl_popup_file_dl( lo_prev )->result( ).
-          client->message_box_display( `the input is downloaded` ).
-        ENDIF.
+        DATA(lo_dummy) = CAST z2ui5_cl_popup_to_inform( lo_prev ).
+        client->message_box_display( `callback after popup to inform` ).
       CATCH cx_root.
     ENDTRY.
 
@@ -39,12 +33,12 @@ CLASS z2ui5_cl_popup_sample_168 IMPLEMENTATION.
     DATA(view) = z2ui5_cl_xml_view=>factory( ).
     view->shell(
         )->page(
-                title          = `abap2UI5 - Popup File Download`
+                title          = `abap2UI5 - Popup HTML`
                 navbuttonpress = client->_event_nav_app_leave( )
                 shownavbutton  = client->check_app_prev_stack( )
            )->button(
-                text  = `Open Popup...`
-                press = client->_event( `POPUP` ) ).
+            text  = `Open Popup...`
+            press = client->_event( `POPUP` ) ).
 
     client->view_display( view->stringify( ) ).
 
@@ -56,7 +50,10 @@ CLASS z2ui5_cl_popup_sample_168 IMPLEMENTATION.
     CASE client->get( )-event.
 
       WHEN `POPUP`.
-        DATA(lo_app) = z2ui5_cl_popup_file_dl=>factory( get_file( ) ).
+        DATA(lo_app) = z2ui5_cl_popup_html=>factory( `<h2>HTML Links</h2>` && |\n| &&
+                                                     `<p>HTML links are defined with the a tag:</p>` && |\n| &&
+                                                     |\n| &&
+                                                     `<a href="https://www.w3schools.com" target="_blank">This is a link</a>` ).
         client->nav_app_call( lo_app ).
     ENDCASE.
 
@@ -75,13 +72,6 @@ CLASS z2ui5_cl_popup_sample_168 IMPLEMENTATION.
     ENDIF.
 
     on_event( ).
-
-  ENDMETHOD.
-
-
-  METHOD get_file.
-
-    result = `test`.
 
   ENDMETHOD.
 

@@ -1,4 +1,4 @@
-CLASS z2ui5_cl_popup_sample_158 DEFINITION PUBLIC.
+CLASS z2ui5_cl_popup_sample_12 DEFINITION PUBLIC.
 
   PUBLIC SECTION.
     INTERFACES z2ui5_if_app.
@@ -17,7 +17,7 @@ CLASS z2ui5_cl_popup_sample_158 DEFINITION PUBLIC.
 ENDCLASS.
 
 
-CLASS z2ui5_cl_popup_sample_158 IMPLEMENTATION.
+CLASS z2ui5_cl_popup_sample_12 IMPLEMENTATION.
 
   METHOD get_example_pdf.
 

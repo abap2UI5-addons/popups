@@ -1,4 +1,4 @@
-CLASS z2ui5_cl_popup_sample_162 DEFINITION PUBLIC.
+CLASS z2ui5_cl_popup_sample_15 DEFINITION PUBLIC.
 
   PUBLIC SECTION.
     INTERFACES z2ui5_if_app.
@@ -12,10 +12,7 @@ CLASS z2ui5_cl_popup_sample_162 DEFINITION PUBLIC.
         storage_location TYPE string,
         quantity         TYPE i,
       END OF ty_s_tab.
-    TYPES ty_t_table TYPE STANDARD TABLE OF ty_s_tab WITH EMPTY KEY.
-
-    DATA mt_table TYPE ty_t_table.
-    DATA mt_filter TYPE z2ui5_cl_popup_context=>ty_t_filter_multi.
+    DATA mt_table TYPE STANDARD TABLE OF ty_s_tab WITH EMPTY KEY.
 
   PROTECTED SECTION.
     DATA client TYPE REF TO z2ui5_if_client.
@@ -28,25 +25,20 @@ CLASS z2ui5_cl_popup_sample_162 DEFINITION PUBLIC.
 ENDCLASS.
 
 
-CLASS z2ui5_cl_popup_sample_162 IMPLEMENTATION.
+CLASS z2ui5_cl_popup_sample_15 IMPLEMENTATION.
 
   METHOD on_event.
 
-    CASE client->get( )-event.
-
-      WHEN `BUTTON_START`.
-        set_data( ).
-        client->view_model_update( ).
-
-      WHEN `PREVIEW_FILTER`.
-        client->nav_app_call( z2ui5_cl_popup_get_range_m=>factory( mt_filter ) ).
-    ENDCASE.
+    IF client->check_on_event( `BUTTON_START` ).
+      client->nav_app_call( z2ui5_cl_popup_table=>factory( mt_table ) ).
+    ENDIF.
 
   ENDMETHOD.
 
 
   METHOD set_data.
 
+    "replace this with a db select here...
     mt_table = VALUE #(
         ( product = `table`    create_date = `01.01.2023` create_by = `Peter` storage_location = `AREA_001` quantity = 400 )
         ( product = `chair`    create_date = `01.01.2023` create_by = `Peter` storage_location = `AREA_001` quantity = 400 )
@@ -54,12 +46,6 @@ CLASS z2ui5_cl_popup_sample_162 IMPLEMENTATION.
         ( product = `computer` create_date = `01.01.2023` create_by = `Peter` storage_location = `AREA_001` quantity = 400 )
         ( product = `oven`     create_date = `01.01.2023` create_by = `Peter` storage_location = `AREA_001` quantity = 400 )
         ( product = `table2`   create_date = `01.01.2023` create_by = `Peter` storage_location = `AREA_001` quantity = 400 ) ).
-
-    z2ui5_cl_popup_context=>filter_itab(
-      EXPORTING
-        filter = mt_filter
-      CHANGING
-        val    = mt_table ).
 
   ENDMETHOD.
 
@@ -69,7 +55,7 @@ CLASS z2ui5_cl_popup_sample_162 IMPLEMENTATION.
     DATA(view) = z2ui5_cl_xml_view=>factory( ).
 
     view           = view->shell( )->page( id = `page_main`
-    title          = `abap2UI5 - Select-Options`
+    title          = `abap2UI5 - Popup Display Table`
     navbuttonpress = client->_event_nav_app_leave( )
     shownavbutton  = client->check_app_prev_stack( ) ).
 
@@ -80,10 +66,8 @@ CLASS z2ui5_cl_popup_sample_162 IMPLEMENTATION.
            )->header_toolbar(
              )->overflow_toolbar(
                  )->toolbar_spacer(
-                 )->button( text  = `Filter`
-                            press = client->_event( `PREVIEW_FILTER` )
-                            icon  = `sap-icon://filter`
-           )->button( text  = `Go`
+*                 )->button( text = `Filter` press = client->_event( `PREVIEW_FILTER` ) icon = `sap-icon://filter`
+           )->button( text  = `Display Popup`
                       press = client->_event( `BUTTON_START` )
                       type  = `Emphasized`
             )->get_parent( )->get_parent( ).
@@ -113,22 +97,16 @@ CLASS z2ui5_cl_popup_sample_162 IMPLEMENTATION.
 
     IF client->check_on_init( ).
 
-      mt_filter = z2ui5_cl_popup_context=>filter_get_multi_by_data( mt_table ).
-      DELETE mt_filter WHERE name = `SELKZ`.
+      set_data( ).
       view_display( ).
       RETURN.
     ENDIF.
 
     IF client->get( )-check_on_navigated = abap_true.
       TRY.
-          DATA(lo_value_help) = CAST z2ui5_cl_popup_get_range_m( client->get_app( client->get( )-s_draft-id_prev_app ) ).
-
-          IF lo_value_help->result( )-check_confirmed = abap_true.
-
-            mt_filter = lo_value_help->result( )-t_filter.
-            set_data( ).
-            client->view_model_update( ).
-          ENDIF.
+          DATA(lo_popup_table) = CAST z2ui5_cl_popup_table( client->get_app( client->get( )-s_draft-id_prev_app ) ).
+          set_data( ).
+          client->view_model_update( ).
         CATCH cx_root.
       ENDTRY.
       RETURN.
