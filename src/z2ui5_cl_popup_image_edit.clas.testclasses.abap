@@ -10,7 +10,7 @@ ENDCLASS.
 CLASS ltcl_test IMPLEMENTATION.
 
   METHOD test_factory.
-    DATA(lo_pop) = z2ui5_cl_popup_image_editor=>factory(
+    DATA(lo_pop) = z2ui5_cl_popup_image_edit=>factory(
       iv_image       = `data:image/png;base64,AAAA`
       iv_title       = `Edit`
       iv_save_text   = `Done`
@@ -20,13 +20,13 @@ CLASS ltcl_test IMPLEMENTATION.
   ENDMETHOD.
 
   METHOD test_factory_defaults.
-    DATA(lo_pop) = z2ui5_cl_popup_image_editor=>factory( `test_img` ).
+    DATA(lo_pop) = z2ui5_cl_popup_image_edit=>factory( `test_img` ).
 
     cl_abap_unit_assert=>assert_bound( lo_pop ).
   ENDMETHOD.
 
   METHOD test_result_initial.
-    DATA(lo_pop) = z2ui5_cl_popup_image_editor=>factory( `test_img` ).
+    DATA(lo_pop) = z2ui5_cl_popup_image_edit=>factory( `test_img` ).
     DATA(ls_result) = lo_pop->result( ).
 
     cl_abap_unit_assert=>assert_equals( exp = abap_false
@@ -68,7 +68,7 @@ CLASS ltcl_test_roundtrip IMPLEMENTATION.
 
   METHOD test_init_displays_popup.
 
-    DATA(lo_pop) = z2ui5_cl_popup_image_editor=>factory( iv_image = `data:image/png;base64,OLD`
+    DATA(lo_pop) = z2ui5_cl_popup_image_edit=>factory( iv_image = `data:image/png;base64,OLD`
                                                        iv_title = `Image Title` ).
     client_create( lo_pop ).
 
@@ -81,7 +81,7 @@ CLASS ltcl_test_roundtrip IMPLEMENTATION.
 
   METHOD test_save.
 
-    DATA(lo_pop) = z2ui5_cl_popup_image_editor=>factory( `data:image/png;base64,OLD` ).
+    DATA(lo_pop) = z2ui5_cl_popup_image_edit=>factory( `data:image/png;base64,OLD` ).
     client_create( lo_pop ).
     lo_pop->z2ui5_if_app~check_initialized = abap_true.
     mo_action->ms_actual-event = `SAVE`.
@@ -98,7 +98,7 @@ CLASS ltcl_test_roundtrip IMPLEMENTATION.
 
   METHOD test_cancel.
 
-    DATA(lo_pop) = z2ui5_cl_popup_image_editor=>factory( `data:image/png;base64,OLD` ).
+    DATA(lo_pop) = z2ui5_cl_popup_image_edit=>factory( `data:image/png;base64,OLD` ).
     client_create( lo_pop ).
     lo_pop->z2ui5_if_app~check_initialized = abap_true.
     mo_action->ms_actual-event = `CANCEL`.

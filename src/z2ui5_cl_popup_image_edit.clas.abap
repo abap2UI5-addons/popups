@@ -1,4 +1,4 @@
-CLASS z2ui5_cl_popup_image_editor DEFINITION PUBLIC.
+CLASS z2ui5_cl_popup_image_edit DEFINITION PUBLIC.
 
   PUBLIC SECTION.
     INTERFACES z2ui5_if_app.
@@ -23,7 +23,7 @@ CLASS z2ui5_cl_popup_image_editor DEFINITION PUBLIC.
         iv_enabledbuttons        TYPE clike  OPTIONAL
         iv_mode                  TYPE clike  OPTIONAL
       RETURNING
-        VALUE(r_result)          TYPE REF TO z2ui5_cl_popup_image_editor.
+        VALUE(r_result)          TYPE REF TO z2ui5_cl_popup_image_edit.
 
     METHODS result
       RETURNING
@@ -50,7 +50,7 @@ CLASS z2ui5_cl_popup_image_editor DEFINITION PUBLIC.
 ENDCLASS.
 
 
-CLASS z2ui5_cl_popup_image_editor IMPLEMENTATION.
+CLASS z2ui5_cl_popup_image_edit IMPLEMENTATION.
 
   METHOD factory.
 
