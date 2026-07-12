@@ -8,13 +8,13 @@
 Ready-to-use popup and dialog apps for abap2UI5. The classes in `src/` were moved here from the abap2UI5 core framework (formerly the built-in popups in its obsolete package); the previous content of this repository (Value-Help, Search-Help, Transport Requests and their samples) now lives in `src/99/`.
 
 #### Key Features
-* Confirm, Inform & Select popups (`z2ui5_cl_pop_to_confirm`, `z2ui5_cl_pop_to_inform`, `z2ui5_cl_pop_to_select`)
-* File Download & Upload (`z2ui5_cl_pop_file_dl`, `z2ui5_cl_pop_file_ul`)
-* Table, Data & Demo Output (`z2ui5_cl_pop_table`, `z2ui5_cl_pop_data`, `z2ui5_cl_pop_demo_output`)
-* Text Editor, HTML & PDF display (`z2ui5_cl_pop_textedit`, `z2ui5_cl_pop_html`, `z2ui5_cl_pop_pdf`)
-* Messages, Error & Input Validation (`z2ui5_cl_pop_messages`, `z2ui5_cl_pop_error`, `z2ui5_cl_pop_input_val`)
-* Range Selection (`z2ui5_cl_pop_get_range`, `z2ui5_cl_pop_get_range_m`)
-* Image Editor & JS Loader (`z2ui5_cl_pop_image_editor`, `z2ui5_cl_pop_js_loader`)
+* Confirm, Inform & Select popups (`z2ui5_cl_popup_to_confirm`, `z2ui5_cl_popup_to_inform`, `z2ui5_cl_popup_to_select`)
+* File Download & Upload (`z2ui5_cl_popup_file_dl`, `z2ui5_cl_popup_file_ul`)
+* Table, Data & Demo Output (`z2ui5_cl_popup_table`, `z2ui5_cl_popup_data`, `z2ui5_cl_popup_demo_output`)
+* Text Editor, HTML & PDF display (`z2ui5_cl_popup_textedit`, `z2ui5_cl_popup_html`, `z2ui5_cl_popup_pdf`)
+* Messages, Error & Input Validation (`z2ui5_cl_popup_messages`, `z2ui5_cl_popup_error`, `z2ui5_cl_popup_input_val`)
+* Range Selection (`z2ui5_cl_popup_get_range`, `z2ui5_cl_popup_get_range_m`)
+* Image Editor & JS Loader (`z2ui5_cl_popup_image_editor`, `z2ui5_cl_popup_js_loader`)
 * Legacy (`src/99/`): Value-Help, Search-Help, Transport Requests
 
 #### Compatibility
