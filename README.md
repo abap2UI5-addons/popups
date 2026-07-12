@@ -23,10 +23,19 @@ Ready-to-use popup and dialog apps for abap2UI5. The classes in `src/` were move
 | Package | Content |
 |---|---|
 | `src/` | Popup classes (`z2ui5_cl_popup_*`) |
-| `src/00/` | Context/utility class `z2ui5_cl_popup_context` (no external util dependencies) |
+| `src/00/` | Context/utility class `z2ui5_cl_popup_context` — a vendored copy from [abap-util](https://github.com/abap-util/abap-util), see below |
 | `src/02/` | Samples (`z2ui5_cl_popup_sample_*`) |
 | `src/03/` | Popups with layout-management dependency (Value-Help, Search-Help) |
 | `src/99/` | Obsolete: the original classes of this repository, kept for compatibility |
+
+#### Utility Class — Vendored Copy from abap-util
+
+`z2ui5_cl_popup_context` (`src/00/`) is a **renamed copy** of `zabaputil_cl_util_context` from the [abap-util](https://github.com/abap-util/abap-util) master repository, **reduced to the methods actually used by the popup apps**. This keeps the installation dependency-free (abapGit has no dependency management) and namespace-isolated, while the utility logic itself is developed and unit-tested in exactly one place — abap-util.
+
+Rules:
+* Bug fixes in utility logic go to [abap-util](https://github.com/abap-util/abap-util) first, then the fix is applied identically here. Never patch only the copy.
+* The copy may differ from the master only in its class name and its method subset — implementations stay identical.
+* If a popup needs a utility method that is not in the copy yet, copy it (with its private helpers) from the current abap-util master state.
 
 #### Compatibility
 * S/4 Private Cloud or On-Premise (Standard ABAP)
@@ -35,6 +44,8 @@ Ready-to-use popup and dialog apps for abap2UI5. The classes in `src/` were move
 #### Dependencies
 * [abap2UI5](https://github.com/abap2UI5/abap2UI5)
 * [layout-management](https://github.com/abap2UI5-addons/layout-management)
+
+No dependency on abap-util at installation time — the needed utilities are embedded as a vendored copy (see above).
 
 #### Limitations & Todo
 * Transports currently only work in On-Premise

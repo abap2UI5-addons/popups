@@ -476,6 +476,20 @@ CLASS z2ui5_cl_popup_context DEFINITION PUBLIC FINAL CREATE PUBLIC.
 
   PRIVATE SECTION.
 
+    CLASS-METHODS rtti_get_dtel_texts_by_ddic
+      IMPORTING
+        name        TYPE string
+      EXPORTING
+        texts       TYPE ty_s_data_element_text
+        do_fallback TYPE abap_bool.
+
+    CLASS-METHODS rtti_get_dtel_texts_by_xco
+      IMPORTING
+        name        TYPE string
+      EXPORTING
+        texts       TYPE ty_s_data_element_text
+        do_fallback TYPE abap_bool.
+
     TYPES:
       BEGIN OF ty_s_bool_cache,
         absolute_name TYPE string,
@@ -1483,116 +1497,136 @@ CLASS z2ui5_cl_popup_context IMPLEMENTATION.
 
   METHOD rtti_get_data_element_texts.
 
-    DATA ddic_ref     TYPE REF TO data.
-    DATA data_element TYPE REF TO object.
-    DATA content      TYPE REF TO object.
+    DATA data_element_name TYPE string.
+    DATA lv_do_fallback    TYPE abap_bool.
+
+    data_element_name = val.
+
+    TRY.
+        rtti_get_dtel_texts_by_ddic( EXPORTING name        = data_element_name
+                                     IMPORTING texts       = result
+                                               do_fallback = lv_do_fallback ).
+      CATCH cx_root.
+        rtti_get_dtel_texts_by_xco( EXPORTING name        = data_element_name
+                                    IMPORTING texts       = result
+                                              do_fallback = lv_do_fallback ).
+    ENDTRY.
+
+    IF lv_do_fallback = abap_true AND result IS INITIAL.
+      result-header = val.
+      result-long = val.
+      result-medium = val.
+      result-short = val.
+    ENDIF.
+
+  ENDMETHOD.
+
+  METHOD rtti_get_dtel_texts_by_ddic.
+
+    DATA ddic_ref TYPE REF TO data.
     DATA: BEGIN OF ddic,
             reptext   TYPE string,
             scrtext_s TYPE string,
             scrtext_m TYPE string,
             scrtext_l TYPE string,
           END OF ddic.
-    DATA exists            TYPE abap_bool.
-
-    DATA data_element_name TYPE string.
-    DATA temp7             TYPE REF TO cl_abap_structdescr.
-    DATA struct_desrc      LIKE temp7.
+    DATA struct_desrc TYPE REF TO cl_abap_structdescr.
     FIELD-SYMBOLS <ddic> TYPE data.
-    DATA lo_typedescr           TYPE REF TO cl_abap_typedescr.
-    DATA temp8                  TYPE REF TO cl_abap_datadescr.
-    DATA data_descr             LIKE temp8.
+    DATA lo_typedescr TYPE REF TO cl_abap_typedescr.
+    DATA data_descr   TYPE REF TO cl_abap_datadescr.
 
-    data_element_name = val.
+    CLEAR texts.
+    do_fallback = abap_false.
+
+    cl_abap_typedescr=>describe_by_name( `T100` ).
+
+    struct_desrc ?= cl_abap_structdescr=>describe_by_name( `DFIES` ).
+
+    CREATE DATA ddic_ref TYPE HANDLE struct_desrc.
+
+    ASSIGN ddic_ref->* TO <ddic>.
+    ASSERT sy-subrc = 0.
+
+    cl_abap_elemdescr=>describe_by_name( EXPORTING  p_name     = name
+                                         RECEIVING p_descr_ref = lo_typedescr
+                                         EXCEPTIONS OTHERS     = 1 ).
+    IF sy-subrc <> 0.
+      RETURN.
+    ENDIF.
+
+    data_descr ?= lo_typedescr.
+
+    CALL METHOD data_descr->(`GET_DDIC_FIELD`)
+      RECEIVING
+        p_flddescr   = <ddic>
+      EXCEPTIONS
+        not_found    = 1
+        no_ddic_type = 2
+        OTHERS       = 3.
+    IF sy-subrc <> 0.
+      RETURN.
+    ENDIF.
+
+    MOVE-CORRESPONDING <ddic> TO ddic.
+    texts-header = ddic-reptext.
+    texts-short  = ddic-scrtext_s.
+    texts-medium = ddic-scrtext_m.
+    texts-long   = ddic-scrtext_l.
+    do_fallback  = abap_true.
+
+  ENDMETHOD.
+
+  METHOD rtti_get_dtel_texts_by_xco.
+
+    DATA data_element TYPE REF TO object.
+    DATA content      TYPE REF TO object.
+    DATA exists       TYPE abap_bool.
+    DATA lv_xco_cp_abap_dictionary TYPE string.
+
+    CLEAR texts.
+    do_fallback = abap_false.
 
     TRY.
-        cl_abap_typedescr=>describe_by_name( `T100` ).
-
-        temp7 ?= cl_abap_structdescr=>describe_by_name( `DFIES` ).
-
-        struct_desrc = temp7.
-
-        CREATE DATA ddic_ref TYPE HANDLE struct_desrc.
-
-        ASSIGN ddic_ref->* TO <ddic>.
-        ASSERT sy-subrc = 0.
-
-        cl_abap_elemdescr=>describe_by_name( EXPORTING  p_name      = data_element_name
-                                             RECEIVING  p_descr_ref = lo_typedescr
-                                             EXCEPTIONS OTHERS      = 1 ).
-        IF sy-subrc <> 0.
-          RETURN.
-        ENDIF.
-
-        temp8 ?= lo_typedescr.
-
-        data_descr = temp8.
-
-        CALL METHOD data_descr->(`GET_DDIC_FIELD`)
+        lv_xco_cp_abap_dictionary = `XCO_CP_ABAP_DICTIONARY`.
+        CALL METHOD (lv_xco_cp_abap_dictionary)=>(`DATA_ELEMENT`)
+          EXPORTING
+            iv_name         = name
           RECEIVING
-            p_flddescr   = <ddic>
-          EXCEPTIONS
-            not_found    = 1
-            no_ddic_type = 2
-            OTHERS       = 3.
-        IF sy-subrc <> 0.
+            ro_data_element = data_element.
+
+        CALL METHOD data_element->(`IF_XCO_AD_DATA_ELEMENT~EXISTS`)
+          RECEIVING
+            rv_exists = exists.
+
+        IF exists = abap_false.
           RETURN.
         ENDIF.
 
-        MOVE-CORRESPONDING <ddic> TO ddic.
-        result-header = ddic-reptext.
-        result-short  = ddic-scrtext_s.
-        result-medium = ddic-scrtext_m.
-        result-long   = ddic-scrtext_l.
+        CALL METHOD data_element->(`IF_XCO_AD_DATA_ELEMENT~CONTENT`)
+          RECEIVING
+            ro_content = content.
+
+        CALL METHOD content->(`IF_XCO_DTEL_CONTENT~GET_HEADING_FIELD_LABEL`)
+          RECEIVING
+            rs_heading_field_label = texts-header.
+
+        CALL METHOD content->(`IF_XCO_DTEL_CONTENT~GET_SHORT_FIELD_LABEL`)
+          RECEIVING
+            rs_short_field_label = texts-short.
+
+        CALL METHOD content->(`IF_XCO_DTEL_CONTENT~GET_MEDIUM_FIELD_LABEL`)
+          RECEIVING
+            rs_medium_field_label = texts-medium.
+
+        CALL METHOD content->(`IF_XCO_DTEL_CONTENT~GET_LONG_FIELD_LABEL`)
+          RECEIVING
+            rs_long_field_label = texts-long.
+
+        do_fallback = abap_true.
 
       CATCH cx_root.
-        TRY.
-            DATA lv_xco_cp_abap_dictionary TYPE string.
-            lv_xco_cp_abap_dictionary = `XCO_CP_ABAP_DICTIONARY`.
-            CALL METHOD (lv_xco_cp_abap_dictionary)=>(`DATA_ELEMENT`)
-              EXPORTING
-                iv_name         = data_element_name
-              RECEIVING
-                ro_data_element = data_element.
-
-            CALL METHOD data_element->(`IF_XCO_AD_DATA_ELEMENT~EXISTS`)
-              RECEIVING
-                rv_exists = exists.
-
-            IF exists = abap_false.
-              RETURN.
-            ENDIF.
-
-            CALL METHOD data_element->(`IF_XCO_AD_DATA_ELEMENT~CONTENT`)
-              RECEIVING
-                ro_content = content.
-
-            CALL METHOD content->(`IF_XCO_DTEL_CONTENT~GET_HEADING_FIELD_LABEL`)
-              RECEIVING
-                rs_heading_field_label = result-header.
-
-            CALL METHOD content->(`IF_XCO_DTEL_CONTENT~GET_SHORT_FIELD_LABEL`)
-              RECEIVING
-                rs_short_field_label = result-short.
-
-            CALL METHOD content->(`IF_XCO_DTEL_CONTENT~GET_MEDIUM_FIELD_LABEL`)
-              RECEIVING
-                rs_medium_field_label = result-medium.
-
-            CALL METHOD content->(`IF_XCO_DTEL_CONTENT~GET_LONG_FIELD_LABEL`)
-              RECEIVING
-                rs_long_field_label = result-long.
-
-          CATCH cx_root INTO DATA(x).
-            DATA(error) = x->get_text( ).
-        ENDTRY.
+        do_fallback = abap_true.
     ENDTRY.
-
-    IF result IS INITIAL.
-      result-header = val.
-      result-long = val.
-      result-medium = val.
-      result-short = val.
-    ENDIF.
 
   ENDMETHOD.
 
@@ -3167,11 +3201,16 @@ CLASS z2ui5_cl_popup_context IMPLEMENTATION.
 
   METHOD ui5_get_msg_type.
 
-    result = SWITCH #( val
-                       WHEN `E` THEN cs_ui5_msg_type-e
-                       WHEN `S` THEN cs_ui5_msg_type-s
-                       WHEN `W` THEN cs_ui5_msg_type-w
-                       ELSE cs_ui5_msg_type-i ).
+    CASE val.
+      WHEN `E`.
+        result = cs_ui5_msg_type-e.
+      WHEN `S`.
+        result = cs_ui5_msg_type-s.
+      WHEN `W`.
+        result = cs_ui5_msg_type-w.
+      WHEN OTHERS.
+        result = cs_ui5_msg_type-i.
+    ENDCASE.
 
   ENDMETHOD.
 
