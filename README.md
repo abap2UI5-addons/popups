@@ -14,7 +14,7 @@ Ready-to-use popup and dialog apps for abap2UI5. The classes in `src/` were move
 * Text Editor, HTML & PDF display (`z2ui5_cl_popup_textedit`, `z2ui5_cl_popup_html`, `z2ui5_cl_popup_pdf`)
 * Messages, Error & Input Validation (`z2ui5_cl_popup_messages`, `z2ui5_cl_popup_error`, `z2ui5_cl_popup_input_val`)
 * Range Selection (`z2ui5_cl_popup_get_range`, `z2ui5_cl_popup_get_range_m`)
-* Image Editor & JS Loader (`z2ui5_cl_popup_image_editor`, `z2ui5_cl_popup_js_loader`)
+* Image Editor & JS Loader (`z2ui5_cl_popup_image_edit`, `z2ui5_cl_popup_js_loader`)
 * Value-Help & Search-Help (`z2ui5_cl_popup_value_help`, `z2ui5_cl_popup_search_help`)
 * Transport Requests (`z2ui5_cl_popup_show_tr`)
 * Samples for all popups (`src/02/`, `z2ui5_cl_popup_sample_*`)
