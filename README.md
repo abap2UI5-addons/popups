@@ -5,7 +5,7 @@
 
 # Popups
 
-Ready-to-use popup and dialog apps for abap2UI5. The classes in `src/` were moved here from the abap2UI5 core framework (formerly the built-in popups in its obsolete package); the previous content of this repository (Value-Help, Search-Help, Transport Requests and their samples) now lives in `src/99/`.
+Ready-to-use popup and dialog apps for abap2UI5. The classes in `src/` were moved here from the abap2UI5 core framework (formerly the built-in popups in its obsolete package); the previous content of this repository lives in `src/99/` (obsolete).
 
 #### Key Features
 * Confirm, Inform & Select popups (`z2ui5_cl_popup_to_confirm`, `z2ui5_cl_popup_to_inform`, `z2ui5_cl_popup_to_select`)
@@ -17,8 +17,16 @@ Ready-to-use popup and dialog apps for abap2UI5. The classes in `src/` were move
 * Image Editor & JS Loader (`z2ui5_cl_popup_image_editor`, `z2ui5_cl_popup_js_loader`)
 * Value-Help & Search-Help (`z2ui5_cl_popup_value_help`, `z2ui5_cl_popup_search_help`)
 * Transport Requests (`z2ui5_cl_popup_show_tr`)
-* Samples for all popups (`src/00/`, `z2ui5_cl_popup_sample_*`)
-* Legacy (`src/99/`): Value-Help, Search-Help, Transport Requests
+* Samples for all popups (`src/02/`, `z2ui5_cl_popup_sample_*`)
+
+#### Package Structure
+| Package | Content |
+|---|---|
+| `src/` | Popup classes (`z2ui5_cl_popup_*`) |
+| `src/00/` | Context/utility class `z2ui5_cl_popup_context` (no external util dependencies) |
+| `src/02/` | Samples (`z2ui5_cl_popup_sample_*`) |
+| `src/03/` | Popups with layout-management dependency (Value-Help, Search-Help) |
+| `src/99/` | Obsolete: the original classes of this repository, kept for compatibility |
 
 #### Compatibility
 * S/4 Private Cloud or On-Premise (Standard ABAP)
