@@ -14,11 +14,11 @@ CLASS z2ui5_cl_pop_search_help DEFINITION
     DATA mt_data         TYPE REF TO data.
     DATA ms_data_row     TYPE REF TO data.
     DATA mo_layout       TYPE REF TO z2ui5_cl_layo_manager.
-    DATA ms_shlp         TYPE z2ui5_cl_util_ext=>ty_shlp_descr.
-    DATA mt_result_desc  TYPE z2ui5_cl_util_ext=>ty_t_dfies_2.
+    DATA ms_shlp         TYPE z2ui5_cl_popup_context=>ty_shlp_descr.
+    DATA mt_result_desc  TYPE z2ui5_cl_popup_context=>ty_t_dfies_2.
     DATA mr_data         TYPE REF TO data.
 
-    TYPES ty_t_dfies TYPE z2ui5_cl_util_ext=>ty_t_dfies_2.
+    TYPES ty_t_dfies TYPE z2ui5_cl_popup_context=>ty_t_dfies_2.
 
     CLASS-METHODS factory
       IMPORTING
@@ -60,7 +60,7 @@ CLASS z2ui5_cl_pop_search_help IMPLEMENTATION.
 
   METHOD on_init.
 
-    z2ui5_cl_util_ext=>bus_search_help_read( CHANGING ms_shlp        = ms_shlp
+    z2ui5_cl_popup_context=>bus_search_help_read( CHANGING ms_shlp        = ms_shlp
                                                       mv_fname       = mv_fname
                                                       mv_table       = mv_table
                                                       mr_data        = mr_data
@@ -75,8 +75,8 @@ CLASS z2ui5_cl_pop_search_help IMPLEMENTATION.
 
   METHOD get_layout.
 
-    DATA(class) = z2ui5_cl_util=>rtti_get_classname_by_ref( me ).
-    DATA(app) = z2ui5_cl_util=>url_param_get( val = 'app'
+    DATA(class) = z2ui5_cl_popup_context=>rtti_get_classname_by_ref( me ).
+    DATA(app) = z2ui5_cl_popup_context=>url_param_get( val = 'app'
                                               url = client->get( )-s_config-search ).
 
     mo_layout = z2ui5_cl_layo_manager=>factory( control  = z2ui5_cl_layo_manager=>m_table
@@ -92,7 +92,7 @@ CLASS z2ui5_cl_pop_search_help IMPLEMENTATION.
 
     DATA(popup) = z2ui5_cl_xml_view=>factory_popup( ).
 
-    DATA(simple_form) = popup->dialog( title        = z2ui5_cl_util=>rtti_get_data_element_texts( `SCRFMTCH`  )-medium
+    DATA(simple_form) = popup->dialog( title        = z2ui5_cl_popup_context=>rtti_get_data_element_texts( `SCRFMTCH`  )-medium
                                        contentwidth = '70%'
                                        afterclose   = client->_event( 'SHLP_CLOSE' )
           )->simple_form( layout   = 'ResponsiveGridLayout'
@@ -113,7 +113,7 @@ CLASS z2ui5_cl_pop_search_help IMPLEMENTATION.
 
       ASSIGN COMPONENT dfies->fieldname OF STRUCTURE <data_row> TO FIELD-SYMBOL(<val>).
 
-      simple_form->label( text = z2ui5_cl_util=>rtti_get_data_element_text_l( dfies->rollname ) ).
+      simple_form->label( text = z2ui5_cl_popup_context=>rtti_get_data_element_text_l( dfies->rollname ) ).
 
       simple_form->input( value         = client->_bind_edit( <val> )
                           showvaluehelp = abap_false
@@ -127,11 +127,11 @@ CLASS z2ui5_cl_pop_search_help IMPLEMENTATION.
     DATA(table) = popup->get_child( )->table( growing    = 'true'
                                               width      = 'auto'
                                               items      = client->_bind( <mt_data> )
-                                              headertext = z2ui5_cl_util=>rtti_get_table_desrc( mv_table ) ).
+                                              headertext = z2ui5_cl_popup_context=>rtti_get_table_desrc( mv_table ) ).
 
     DATA(header) = table->header_toolbar(
                 )->overflow_toolbar(
-                )->title( text = z2ui5_cl_util=>rtti_get_table_desrc( mv_table )
+                )->title( text = z2ui5_cl_popup_context=>rtti_get_table_desrc( mv_table )
                 )->toolbar_spacer( ).
 
     header = z2ui5_cl_layo_pop=>render_layout_function( xml    = header
@@ -158,7 +158,7 @@ CLASS z2ui5_cl_pop_search_help IMPLEMENTATION.
                        minscreenwidth  = client->_bind( val       = layout->width
                                                         tab       = mo_layout->ms_layout-t_layout
                                                         tab_index = lv_index )
-       )->text( z2ui5_cl_util=>rtti_get_data_element_text_l( layout->rollname ) ).
+       )->text( z2ui5_cl_popup_context=>rtti_get_data_element_text_l( layout->rollname ) ).
 
     ENDLOOP.
 
@@ -215,7 +215,7 @@ CLASS z2ui5_cl_pop_search_help IMPLEMENTATION.
 
         set_selopt( ).
 
-        z2ui5_cl_util_ext=>bus_search_help_read( CHANGING ms_shlp        = ms_shlp
+        z2ui5_cl_popup_context=>bus_search_help_read( CHANGING ms_shlp        = ms_shlp
                                                           mv_fname       = mv_fname
                                                           mv_table       = mv_table
                                                           mr_data        = mr_data
@@ -245,7 +245,7 @@ CLASS z2ui5_cl_pop_search_help IMPLEMENTATION.
 
     IF i_data IS SUPPLIED.
 
-      DATA(t_comp) = z2ui5_cl_util=>rtti_get_t_attri_by_any( i_data ).
+      DATA(t_comp) = z2ui5_cl_popup_context=>rtti_get_t_attri_by_any( i_data ).
       DATA(struct_desc) = cl_abap_structdescr=>create( t_comp ).
       CREATE DATA result->mr_data TYPE HANDLE struct_desc.
 
