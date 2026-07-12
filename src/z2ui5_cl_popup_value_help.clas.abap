@@ -14,7 +14,7 @@ CLASS z2ui5_cl_popup_value_help DEFINITION
     DATA mv_value        TYPE string.
     DATA mv_return_value TYPE string.
     DATA mv_rows         TYPE int1 VALUE '50'.
-    DATA mt_dfies        TYPE z2ui5_cl_util_ext=>ty_t_dfies.
+    DATA mt_dfies        TYPE z2ui5_cl_popup_context=>ty_t_dfies.
 
     CLASS-METHODS factory
       IMPORTING
@@ -85,7 +85,7 @@ CLASS z2ui5_cl_popup_value_help IMPLEMENTATION.
     create_objects( ).
     prefill_inputs( ).
 
-    DATA(result) = z2ui5_cl_util_ext=>tab_get_where_by_dfies( mv_check_tab_field = mv_check_tab_field
+    DATA(result) = z2ui5_cl_popup_context=>tab_get_where_by_dfies( mv_check_tab_field = mv_check_tab_field
                                                               ms_data_row        = ms_data_row
                                                               it_dfies           = mt_dfies ).
 
@@ -104,7 +104,7 @@ CLASS z2ui5_cl_popup_value_help IMPLEMENTATION.
                                ( name = 'ROW_ID'
                                  type = CAST #( cl_abap_datadescr=>describe_by_data( index ) ) ) ).
 
-        APPEND LINES OF z2ui5_cl_util=>rtti_get_t_attri_by_table_name( mv_check_tab  ) TO comp.
+        APPEND LINES OF z2ui5_cl_popup_context=>rtti_get_t_attri_by_table_name( mv_check_tab  ) TO comp.
 
         DATA(new_struct_desc) = cl_abap_structdescr=>create( comp ).
 
@@ -150,7 +150,7 @@ CLASS z2ui5_cl_popup_value_help IMPLEMENTATION.
     DATA(popup) = z2ui5_cl_xml_view=>factory_popup( ).
 
     DATA(simple_form) = popup->dialog(
-                            title        = z2ui5_cl_util=>rtti_get_data_element_texts( `/IWFND/SU_GWC_RH_VH`  )-medium
+                            title        = z2ui5_cl_popup_context=>rtti_get_data_element_texts( `/IWFND/SU_GWC_RH_VH`  )-medium
                             contentwidth = '90%'
                             afterclose   = client->_event( 'F4_CLOSE' )
           )->simple_form( layout   = 'ResponsiveGridLayout'
@@ -173,7 +173,7 @@ CLASS z2ui5_cl_popup_value_help IMPLEMENTATION.
         CONTINUE.
       ENDIF.
 
-      simple_form->label( z2ui5_cl_util=>rtti_get_data_element_text_l( dfies->rollname ) ).
+      simple_form->label( z2ui5_cl_popup_context=>rtti_get_data_element_text_l( dfies->rollname ) ).
 
       simple_form->input( value         = client->_bind_edit( <val> )
                           showvaluehelp = abap_false
@@ -181,7 +181,7 @@ CLASS z2ui5_cl_popup_value_help IMPLEMENTATION.
 
     ENDLOOP.
 
-    simple_form->label( z2ui5_cl_util=>rtti_get_data_element_text_l( 'SYST_TABIX' ) ).
+    simple_form->label( z2ui5_cl_popup_context=>rtti_get_data_element_text_l( 'SYST_TABIX' ) ).
 
     simple_form->input( value         = client->_bind_edit( mv_rows )
                         showvaluehelp = abap_false
@@ -279,7 +279,7 @@ CLASS z2ui5_cl_popup_value_help IMPLEMENTATION.
 
       WHEN 'F4_INPUT_DONE'.
 
-        DATA(result) = z2ui5_cl_util_ext=>tab_get_where_by_dfies( mv_check_tab_field = mv_check_tab_field
+        DATA(result) = z2ui5_cl_popup_context=>tab_get_where_by_dfies( mv_check_tab_field = mv_check_tab_field
                                                                   ms_data_row        = ms_data_row
                                                                   it_dfies           = mt_dfies ).
 
@@ -327,7 +327,7 @@ CLASS z2ui5_cl_popup_value_help IMPLEMENTATION.
 
   METHOD get_dfies.
 
-    DATA(t_dfies) = z2ui5_cl_util_ext=>rtti_get_t_dfies_by_table_name( mv_table ).
+    DATA(t_dfies) = z2ui5_cl_popup_context=>rtti_get_t_dfies_by_table_name( mv_table ).
 
     READ TABLE t_dfies REFERENCE INTO DATA(dfies) WITH KEY fieldname = mv_field.
     IF sy-subrc <> 0.
@@ -342,7 +342,7 @@ CLASS z2ui5_cl_popup_value_help IMPLEMENTATION.
       RETURN.
     ENDIF.
 
-    mt_dfies = z2ui5_cl_util_ext=>rtti_get_t_dfies_by_table_name( CONV #( dfies->checktable ) ).
+    mt_dfies = z2ui5_cl_popup_context=>rtti_get_t_dfies_by_table_name( CONV #( dfies->checktable ) ).
 
     " determine the field of the check table, first via the data element
     mv_check_tab_field = VALUE #( mt_dfies[ rollname = dfies->rollname ]-fieldname OPTIONAL ).
@@ -402,7 +402,7 @@ CLASS z2ui5_cl_popup_value_help IMPLEMENTATION.
 
   METHOD get_layout.
 
-    DATA(class) = z2ui5_cl_util=>rtti_get_classname_by_ref( me ).
+    DATA(class) = z2ui5_cl_popup_context=>rtti_get_classname_by_ref( me ).
 
     mo_layout = z2ui5_cl_layo_manager=>factory( control  = z2ui5_cl_layo_manager=>m_table
                                                 data     = mt_data

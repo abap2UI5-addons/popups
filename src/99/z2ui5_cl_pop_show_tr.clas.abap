@@ -6,15 +6,15 @@ CLASS z2ui5_cl_pop_show_tr DEFINITION
     INTERFACES z2ui5_if_app.
 
     DATA client       TYPE REF TO z2ui5_if_client.
-    DATA ms_transport TYPE z2ui5_cl_util_ext=>ty_s_transport.
+    DATA ms_transport TYPE z2ui5_cl_popup_context=>ty_s_transport.
 
     CLASS-METHODS add_data_to_tranport
       IMPORTING
         ir_data      TYPE REF TO data
         iv_tabname   TYPE string
-        is_transport TYPE z2ui5_cl_util_ext=>ty_s_transport.
+        is_transport TYPE z2ui5_cl_popup_context=>ty_s_transport.
 
-    DATA mt_data TYPE STANDARD TABLE OF z2ui5_cl_util_ext=>ty_s_transport WITH EMPTY KEY.
+    DATA mt_data TYPE STANDARD TABLE OF z2ui5_cl_popup_context=>ty_s_transport WITH EMPTY KEY.
 
     CLASS-METHODS factory
       RETURNING
@@ -45,7 +45,7 @@ CLASS z2ui5_cl_pop_show_tr IMPLEMENTATION.
 
   METHOD on_init.
 
-    mt_data = z2ui5_cl_util_ext=>bus_tr_read( ).
+    mt_data = z2ui5_cl_popup_context=>bus_tr_read( ).
 
   ENDMETHOD.
 
@@ -55,12 +55,12 @@ CLASS z2ui5_cl_pop_show_tr IMPLEMENTATION.
 
     popup->dialog( contentwidth = '40%'
                    afterclose   = client->_event( 'CLOSE' )
-                   title        = z2ui5_cl_util=>rtti_get_data_element_texts( `SRET_TRORD`  )-long
+                   title        = z2ui5_cl_popup_context=>rtti_get_data_element_texts( `SRET_TRORD`  )-long
     )->table( mode  = 'SingleSelectLeft'
               items = client->_bind_edit( mt_data )
         )->columns(
-            )->column( )->text( z2ui5_cl_util=>rtti_get_data_element_texts( `SRET_TRORD`  )-short )->get_parent(
-            )->column( )->text( z2ui5_cl_util=>rtti_get_data_element_texts( `CC_TEXT`  )-short )->get_parent(
+            )->column( )->text( z2ui5_cl_popup_context=>rtti_get_data_element_texts( `SRET_TRORD`  )-short )->get_parent(
+            )->column( )->text( z2ui5_cl_popup_context=>rtti_get_data_element_texts( `CC_TEXT`  )-short )->get_parent(
                 )->get_parent(
         )->items(
             )->column_list_item( selected = '{SELKZ}'
@@ -120,7 +120,7 @@ CLASS z2ui5_cl_pop_show_tr IMPLEMENTATION.
       RETURN.
     ENDIF.
 
-    z2ui5_cl_util_ext=>bus_tr_add( ir_data      = ir_data
+    z2ui5_cl_popup_context=>bus_tr_add( ir_data      = ir_data
                                    iv_tabname   = iv_tabname
                                    is_transport = is_transport ).
 
