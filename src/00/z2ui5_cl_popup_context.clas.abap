@@ -982,9 +982,6 @@ CLASS z2ui5_cl_popup_context IMPLEMENTATION.
     DATA lt_comps      TYPE abap_component_tab.
     DATA lo_datadescr  TYPE REF TO cl_abap_datadescr.
     DATA lr_line       TYPE REF TO data.
-
-    " data ls_shlp type shlp_descr.
-
     DATA lr_shlp       TYPE REF TO data.
 
     DATA(lv_type) = `SHLP_DESCR`.
@@ -1132,9 +1129,9 @@ CLASS z2ui5_cl_popup_context IMPLEMENTATION.
       APPEND ls_comp TO lt_comps.
     ENDIF.
 
-    DATA(strucdescr) = cl_abap_structdescr=>create( p_components = lt_comps ).
+    DATA(strucdescr) = cl_abap_structdescr=>create( lt_comps ).
 
-    DATA(tabdescr) = cl_abap_tabledescr=>create( p_line_type = strucdescr ).
+    DATA(tabdescr) = cl_abap_tabledescr=>create( strucdescr ).
 
     IF mt_data IS NOT BOUND.
       CREATE DATA mt_data TYPE HANDLE tabdescr.

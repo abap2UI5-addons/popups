@@ -2,6 +2,7 @@
 [![ABAP_CLOUD](https://github.com/abap2UI5-addons/popups/actions/workflows/ABAP_CLOUD.yaml/badge.svg)](https://github.com/abap2UI5-addons/popups/actions/workflows/ABAP_CLOUD.yaml)
 <br>
 [![rename_test](https://github.com/abap2UI5-addons/popups/actions/workflows/rename_test.yaml/badge.svg)](https://github.com/abap2UI5-addons/popups/actions/workflows/rename_test.yaml)
+[![ABAP_702](https://github.com/abap2UI5-addons/popups/actions/workflows/ABAP_702.yaml/badge.svg)](https://github.com/abap2UI5-addons/popups/actions/workflows/ABAP_702.yaml)
 
 # Popups
 
@@ -40,6 +41,9 @@ How the copy is maintained:
 #### Compatibility
 * S/4 Private Cloud or On-Premise (Standard ABAP)
 * SAP NetWeaver AS ABAP 7.50 or higher (Standard ABAP)
+
+#### Security
+The value-help and search-help popups read the DDIC check table the user selects, without an authorization check of their own. Before using them beyond a development system, add your own authorization checks and restrict which tables may be browsed.
 
 #### Dependencies
 * [abap2UI5](https://github.com/abap2UI5/abap2UI5)
