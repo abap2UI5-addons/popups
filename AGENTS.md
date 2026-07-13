@@ -31,10 +31,34 @@ Ready-to-use popup and dialog apps for [abap2UI5](https://github.com/abap2UI5/ab
 3. **Periodic AI sync-back:** every few weeks an AI compares abap-util with all consumers and merges methods that were added locally back into abap-util, so the master catalog stays the superset of all methods and other projects can reuse them.
 4. **Popup-specific logic does not belong in the context class.** Keep it in the popup class; only generic, reusable utilities live in the vendored copy (they will be harvested into abap-util by the sync).
 
+## Dependencies
+
+Installed alongside via abapGit; declared in the abaplint configs:
+
+* [abap2UI5](https://github.com/abap2UI5/abap2UI5)
+* [layout-management](https://github.com/abap2UI5-addons/layout-management) — used by the Value-Help/Search-Help popups in `src/03/`
+
+## Security
+
+The value-help and search-help popups read the DDIC check table the user
+selects, without an authorization check of their own. The dynamic WHERE clause
+doubles single quotes to prevent SQL injection, but before using these popups
+beyond a development system add your own authorization checks and restrict which
+tables may be browsed.
+
 ## Coding Style
 
 This project follows the conventions of the abap2UI5 core framework (see its [AGENTS.md](https://github.com/abap2UI5/abap2UI5/blob/main/AGENTS.md)): Clean ABAP with Hungarian prefixes, `FINAL` classes with all three section blocks, backtick string literals, `xsdbool()`, `NEW #()`, no `boolc()`.
 
 ## Validation
 
-Run `npx abaplint` before considering changes complete. CI lints against Standard ABAP and ABAP Cloud (`ABAP_STANDARD.yaml`, `ABAP_CLOUD.yaml`) and runs the namespace-rename check (`rename_test.yaml`).
+Run `npx abaplint` before considering changes complete (0 issues expected). CI:
+
+* `ABAP_STANDARD` / `ABAP_CLOUD` — lint against Standard ABAP and ABAP Cloud
+* `ABAP_702` — lint the downported `702` branch; `npm run downport` /
+  `auto_downport` produce it (`abaplint --fix` against `.github/abaplint/abap_702.jsonc`)
+* `renaming` (`rename_test.yaml`) — namespace-rename check
+* `build_rename` — manual workflow that pushes a namespace-renamed branch
+  `rename_<name>` for a parallel install
+
+All `.abap`/`.xml`/config files are LF-only (`.gitattributes` enforces it).

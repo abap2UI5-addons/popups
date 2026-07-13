@@ -1,7 +1,11 @@
 [![ABAP_STANDARD](https://github.com/abap2UI5-addons/popups/actions/workflows/ABAP_STANDARD.yaml/badge.svg)](https://github.com/abap2UI5-addons/popups/actions/workflows/ABAP_STANDARD.yaml)
 [![ABAP_CLOUD](https://github.com/abap2UI5-addons/popups/actions/workflows/ABAP_CLOUD.yaml/badge.svg)](https://github.com/abap2UI5-addons/popups/actions/workflows/ABAP_CLOUD.yaml)
+[![ABAP_702](https://github.com/abap2UI5-addons/popups/actions/workflows/ABAP_702.yaml/badge.svg)](https://github.com/abap2UI5-addons/popups/actions/workflows/ABAP_702.yaml)
 <br>
-[![rename_test](https://github.com/abap2UI5-addons/popups/actions/workflows/rename_test.yaml/badge.svg)](https://github.com/abap2UI5-addons/popups/actions/workflows/rename_test.yaml)
+[![auto_cloud](https://github.com/abap2UI5-addons/popups/actions/workflows/auto_cloud.yaml/badge.svg)](https://github.com/abap2UI5-addons/popups/actions/workflows/auto_cloud.yaml)
+[![auto_downport](https://github.com/abap2UI5-addons/popups/actions/workflows/auto_downport.yaml/badge.svg)](https://github.com/abap2UI5-addons/popups/actions/workflows/auto_downport.yaml)
+<br>
+[![renaming](https://github.com/abap2UI5-addons/popups/actions/workflows/rename_test.yaml/badge.svg)](https://github.com/abap2UI5-addons/popups/actions/workflows/rename_test.yaml)
 
 # Popups
 
@@ -38,8 +42,12 @@ How the copy is maintained:
 * Every few weeks an AI compares abap-util with all consumers and merges locally added methods back into abap-util, so the master catalog stays the superset of all methods.
 
 #### Compatibility
-* S/4 Private Cloud or On-Premise (Standard ABAP)
+* S/4 Public Cloud and BTP ABAP Environment (ABAP for Cloud)
+* S/4 Private Cloud or On-Premise (ABAP for Cloud, Standard ABAP)
 * SAP NetWeaver AS ABAP 7.50 or higher (Standard ABAP)
+
+#### Security
+The value-help and search-help popups read the DDIC check table the user selects, without an authorization check of their own. Before using them beyond a development system, add your own authorization checks and restrict which tables may be browsed.
 
 #### Dependencies
 * [abap2UI5](https://github.com/abap2UI5/abap2UI5)

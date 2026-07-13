@@ -66,7 +66,7 @@ CLASS z2ui5_cl_popup_sample_17 IMPLEMENTATION.
                            i_tab             = mt_tab
                            i_multiselect     = mv_multiselect
                            i_event_confirmed = `POPUP_CONFIRMED`
-                           i_event_canceled  = `POPUP_CANCEL`
+                           i_event_canceled  = `POPUP_CANCELED`
           ) ).
 
       WHEN `POPUP_CANCELED`.
