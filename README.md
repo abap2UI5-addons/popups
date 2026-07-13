@@ -30,12 +30,12 @@ Ready-to-use popup and dialog apps for abap2UI5. The classes in `src/` were move
 
 #### Utility Class — Vendored Copy from abap-util
 
-`z2ui5_cl_popup_context` (`src/00/`) is a **renamed copy** of `zabaputil_cl_util_context` from the [abap-util](https://github.com/abap-util/abap-util) master repository, **reduced to the methods actually used by the popup apps**. This keeps the installation dependency-free (abapGit has no dependency management) and namespace-isolated, while the utility logic itself is developed and unit-tested in exactly one place — abap-util.
+`z2ui5_cl_popup_context` (`src/00/`) is a **renamed copy** of `zabaputil_cl_util_context` from the [abap-util](https://github.com/abap-util/abap-util) master catalog, **reduced to the methods actually used by the popup apps**. This keeps the installation dependency-free (abapGit has no dependency management) and namespace-isolated, while abap-util remains the catalog that contains all utility classes with all methods.
 
-Rules:
-* Bug fixes in utility logic go to [abap-util](https://github.com/abap-util/abap-util) first, then the fix is applied identically here. Never patch only the copy.
-* The copy may differ from the master only in its class name and its method subset — implementations stay identical.
-* If a popup needs a utility method that is not in the copy yet, copy it (with its private helpers) from the current abap-util master state.
+How the copy is maintained:
+* Only the context class is trimmed at method level — unused methods are removed (the private helpers a kept method needs stay in the copy); other classes from abap-util would be vendored as-is.
+* If a popup needs a utility method that is not in the copy yet, it is added directly to the local `z2ui5_cl_popup_context` (if it already exists in abap-util, it is copied from there with its private helpers instead of re-implemented).
+* Every few weeks an AI compares abap-util with all consumers and merges locally added methods back into abap-util, so the master catalog stays the superset of all methods.
 
 #### Compatibility
 * S/4 Private Cloud or On-Premise (Standard ABAP)
