@@ -22,5 +22,8 @@
   "homepage": "https://github.com/abap2UI5-addons/popups#readme",
   "devDependencies": {
     "@abaplint/cli": "^2.119.14"
+  },
+  "engines": {
+    "node": ">=22"
   }
 }

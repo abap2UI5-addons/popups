@@ -42,7 +42,8 @@ How the copy is maintained:
 * Every few weeks an AI compares abap-util with all consumers and merges locally added methods back into abap-util, so the master catalog stays the superset of all methods.
 
 #### Compatibility
-* S/4 Private Cloud or On-Premise (Standard ABAP)
+* S/4 Public Cloud and BTP ABAP Environment (ABAP for Cloud)
+* S/4 Private Cloud or On-Premise (ABAP for Cloud, Standard ABAP)
 * SAP NetWeaver AS ABAP 7.50 or higher (Standard ABAP)
 
 #### Security
