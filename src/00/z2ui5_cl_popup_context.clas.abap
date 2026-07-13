@@ -2244,6 +2244,12 @@ CLASS z2ui5_cl_popup_context IMPLEMENTATION.
 
       val = <value>.
 
+      " Double single quotes so a value containing ' cannot break out of the
+      " string literal below (SQL injection). Independent of the _ escaping.
+      IF val CA `'`.
+        REPLACE ALL OCCURRENCES OF `'` IN val WITH `''`.
+      ENDIF.
+
       IF val CA `_`.
         REPLACE ALL OCCURRENCES OF `_` IN val WITH `#_`.
       ENDIF.
