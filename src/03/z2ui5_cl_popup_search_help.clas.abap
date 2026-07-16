@@ -97,7 +97,7 @@ CLASS z2ui5_cl_popup_search_help IMPLEMENTATION.
                                        afterclose   = client->_event( 'SHLP_CLOSE' )
           )->simple_form( layout   = 'ResponsiveGridLayout'
                           editable = abap_true
-          )->content( 'form' ).
+          )->content( ns = 'form' ).
 
     ASSIGN ms_data_row->* TO FIELD-SYMBOL(<data_row>).
 
@@ -113,7 +113,7 @@ CLASS z2ui5_cl_popup_search_help IMPLEMENTATION.
 
       ASSIGN COMPONENT dfies->fieldname OF STRUCTURE <data_row> TO FIELD-SYMBOL(<val>).
 
-      simple_form->label( z2ui5_cl_popup_context=>rtti_get_data_element_text_l( dfies->rollname ) ).
+      simple_form->label( text = z2ui5_cl_popup_context=>rtti_get_data_element_text_l( dfies->rollname ) ).
 
       simple_form->input( value         = client->_bind_edit( <val> )
                           showvaluehelp = abap_false
@@ -131,7 +131,7 @@ CLASS z2ui5_cl_popup_search_help IMPLEMENTATION.
 
     DATA(header) = table->header_toolbar(
                 )->overflow_toolbar(
-                )->title( z2ui5_cl_popup_context=>rtti_get_table_desrc( mv_table )
+                )->title( text = z2ui5_cl_popup_context=>rtti_get_table_desrc( mv_table )
                 )->toolbar_spacer( ).
 
     header = z2ui5_cl_layo_pop=>render_layout_function( xml    = header

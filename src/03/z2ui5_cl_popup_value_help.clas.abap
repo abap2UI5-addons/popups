@@ -13,7 +13,7 @@ CLASS z2ui5_cl_popup_value_help DEFINITION
     DATA mv_field        TYPE string.
     DATA mv_value        TYPE string.
     DATA mv_return_value TYPE string.
-    DATA mv_rows         TYPE i VALUE 50.
+    DATA mv_rows         TYPE int1 VALUE '50'.
     DATA mt_dfies        TYPE z2ui5_cl_popup_context=>ty_t_dfies.
 
     CLASS-METHODS factory
