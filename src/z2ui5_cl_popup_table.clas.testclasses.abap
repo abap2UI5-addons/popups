@@ -121,6 +121,8 @@ CLASS ltcl_test_roundtrip DEFINITION FINAL
         iv_event TYPE string.
 
     METHODS test_init_displays_table FOR TESTING RAISING cx_static_check.
+    METHODS test_growing             FOR TESTING RAISING cx_static_check.
+    METHODS test_growing_default_off FOR TESTING RAISING cx_static_check.
     METHODS test_confirm             FOR TESTING RAISING cx_static_check.
     METHODS test_cancel              FOR TESTING RAISING cx_static_check.
 
@@ -160,6 +162,35 @@ CLASS ltcl_test_roundtrip IMPLEMENTATION.
     cl_abap_unit_assert=>assert_true( xsdbool( lv_xml CS `Pick a row` ) ).
     cl_abap_unit_assert=>assert_true( xsdbool( lv_xml CS `{NAME}` ) ).
     cl_abap_unit_assert=>assert_true( xsdbool( lv_xml CS `{COUNT}` ) ).
+
+  ENDMETHOD.
+
+  METHOD test_growing.
+
+    DATA(lt_tab) = VALUE ty_t_tab( ( name = `row1` count = 1 ) ).
+    DATA(lo_pop) = z2ui5_cl_popup_table=>factory( i_tab              = lt_tab
+                                                  i_growing          = abap_true
+                                                  i_growingthreshold = `5` ).
+    client_create( lo_pop ).
+
+    lo_pop->z2ui5_if_app~main( mi_client ).
+
+    DATA(lv_xml) = mo_action->ms_next-s_set-s_popup-xml.
+    cl_abap_unit_assert=>assert_true( xsdbool( lv_xml CS `growing="true"` ) ).
+    cl_abap_unit_assert=>assert_true( xsdbool( lv_xml CS `growingThreshold="5"` ) ).
+
+  ENDMETHOD.
+
+  METHOD test_growing_default_off.
+
+    DATA(lt_tab) = VALUE ty_t_tab( ( name = `row1` count = 1 ) ).
+    DATA(lo_pop) = z2ui5_cl_popup_table=>factory( lt_tab ).
+    client_create( lo_pop ).
+
+    lo_pop->z2ui5_if_app~main( mi_client ).
+
+    DATA(lv_xml) = mo_action->ms_next-s_set-s_popup-xml.
+    cl_abap_unit_assert=>assert_false( xsdbool( lv_xml CS `growing="true"` ) ).
 
   ENDMETHOD.
 
