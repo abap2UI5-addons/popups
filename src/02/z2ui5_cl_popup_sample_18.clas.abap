@@ -22,18 +22,24 @@ CLASS z2ui5_cl_popup_sample_18 IMPLEMENTATION.
 
     IF client->check_on_navigated( ).
 
-      DATA(view) = z2ui5_cl_xml_view=>factory( ).
-      view->shell(
-          )->page(
-              title          = `abap2UI5 - CL_DEMO_OUTPUT`
-              navbuttonpress = client->_event_nav_app_leave( )
-              shownavbutton  = client->check_app_prev_stack( )
-              )->button(
-                  text  = `Open in Popup`
-                  press = client->_event( `POPUP` )
-              )->button(
-                  text  = `Open as Fullscreen App`
-                  press = client->_event( `FULLSCREEN` ) ).
+      DATA(view) = z2ui5_cl_ui5_view_builder=>factory( 
+                       )->ele( n = `View` ns = `mvc` 
+                       )->a( n = `xmlns` v = `sap.m` 
+                       )->a( n = `xmlns:mvc` v = `sap.ui.core.mvc` 
+                       )->a( n = `xmlns:core` v = `sap.ui.core` 
+                       )->a( n = `displayBlock` v = `true` 
+                       )->a( n = `height` v = `100%` ).
+      view->ele( `Shell` 
+          )->ele( `Page` 
+          )->a( n = `title` v = `abap2UI5 - CL_DEMO_OUTPUT` 
+          )->a( n = `navButtonPress` v = client->_event_nav_app_leave( ) 
+          )->a( n = `showNavButton` b = client->check_app_prev_stack( ) 
+          )->tag( `Button` 
+          )->a( n = `text` v = `Open in Popup` 
+          )->a( n = `press` v = client->_event( `POPUP` ) 
+          )->tag( `Button` 
+          )->a( n = `text` v = `Open as Fullscreen App` 
+          )->a( n = `press` v = client->_event( `FULLSCREEN` ) ).
       client->view_display( view->stringify( ) ).
 
     ELSEIF client->check_on_event( `POPUP` ).

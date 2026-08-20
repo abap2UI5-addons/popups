@@ -64,27 +64,37 @@ CLASS z2ui5_cl_popup_sample_07 IMPLEMENTATION.
 
   METHOD view_display.
 
-    DATA(view) = z2ui5_cl_xml_view=>factory( ).
-    view->shell(
-        )->page(
-                title          = `abap2UI5 - Popup To Select`
-                navbuttonpress = client->_event_nav_app_leave( )
-                shownavbutton  = client->check_app_prev_stack( )
-           )->hbox(
-           )->text( text  = `Multiselect: `
-                    class = `sapUiTinyMargin`
-           )->switch( state  = client->_bind_edit( mv_multiselect )
-                      change = client->_event( `MULTISELECT_TOGGLE` )
-           )->get_parent(
-           )->hbox(
-           )->text( text  = `Preselect all entries: `
-                    class = `sapUiTinyMargin`
-           )->switch( state   = client->_bind_edit( mv_preselect )
-                      enabled = client->_bind_edit( mv_multiselect )
-           )->get_parent(
-           )->button(
-            text  = `Open Popup...`
-            press = client->_event( `POPUP` ) ).
+    DATA(view) = z2ui5_cl_ui5_view_builder=>factory( 
+                     )->ele( n = `View` ns = `mvc` 
+                     )->a( n = `xmlns` v = `sap.m` 
+                     )->a( n = `xmlns:mvc` v = `sap.ui.core.mvc` 
+                     )->a( n = `xmlns:core` v = `sap.ui.core` 
+                     )->a( n = `displayBlock` v = `true` 
+                     )->a( n = `height` v = `100%` ).
+    view->ele( `Shell` 
+        )->ele( `Page` 
+        )->a( n = `title` v = `abap2UI5 - Popup To Select` 
+        )->a( n = `navButtonPress` v = client->_event_nav_app_leave( ) 
+        )->a( n = `showNavButton` b = client->check_app_prev_stack( ) 
+        )->ele( `HBox` 
+        )->tag( `Text` 
+        )->a( n = `text` v = `Multiselect: ` 
+        )->a( n = `class` v = `sapUiTinyMargin` 
+        )->tag( `Switch` 
+        )->a( n = `state` v = client->_bind_edit( mv_multiselect ) 
+        )->a( n = `change` v = client->_event( `MULTISELECT_TOGGLE` ) 
+        )->end( 
+        )->ele( `HBox` 
+        )->tag( `Text` 
+        )->a( n = `text` v = `Preselect all entries: ` 
+        )->a( n = `class` v = `sapUiTinyMargin` 
+        )->tag( `Switch` 
+        )->a( n = `state` v = client->_bind_edit( mv_preselect ) 
+        )->a( n = `enabled` v = client->_bind_edit( mv_multiselect ) 
+        )->end( 
+        )->tag( `Button` 
+        )->a( n = `text` v = `Open Popup...` 
+        )->a( n = `press` v = client->_event( `POPUP` ) ).
 
     client->view_display( view->stringify( ) ).
 

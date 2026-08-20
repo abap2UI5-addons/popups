@@ -85,63 +85,91 @@ CLASS z2ui5_cl_popup_sample_19 IMPLEMENTATION.
 
   METHOD view_display.
 
-    DATA(view) = z2ui5_cl_xml_view=>factory( ).
+    DATA(view) = z2ui5_cl_ui5_view_builder=>factory( 
+                     )->ele( n = `View` ns = `mvc` 
+                     )->a( n = `xmlns` v = `sap.m` 
+                     )->a( n = `xmlns:mvc` v = `sap.ui.core.mvc` 
+                     )->a( n = `xmlns:core` v = `sap.ui.core` 
+                     )->a( n = `xmlns:z2ui5` v = `z2ui5.cc` 
+                     )->a( n = `displayBlock` v = `true` 
+                     )->a( n = `height` v = `100%` ).
 
-    view           = view->shell( )->page( id = `page_main`
-    title          = `abap2UI5 - Select-Options`
-    navbuttonpress = client->_event_nav_app_leave( )
-    shownavbutton  = client->check_app_prev_stack( )
-        )->get_parent( ).
+    view           = view->ele( `Shell` 
+                         )->ele( `Page` 
+                         )->a( n = `id` v = `page_main` 
+                         )->a( n = `title` v = `abap2UI5 - Select-Options` 
+                         )->a( n = `navButtonPress` v = client->_event_nav_app_leave( ) 
+                         )->a( n = `showNavButton` b = client->check_app_prev_stack( ) 
+                         )->end( ).
 
-    DATA(vbox) = view->vbox( ).
-    vbox->_z2ui5( )->multiinput_ext(
-                       addedtokens   = client->_bind_edit( mt_tokens_added )
-                       removedtokens = client->_bind_edit( mt_tokens_removed )
-                       change        = client->_event( `UPDATE_TOKENS` )
-                       multiinputid  = `MultiInput` ).
+    DATA(vbox) = view->ele( `VBox` ).
+    vbox->tag( n = `MultiInputExt` ns = `z2ui5` 
+        )->a( n = `addedTokens` v = client->_bind_edit( mt_tokens_added ) 
+        )->a( n = `removedTokens` v = client->_bind_edit( mt_tokens_removed ) 
+        )->a( n = `change` v = client->_event( `UPDATE_TOKENS` ) 
+        )->a( n = `MultiInputId` v = `MultiInput` ).
 
-    DATA(tab) = vbox->table(
-        client->_bind( val = mt_table )
-           )->header_toolbar(
-             )->overflow_toolbar(
-             )->text( `Product:`
-             )->multi_input(
-                width            = `30%`
-                id               = `MultiInput`
-                tokens           = client->_bind( mt_token )
-                showclearicon    = abap_true
-                valuehelprequest = client->_event( `FILTER_VALUE_HELP` )
-            )->item(
-                    key  = `{KEY}`
-                    text = `{TEXT}`
-            )->tokens(
-                )->token(
-                    key      = `{KEY}`
-                    text     = `{TEXT}`
-                    visible  = `{VISIBLE}`
-                    selected = `{SELKZ}`
-                    editable = `{EDITABLE}`
-                )->get_parent( )->get_parent(
-                 )->toolbar_spacer(
-               )->button(
-        text  = `Go`
-        press = client->_event( `BUTTON_START` )
-        type  = `Emphasized`
-            )->get_parent( )->get_parent( ).
+    DATA(tab) = vbox->ele( `Table` 
+                    )->a( n = `items` v = client->_bind( val = mt_table ) 
+                    )->ele( `headerToolbar` 
+                    )->ele( `OverflowToolbar` 
+                    )->tag( `Text` 
+                    )->a( n = `text` v = `Product:` 
+                    )->ele( `MultiInput` 
+                    )->a( n = `width` v = `30%` 
+                    )->a( n = `id` v = `MultiInput` 
+                    )->a( n = `tokens` v = client->_bind( mt_token ) 
+                    )->a( n = `showClearIcon` b = abap_true 
+                    )->a( n = `valueHelpRequest` v = client->_event( `FILTER_VALUE_HELP` ) 
+                    )->tag( n = `Item` ns = `core` 
+                    )->a( n = `key` v = `{KEY}` 
+                    )->a( n = `text` v = `{TEXT}` 
+                    )->ele( `tokens` 
+                    )->tag( `Token` 
+                    )->a( n = `key` v = `{KEY}` 
+                    )->a( n = `text` v = `{TEXT}` 
+                    )->a( n = `visible` v = `{VISIBLE}` 
+                    )->a( n = `selected` v = `{SELKZ}` 
+                    )->a( n = `editable` v = `{EDITABLE}` 
+                    )->end( 
+                    )->end( 
+                    )->tag( `ToolbarSpacer` 
+                    )->tag( `Button` 
+                    )->a( n = `text` v = `Go` 
+                    )->a( n = `press` v = client->_event( `BUTTON_START` ) 
+                    )->a( n = `type` v = `Emphasized` 
+                    )->end( 
+                    )->end( ).
 
-    DATA(lo_columns) = tab->columns( ).
-    lo_columns->column( )->text( `Product` ).
-    lo_columns->column( )->text( `Date` ).
-    lo_columns->column( )->text( `Name` ).
-    lo_columns->column( )->text( `Location` ).
-    lo_columns->column( )->text( `Quantity` ).
+    DATA(lo_columns) = tab->ele( `columns` ).
+    lo_columns->ele( `Column` 
+        )->tag( `Text` 
+        )->a( n = `text` v = `Product` ).
+    lo_columns->ele( `Column` 
+        )->tag( `Text` 
+        )->a( n = `text` v = `Date` ).
+    lo_columns->ele( `Column` 
+        )->tag( `Text` 
+        )->a( n = `text` v = `Name` ).
+    lo_columns->ele( `Column` 
+        )->tag( `Text` 
+        )->a( n = `text` v = `Location` ).
+    lo_columns->ele( `Column` 
+        )->tag( `Text` 
+        )->a( n = `text` v = `Quantity` ).
 
-    DATA(lo_cells) = tab->items( )->column_list_item( ).
-    lo_cells->text( `{PRODUCT}` ).
-    lo_cells->text( `{CREATE_DATE}` ).
-    lo_cells->text( `{CREATE_BY}` ).
-    lo_cells->text( `{STORAGE_LOCATION}` ).
-    lo_cells->text( `{QUANTITY}` ).
+    DATA(lo_cells) = tab->ele( `items` 
+                         )->ele( `ColumnListItem` ).
+    lo_cells->tag( `Text` 
+        )->a( n = `text` v = `{PRODUCT}` ).
+    lo_cells->tag( `Text` 
+        )->a( n = `text` v = `{CREATE_DATE}` ).
+    lo_cells->tag( `Text` 
+        )->a( n = `text` v = `{CREATE_BY}` ).
+    lo_cells->tag( `Text` 
+        )->a( n = `text` v = `{STORAGE_LOCATION}` ).
+    lo_cells->tag( `Text` 
+        )->a( n = `text` v = `{QUANTITY}` ).
 
     client->view_display( view->stringify( ) ).
 
