@@ -47,21 +47,33 @@ CLASS z2ui5_cl_popup_sample_02 IMPLEMENTATION.
 
   METHOD render_main.
 
-    DATA(view) = z2ui5_cl_xml_view=>factory( ).
-    DATA(page) = view->shell( )->page(
-                     title          = 'Search-Help'
-                     navbuttonpress = client->_event( 'BACK' )
-                     shownavbutton  = xsdbool( client->get( )-s_draft-id_prev_app_stack IS NOT INITIAL )
-                     class          = 'sapUiContentPadding' ).
+    DATA(view) = z2ui5_cl_ui5_view_builder=>factory( 
+                     )->ele( n = `View` ns = `mvc` 
+                     )->a( n = `xmlns` v = `sap.m` 
+                     )->a( n = `xmlns:mvc` v = `sap.ui.core.mvc` 
+                     )->a( n = `xmlns:core` v = `sap.ui.core` 
+                     )->a( n = `xmlns:form` v = `sap.ui.layout.form` 
+                     )->a( n = `displayBlock` v = `true` 
+                     )->a( n = `height` v = `100%` ).
+    DATA(page) = view->ele( `Shell` 
+                     )->ele( `Page` 
+                     )->a( n = `title` v = 'Search-Help' 
+                     )->a( n = `navButtonPress` v = client->_event( 'BACK' ) 
+                     )->a( n = `showNavButton` b = xsdbool( client->get( )-s_draft-id_prev_app_stack IS NOT INITIAL ) 
+                     )->a( n = `class` v = 'sapUiContentPadding' ).
 
-    page->simple_form( title    = 'Search-Help'
-                       editable = abap_true
-                    )->content( 'form'
-                        )->text( `Table USR01 field SPLD has a Search-Help.`
-                        )->label( `SPLD`
-                        )->input( value            = client->_bind_edit( ms_usr01-spld )
-                                  showvaluehelp    = abap_true
-                                  valuehelprequest = client->_event( val   = 'CALL_POPUP_SEARCH'
+    page->ele( n = `SimpleForm` ns = `form` 
+        )->a( n = `title` v = 'Search-Help' 
+        )->a( n = `editable` b = abap_true 
+        )->ele( n = `content` ns = `form` 
+        )->tag( `Text` 
+        )->a( n = `text` v = `Table USR01 field SPLD has a Search-Help.` 
+        )->tag( `Label` 
+        )->a( n = `text` v = `SPLD` 
+        )->tag( `Input` 
+        )->a( n = `value` v = client->_bind_edit( ms_usr01-spld ) 
+        )->a( n = `showValueHelp` b = abap_true 
+        )->a( n = `valueHelpRequest` v = client->_event( val   = 'CALL_POPUP_SEARCH'
                                                                      t_arg = VALUE #( ( `SPLD` ) ( `USR01` ) ) ) ).
 
     client->view_display( view->stringify( ) ).

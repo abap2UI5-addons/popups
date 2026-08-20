@@ -147,15 +147,21 @@ CLASS z2ui5_cl_popup_value_help IMPLEMENTATION.
 
   METHOD render_view.
 
-    DATA(popup) = z2ui5_cl_xml_view=>factory_popup( ).
+    DATA(popup) = z2ui5_cl_ui5_view_builder=>factory( 
+                      )->ele( n = `FragmentDefinition` ns = `core` 
+                      )->a( n = `xmlns` v = `sap.m` 
+                      )->a( n = `xmlns:core` v = `sap.ui.core` 
+                      )->a( n = `xmlns:form` v = `sap.ui.layout.form` ).
 
-    DATA(simple_form) = popup->dialog(
-                            title        = z2ui5_cl_popup_context=>rtti_get_data_element_texts( `/IWFND/SU_GWC_RH_VH`  )-medium
-                            contentwidth = '90%'
-                            afterclose   = client->_event( 'F4_CLOSE' )
-          )->simple_form( layout   = 'ResponsiveGridLayout'
-                          editable = abap_true
-          )->content( 'form' ).
+    DATA(dialog) = popup->ele( `Dialog` 
+                          )->a( n = `title` v = z2ui5_cl_popup_context=>rtti_get_data_element_texts( `/IWFND/SU_GWC_RH_VH`  )-medium 
+                          )->a( n = `contentWidth` v = '90%' 
+                          )->a( n = `afterClose` v = client->_event( 'F4_CLOSE' ) ).
+
+    DATA(simple_form) = dialog->ele( n = `SimpleForm` ns = `form` 
+                                )->a( n = `layout` v = 'ResponsiveGridLayout'
+                                )->a( n = `editable` b = abap_true
+                                )->ele( n = `content` ns = `form` ).
 
     LOOP AT mt_dfies REFERENCE INTO DATA(dfies).
 
@@ -173,43 +179,50 @@ CLASS z2ui5_cl_popup_value_help IMPLEMENTATION.
         CONTINUE.
       ENDIF.
 
-      simple_form->label( z2ui5_cl_popup_context=>rtti_get_data_element_text_l( dfies->rollname ) ).
+      simple_form->tag( `Label` 
+          )->a( n = `text` v = z2ui5_cl_popup_context=>rtti_get_data_element_text_l( dfies->rollname ) ).
 
-      simple_form->input( value         = client->_bind_edit( <val> )
-                          showvaluehelp = abap_false
-                          submit        = client->_event( 'F4_INPUT_DONE' ) ).
+      simple_form->tag( `Input` 
+          )->a( n = `value` v = client->_bind_edit( <val> ) 
+          )->a( n = `showValueHelp` b = abap_false 
+          )->a( n = `submit` v = client->_event( 'F4_INPUT_DONE' ) ).
 
     ENDLOOP.
 
-    simple_form->label( z2ui5_cl_popup_context=>rtti_get_data_element_text_l( 'SYST_TABIX' ) ).
+    simple_form->tag( `Label` 
+        )->a( n = `text` v = z2ui5_cl_popup_context=>rtti_get_data_element_text_l( 'SYST_TABIX' ) ).
 
-    simple_form->input( value         = client->_bind_edit( mv_rows )
-                        showvaluehelp = abap_false
-                        submit        = client->_event( 'F4_INPUT_DONE' )
-                        maxlength     = '3' ).
+    simple_form->tag( `Input` 
+        )->a( n = `value` v = client->_bind_edit( mv_rows ) 
+        )->a( n = `showValueHelp` b = abap_false 
+        )->a( n = `submit` v = client->_event( 'F4_INPUT_DONE' ) 
+        )->a( n = `maxLength` v = '3' ).
 
     ASSIGN mt_data->* TO FIELD-SYMBOL(<table>).
 
-    DATA(table) = popup->get_child( )->table( growing    = 'true'
-                                              width      = 'auto'
-                                              items      = client->_bind( val = <table> )
-                                              headertext = mv_check_tab  ).
+    DATA(table) = dialog->ele( `Table`
+                      )->a( n = `growing`    v = 'true'
+                      )->a( n = `width`      v = 'auto'
+                      )->a( n = `items`      v = client->_bind( val = <table> )
+                      )->a( n = `headerText` v = mv_check_tab ).
 
-    DATA(header) = table->header_toolbar(
-                )->overflow_toolbar(
-                )->title( mv_check_tab
-                )->toolbar_spacer( ).
+    DATA(header) = table->ele( `headerToolbar` 
+                       )->ele( `OverflowToolbar` 
+                       )->tag( `Title` 
+                       )->a( n = `text` v = mv_check_tab 
+                       )->tag( `ToolbarSpacer` ).
 
     header = z2ui5_cl_layo_pop=>render_layout_function( xml    = header
                                                         client = client
                                                         layout = mo_layout ).
 
-    DATA(columns) = table->columns( ).
+    DATA(columns) = table->ele( `columns` ).
 
     LOOP AT mo_layout->ms_layout-t_layout REFERENCE INTO DATA(layout).
       DATA(lv_index) = sy-tabix.
 
-      columns->column( visible         = client->_bind( val       = layout->visible
+      columns->ele( `Column` 
+          )->a( n = `visible` v = client->_bind( val       = layout->visible
                                                         tab       = mo_layout->ms_layout-t_layout
                                                         tab_index = lv_index )
 *                       halign          = client->_bind( val       = layout->halign
@@ -217,28 +230,31 @@ CLASS z2ui5_cl_popup_value_help IMPLEMENTATION.
 *                       tab_index       = lv_index )
 *                       importance      = client->_bind( val       = layout->importance
 *                       tab             = mo_layout->ms_layout-t_layout
-*                       tab_index       = lv_index )
-                       mergeduplicates = client->_bind( val       = layout->merge
+*                       tab_index       = lv_index ) 
+          )->a( n = `mergeDuplicates` v = client->_bind( val       = layout->merge
                                                         tab       = mo_layout->ms_layout-t_layout
-                                                        tab_index = lv_index )
-                       minscreenwidth  = client->_bind( val       = layout->width
+                                                        tab_index = lv_index ) 
+          )->a( n = `minScreenWidth` v = client->_bind( val       = layout->width
                                                         tab       = mo_layout->ms_layout-t_layout
-                                                        tab_index = lv_index )
-       )->text( layout->tlabel ).
+                                                        tab_index = lv_index ) 
+          )->tag( `Text` 
+          )->a( n = `text` v = layout->tlabel ).
 
     ENDLOOP.
 
-    DATA(cells) = columns->get_parent( )->items(
-                                       )->column_list_item(
-                                           valign = 'Middle'
-                                           type   = 'Navigation'
-                                           press  = client->_event( val   = 'F4_ROW_SELECT'
-                                                                    t_arg = VALUE #( ( `${ROW_ID}`  ) ) )
-                                       )->cells( ).
+    DATA(cells) = columns->end( 
+                      )->ele( `items` 
+                      )->ele( `ColumnListItem` 
+                      )->a( n = `vAlign` v = 'Middle' 
+                      )->a( n = `type` v = 'Navigation' 
+                      )->a( n = `press` v = client->_event( val   = 'F4_ROW_SELECT'
+                                                                    t_arg = VALUE #( ( `${ROW_ID}`  ) ) ) 
+                      )->ele( `cells` ).
 
     LOOP AT mo_layout->ms_layout-t_layout REFERENCE INTO layout.
 
-      cells->object_identifier( text = |\{{ layout->fname }\}| ).
+      cells->ele( `ObjectIdentifier` 
+          )->a( n = `text` v = |\{{ layout->fname }\}| ).
 
     ENDLOOP.
 

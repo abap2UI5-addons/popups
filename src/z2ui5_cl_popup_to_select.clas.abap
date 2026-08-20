@@ -88,39 +88,44 @@ CLASS z2ui5_cl_popup_to_select IMPLEMENTATION.
 
     ASSIGN mr_tab_popup->* TO <tab_out>.
 
-    DATA(popup) = z2ui5_cl_xml_view=>factory_popup( ).
-    DATA(tab) = popup->table_select_dialog(
-        items            = |\{path:'|
+    DATA(popup) = z2ui5_cl_ui5_view_builder=>factory( 
+                      )->ele( n = `FragmentDefinition` ns = `core` 
+                      )->a( n = `xmlns` v = `sap.m` 
+                      )->a( n = `xmlns:core` v = `sap.ui.core` ).
+    DATA(tab) = popup->ele( `TableSelectDialog` 
+                    )->a( n = `items` v = |\{path:'|
                           && client->_bind_edit( val  = <tab_out>
                                                  path = abap_true )
                           && |', sorter : \{ path : '{ to_upper( sort_field ) }', descending : |
                           && z2ui5_cl_popup_context=>boolean_abap_2_json( descending )
-                          && | \} \}|
-        cancel           = client->_event( `CANCEL` )
-        search           = client->_event(
+                          && | \} \}| 
+                    )->a( n = `cancel` v = client->_event( `CANCEL` ) 
+                    )->a( n = `search` v = client->_event(
                                val   = `SEARCH`
-                               t_arg = VALUE #( ( `${$parameters>/value}` ) ( `${$parameters>/clearButtonPressed}` ) ) )
-        confirm          = client->_event( val   = `CONFIRM`
-                                           t_arg = VALUE #( ( `${$parameters>/selectedContexts[0]/sPath}` ) ) )
-        growing          = abap_true
-        contentwidth     = content_width
-        contentheight    = content_height
-        growingthreshold = growing_threshold
-        title            = title
-        multiselect      = multiselect ).
+                               t_arg = VALUE #( ( `${$parameters>/value}` ) ( `${$parameters>/clearButtonPressed}` ) ) ) 
+                    )->a( n = `confirm` v = client->_event( val   = `CONFIRM`
+                                           t_arg = VALUE #( ( `${$parameters>/selectedContexts[0]/sPath}` ) ) ) 
+                    )->a( n = `growing` b = abap_true 
+                    )->a( n = `contentWidth` v = content_width 
+                    )->a( n = `contentHeight` v = content_height 
+                    )->a( n = `growingThreshold` v = growing_threshold 
+                    )->a( n = `title` v = title 
+                    )->a( n = `multiSelect` b = multiselect ).
 
     DATA(lt_comp) = z2ui5_cl_popup_context=>rtti_get_t_attri_by_any( <tab_out> ).
     DELETE lt_comp WHERE name = `ZZSELKZ`.
 
-    DATA(list) = tab->column_list_item( valign   = `Top`
-                                        selected = `{ZZSELKZ}` ).
-    DATA(cells) = list->cells( ).
+    DATA(list) = tab->ele( `ColumnListItem` 
+                     )->a( n = `vAlign` v = `Top` 
+                     )->a( n = `selected` v = `{ZZSELKZ}` ).
+    DATA(cells) = list->ele( `cells` ).
 
     LOOP AT lt_comp INTO DATA(ls_comp).
-      cells->text( |\{{ ls_comp-name }\}| ).
+      cells->tag( `Text` 
+          )->a( n = `text` v = |\{{ ls_comp-name }\}| ).
     ENDLOOP.
 
-    DATA(columns) = tab->columns( ).
+    DATA(columns) = tab->ele( `columns` ).
     LOOP AT lt_comp INTO ls_comp.
       DATA(text) = COND #(
                      LET data_element_name = z2ui5_cl_popup_context=>rtti_get_ddic_type_name( ls_comp-type )
@@ -128,7 +133,11 @@ CLASS z2ui5_cl_popup_to_select IMPLEMENTATION.
                      WHEN medium_label IS NOT INITIAL
                      THEN medium_label
                      ELSE ls_comp-name ).
-      columns->column( `8rem` )->header( `` )->text( text ).
+      columns->ele( `Column` 
+          )->a( n = `width` v = `8rem` 
+          )->ele( `header` 
+          )->tag( `Text` 
+          )->a( n = `text` v = text ).
     ENDLOOP.
 
     client->popup_display( popup->stringify( ) ).
