@@ -47,32 +47,31 @@ CLASS z2ui5_cl_popup_sample_02 IMPLEMENTATION.
 
   METHOD render_main.
 
-    DATA(view) = z2ui5_cl_ui5_view_builder=>factory( 
-                     )->ele( n = `View` ns = `mvc` 
-                     )->a( n = `xmlns` v = `sap.m` 
-                     )->a( n = `xmlns:mvc` v = `sap.ui.core.mvc` 
-                     )->a( n = `xmlns:core` v = `sap.ui.core` 
-                     )->a( n = `xmlns:form` v = `sap.ui.layout.form` 
-                     )->a( n = `displayBlock` v = `true` 
+    DATA(view) = z2ui5_cl_ui5_view_builder=>factory(
+                     )->ele( n = `View` ns = `mvc`
+                     )->a( n = `xmlns` v = `sap.m`
+                     )->a( n = `xmlns:mvc` v = `sap.ui.core.mvc`
+                     )->a( n = `xmlns:form` v = `sap.ui.layout.form`
+                     )->a( n = `displayBlock` v = `true`
                      )->a( n = `height` v = `100%` ).
-    DATA(page) = view->ele( `Shell` 
-                     )->ele( `Page` 
-                     )->a( n = `title` v = 'Search-Help' 
-                     )->a( n = `navButtonPress` v = client->_event( 'BACK' ) 
-                     )->a( n = `showNavButton` b = xsdbool( client->get( )-s_draft-id_prev_app_stack IS NOT INITIAL ) 
+    DATA(page) = view->ele( `Shell`
+                     )->ele( `Page`
+                     )->a( n = `title` v = 'Search-Help'
+                     )->a( n = `navButtonPress` v = client->_event( 'BACK' )
+                     )->a( n = `showNavButton` b = xsdbool( client->get( )-s_draft-id_prev_app_stack IS NOT INITIAL )
                      )->a( n = `class` v = 'sapUiContentPadding' ).
 
-    page->ele( n = `SimpleForm` ns = `form` 
-        )->a( n = `title` v = 'Search-Help' 
-        )->a( n = `editable` b = abap_true 
-        )->ele( n = `content` ns = `form` 
-        )->tag( `Text` 
-        )->a( n = `text` v = `Table USR01 field SPLD has a Search-Help.` 
-        )->tag( `Label` 
-        )->a( n = `text` v = `SPLD` 
-        )->tag( `Input` 
-        )->a( n = `value` v = client->_bind_edit( ms_usr01-spld ) 
-        )->a( n = `showValueHelp` b = abap_true 
+    page->ele( n = `SimpleForm` ns = `form`
+        )->a( n = `title` v = 'Search-Help'
+        )->a( n = `editable` b = abap_true
+        )->ele( n = `content` ns = `form`
+        )->tag( `Text`
+        )->a( n = `text` v = `Table USR01 field SPLD has a Search-Help.`
+        )->tag( `Label`
+        )->a( n = `text` v = `SPLD`
+        )->tag( `Input`
+        )->a( n = `value` v = client->_bind_edit( ms_usr01-spld )
+        )->a( n = `showValueHelp` b = abap_true
         )->a( n = `valueHelpRequest` v = client->_event( val   = 'CALL_POPUP_SEARCH'
                                                                      t_arg = VALUE #( ( `SPLD` ) ( `USR01` ) ) ) ).
 
@@ -122,7 +121,7 @@ CLASS z2ui5_cl_popup_sample_02 IMPLEMENTATION.
 
         ENDIF.
 
-      CATCH cx_root.
+      CATCH cx_root ##NO_HANDLER.
     ENDTRY.
 
   ENDMETHOD.

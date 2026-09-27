@@ -1,6 +1,7 @@
 CLASS z2ui5_cl_popup_table DEFINITION PUBLIC.
 
   PUBLIC SECTION.
+    " abap2ui5lint-disable unbound-public-attribute -- a popup's attributes are its interface to the app that called it, which reads them once the popup returns
     INTERFACES z2ui5_if_app.
 
     CLASS-METHODS factory
@@ -25,6 +26,7 @@ CLASS z2ui5_cl_popup_table DEFINITION PUBLIC.
         VALUE(result) TYPE ty_s_result.
 
     DATA mr_tab TYPE REF TO data.
+    " abap2ui5lint-enable unbound-public-attribute
 
   PROTECTED SECTION.
     DATA title  TYPE string VALUE `Table View`.
@@ -48,29 +50,29 @@ CLASS z2ui5_cl_popup_table IMPLEMENTATION.
 
     ASSIGN mr_tab->* TO <tab_out>.
 
-    DATA(popup) = z2ui5_cl_ui5_view_builder=>factory( 
-                      )->ele( n = `FragmentDefinition` ns = `core` 
-                      )->a( n = `xmlns` v = `sap.m` 
-                      )->a( n = `xmlns:core` v = `sap.ui.core` 
-                      )->ele( `Dialog` 
-                      )->a( n = `afterClose` v = client->_event( `CANCEL` ) 
-                      )->a( n = `stretch` b = abap_true 
-                      )->a( n = `title` v = title 
+    DATA(popup) = z2ui5_cl_ui5_view_builder=>factory(
+                      )->ele( n = `FragmentDefinition` ns = `core`
+                      )->a( n = `xmlns` v = `sap.m`
+                      )->a( n = `xmlns:core` v = `sap.ui.core`
+                      )->ele( `Dialog`
+                      )->a( n = `afterClose` v = client->_event( `CANCEL` )
+                      )->a( n = `stretch` b = abap_true
+                      )->a( n = `title` t = title
                       )->ele( `content` ).
 
-    DATA(tab) = popup->ele( `Table` 
-                    )->a( n = `items` v = client->_bind( <tab_out> ) 
-                    )->a( n = `growing` b = growing 
+    DATA(tab) = popup->ele( `Table`
+                    )->a( n = `items` v = client->_bind( <tab_out> )
+                    )->a( n = `growing` b = growing
                     )->a( n = `growingThreshold` v = growingthreshold ).
 
     DATA(lt_comp) = z2ui5_cl_popup_context=>rtti_get_t_attri_by_any( <tab_out> ).
 
-    DATA(list) = tab->ele( `ColumnListItem` 
+    DATA(list) = tab->ele( `ColumnListItem`
                      )->a( n = `vAlign` v = `Top` ).
     DATA(cells) = list->ele( `cells` ).
 
     LOOP AT lt_comp INTO DATA(ls_comp).
-      cells->tag( `Text` 
+      cells->tag( `Text`
           )->a( n = `text` v = |\{{ ls_comp-name }\}| ).
     ENDLOOP.
 
@@ -84,27 +86,27 @@ CLASS z2ui5_cl_popup_table IMPLEMENTATION.
         DATA(lv_ddic_field_label) = z2ui5_cl_popup_context=>rtti_get_data_element_text_l( lv_name ).
 
         IF lv_ddic_field_label IS NOT INITIAL.
-          columns->ele( `Column` 
-              )->a( n = `width` v = `8rem` 
-              )->ele( `header` 
-              )->tag( `Text` 
-              )->a( n = `text` v = lv_ddic_field_label ).
+          columns->ele( `Column`
+              )->a( n = `width` v = `8rem`
+              )->ele( `header`
+              )->tag( `Text`
+              )->a( n = `text` t = lv_ddic_field_label ).
           CONTINUE.
         ENDIF.
       ENDIF.
 
-      columns->ele( `Column` 
-          )->a( n = `width` v = `8rem` 
-          )->ele( `header` 
-          )->tag( `Text` 
-          )->a( n = `text` v = ls_comp-name ).
+      columns->ele( `Column`
+          )->a( n = `width` v = `8rem`
+          )->ele( `header`
+          )->tag( `Text`
+          )->a( n = `text` t = ls_comp-name ).
     ENDLOOP.
 
-    popup->end( 
-        )->ele( `buttons` 
-        )->tag( `Button` 
-        )->a( n = `text` v = `OK` 
-        )->a( n = `press` v = client->_event( `BUTTON_CONFIRM` ) 
+    popup->end(
+        )->ele( `buttons`
+        )->tag( `Button`
+        )->a( n = `text` v = `OK`
+        )->a( n = `press` v = client->_event( `BUTTON_CONFIRM` )
         )->a( n = `type` v = `Emphasized` ).
 
     client->popup_display( popup->stringify( ) ).

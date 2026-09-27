@@ -1,6 +1,7 @@
 CLASS z2ui5_cl_popup_textedit DEFINITION PUBLIC.
 
   PUBLIC SECTION.
+    " abap2ui5lint-disable unbound-public-attribute -- a popup's attributes are its interface to the app that called it, which reads them once the popup returns
     INTERFACES z2ui5_if_app.
 
     CLASS-METHODS factory
@@ -30,6 +31,7 @@ CLASS z2ui5_cl_popup_textedit DEFINITION PUBLIC.
     METHODS result
       RETURNING
         VALUE(result) TYPE ty_s_result.
+    " abap2ui5lint-enable unbound-public-attribute
 
   PROTECTED SECTION.
     DATA client TYPE REF TO z2ui5_if_client.
@@ -52,28 +54,28 @@ CLASS z2ui5_cl_popup_textedit IMPLEMENTATION.
 
   METHOD display.
 
-    DATA(popup) = z2ui5_cl_ui5_view_builder=>factory( 
-                      )->ele( n = `FragmentDefinition` ns = `core` 
-                      )->a( n = `xmlns` v = `sap.m` 
-                      )->a( n = `xmlns:core` v = `sap.ui.core` 
-                      )->ele( `Dialog` 
-                      )->a( n = `afterClose` v = client->_event( `BUTTON_TEXTAREA_CANCEL` ) 
-                      )->a( n = `stretch` b = mv_stretch_active 
-                      )->a( n = `title` v = mv_title 
-                      )->a( n = `icon` v = `sap-icon://edit` 
-                      )->ele( `content` 
-                      )->tag( `TextArea` 
-                      )->a( n = `growing` b = abap_true 
-                      )->a( n = `editable` b = mv_check_editable 
-                      )->a( n = `value` v = client->_bind_edit( ms_result-text ) 
-                      )->end( 
-                      )->ele( `buttons` 
-                      )->tag( `Button` 
-                      )->a( n = `text` v = `Cancel` 
-                      )->a( n = `press` v = client->_event( `BUTTON_TEXTAREA_CANCEL` ) 
-                      )->tag( `Button` 
-                      )->a( n = `text` v = `Confirm` 
-                      )->a( n = `press` v = client->_event( `BUTTON_TEXTAREA_CONFIRM` ) 
+    DATA(popup) = z2ui5_cl_ui5_view_builder=>factory(
+                      )->ele( n = `FragmentDefinition` ns = `core`
+                      )->a( n = `xmlns` v = `sap.m`
+                      )->a( n = `xmlns:core` v = `sap.ui.core`
+                      )->ele( `Dialog`
+                      )->a( n = `afterClose` v = client->_event( `BUTTON_TEXTAREA_CANCEL` )
+                      )->a( n = `stretch` b = mv_stretch_active
+                      )->a( n = `title` t = mv_title
+                      )->a( n = `icon` v = `sap-icon://edit`
+                      )->ele( `content`
+                      )->tag( `TextArea`
+                      )->a( n = `growing` b = abap_true
+                      )->a( n = `editable` b = mv_check_editable
+                      )->a( n = `value` v = client->_bind_edit( ms_result-text )
+                      )->end(
+                      )->ele( `buttons`
+                      )->tag( `Button`
+                      )->a( n = `text` v = `Cancel`
+                      )->a( n = `press` v = client->_event( `BUTTON_TEXTAREA_CANCEL` )
+                      )->tag( `Button`
+                      )->a( n = `text` v = `Confirm`
+                      )->a( n = `press` v = client->_event( `BUTTON_TEXTAREA_CONFIRM` )
                       )->a( n = `type` v = `Emphasized` ).
 
     client->popup_display( popup->stringify( ) ).

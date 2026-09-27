@@ -13,20 +13,19 @@ CLASS z2ui5_cl_popup_sample_05 IMPLEMENTATION.
 
     IF client->check_on_init( ).
 
-      DATA(view) = z2ui5_cl_ui5_view_builder=>factory( 
-                       )->ele( n = `View` ns = `mvc` 
-                       )->a( n = `xmlns` v = `sap.m` 
-                       )->a( n = `xmlns:mvc` v = `sap.ui.core.mvc` 
-                       )->a( n = `xmlns:core` v = `sap.ui.core` 
-                       )->a( n = `displayBlock` v = `true` 
+      DATA(view) = z2ui5_cl_ui5_view_builder=>factory(
+                       )->ele( n = `View` ns = `mvc`
+                       )->a( n = `xmlns` v = `sap.m`
+                       )->a( n = `xmlns:mvc` v = `sap.ui.core.mvc`
+                       )->a( n = `displayBlock` v = `true`
                        )->a( n = `height` v = `100%` ).
-      view->ele( `Shell` 
-          )->ele( `Page` 
-          )->a( n = `title` v = `abap2UI5 - Popup To Confirm` 
-          )->a( n = `navButtonPress` v = client->_event_nav_app_leave( ) 
-          )->a( n = `showNavButton` b = client->check_app_prev_stack( ) 
-          )->tag( `Button` 
-          )->a( n = `text` v = `Open Popup...` 
+      view->ele( `Shell`
+          )->ele( `Page`
+          )->a( n = `title` v = `abap2UI5 - Popup To Confirm`
+          )->a( n = `navButtonPress` v = client->_event_nav_app_leave( )
+          )->a( n = `showNavButton` b = client->check_app_prev_stack( )
+          )->tag( `Button`
+          )->a( n = `text` v = `Open Popup...`
           )->a( n = `press` v = client->_event( `POPUP` ) ).
       client->view_display( view->stringify( ) ).
 
@@ -37,9 +36,11 @@ CLASS z2ui5_cl_popup_sample_05 IMPLEMENTATION.
                                                        i_event_cancel  = `POPUP_FALSE` ).
       client->nav_app_call( lo_app ).
 
+    " abap2ui5lint-disable-next-line handler-without-event -- raised by z2ui5_cl_popup_to_confirm, named in i_event_confirm above
     ELSEIF client->check_on_event( `POPUP_TRUE` ).
       client->message_box_display( `the result is SUCCESS` ).
 
+    " abap2ui5lint-disable-next-line handler-without-event -- raised by z2ui5_cl_popup_to_confirm, named in i_event_cancel above
     ELSEIF client->check_on_event( `POPUP_FALSE` ).
       client->message_box_display( `the result is CANCEL` ).
 

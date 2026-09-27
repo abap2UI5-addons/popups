@@ -1,6 +1,7 @@
 CLASS z2ui5_cl_popup_to_select DEFINITION PUBLIC.
 
   PUBLIC SECTION.
+    " abap2ui5lint-disable unbound-public-attribute -- a popup's attributes are its interface to the app that called it, which reads them once the popup returns
     INTERFACES z2ui5_if_app.
 
     TYPES:
@@ -33,6 +34,7 @@ CLASS z2ui5_cl_popup_to_select DEFINITION PUBLIC.
     METHODS result
       RETURNING
         VALUE(result) TYPE ty_s_result.
+    " abap2ui5lint-enable unbound-public-attribute
 
   PROTECTED SECTION.
     DATA check_table_line  TYPE abap_bool.
@@ -88,40 +90,40 @@ CLASS z2ui5_cl_popup_to_select IMPLEMENTATION.
 
     ASSIGN mr_tab_popup->* TO <tab_out>.
 
-    DATA(popup) = z2ui5_cl_ui5_view_builder=>factory( 
-                      )->ele( n = `FragmentDefinition` ns = `core` 
-                      )->a( n = `xmlns` v = `sap.m` 
+    DATA(popup) = z2ui5_cl_ui5_view_builder=>factory(
+                      )->ele( n = `FragmentDefinition` ns = `core`
+                      )->a( n = `xmlns` v = `sap.m`
                       )->a( n = `xmlns:core` v = `sap.ui.core` ).
-    DATA(tab) = popup->ele( `TableSelectDialog` 
+    DATA(tab) = popup->ele( `TableSelectDialog`
                     )->a( n = `items` v = |\{path:'|
                           && client->_bind_edit( val  = <tab_out>
                                                  path = abap_true )
                           && |', sorter : \{ path : '{ to_upper( sort_field ) }', descending : |
                           && z2ui5_cl_popup_context=>boolean_abap_2_json( descending )
-                          && | \} \}| 
-                    )->a( n = `cancel` v = client->_event( `CANCEL` ) 
+                          && | \} \}|
+                    )->a( n = `cancel` v = client->_event( `CANCEL` )
                     )->a( n = `search` v = client->_event(
                                val   = `SEARCH`
-                               t_arg = VALUE #( ( `${$parameters>/value}` ) ( `${$parameters>/clearButtonPressed}` ) ) ) 
+                               t_arg = VALUE #( ( `${$parameters>/value}` ) ( `${$parameters>/clearButtonPressed}` ) ) )
                     )->a( n = `confirm` v = client->_event( val   = `CONFIRM`
-                                           t_arg = VALUE #( ( `${$parameters>/selectedContexts[0]/sPath}` ) ) ) 
-                    )->a( n = `growing` b = abap_true 
-                    )->a( n = `contentWidth` v = content_width 
-                    )->a( n = `contentHeight` v = content_height 
-                    )->a( n = `growingThreshold` v = growing_threshold 
-                    )->a( n = `title` v = title 
+                                           arg   = `${$parameters>/selectedContexts[0]/sPath}` )
+                    )->a( n = `growing` b = abap_true
+                    )->a( n = `contentWidth` v = content_width
+                    )->a( n = `contentHeight` v = content_height
+                    )->a( n = `growingThreshold` v = growing_threshold
+                    )->a( n = `title` t = title
                     )->a( n = `multiSelect` b = multiselect ).
 
     DATA(lt_comp) = z2ui5_cl_popup_context=>rtti_get_t_attri_by_any( <tab_out> ).
     DELETE lt_comp WHERE name = `ZZSELKZ`.
 
-    DATA(list) = tab->ele( `ColumnListItem` 
-                     )->a( n = `vAlign` v = `Top` 
+    DATA(list) = tab->ele( `ColumnListItem`
+                     )->a( n = `vAlign` v = `Top`
                      )->a( n = `selected` v = `{ZZSELKZ}` ).
     DATA(cells) = list->ele( `cells` ).
 
     LOOP AT lt_comp INTO DATA(ls_comp).
-      cells->tag( `Text` 
+      cells->tag( `Text`
           )->a( n = `text` v = |\{{ ls_comp-name }\}| ).
     ENDLOOP.
 
@@ -133,11 +135,11 @@ CLASS z2ui5_cl_popup_to_select IMPLEMENTATION.
                      WHEN medium_label IS NOT INITIAL
                      THEN medium_label
                      ELSE ls_comp-name ).
-      columns->ele( `Column` 
-          )->a( n = `width` v = `8rem` 
-          )->ele( `header` 
-          )->tag( `Text` 
-          )->a( n = `text` v = text ).
+      columns->ele( `Column`
+          )->a( n = `width` v = `8rem`
+          )->ele( `header`
+          )->tag( `Text`
+          )->a( n = `text` t = text ).
     ENDLOOP.
 
     client->popup_display( popup->stringify( ) ).
@@ -280,7 +282,7 @@ CLASS z2ui5_cl_popup_to_select IMPLEMENTATION.
 
     <tab_out> = <tab_out_backup>.
 
-    z2ui5_cl_popup_context=>itab_filter_by_val( EXPORTING val = client->get_event_arg( 1 )
+    z2ui5_cl_popup_context=>itab_filter_by_val( EXPORTING val = client->get_event_arg( )
                                                  ignore_case     = abap_true
                                        CHANGING  tab             = <tab_out> ).
     client->popup_model_update( ).

@@ -3,6 +3,7 @@ CLASS z2ui5_cl_popup_value_help DEFINITION
   CREATE PUBLIC.
 
   PUBLIC SECTION.
+    " abap2ui5lint-disable unbound-public-attribute -- a popup's attributes are its interface to the app that called it, which reads them once the popup returns
     INTERFACES z2ui5_if_app.
 
     DATA mt_data         TYPE REF TO data.
@@ -23,6 +24,7 @@ CLASS z2ui5_cl_popup_value_help DEFINITION
         i_value       TYPE string
       RETURNING
         VALUE(result) TYPE REF TO z2ui5_cl_popup_value_help.
+    " abap2ui5lint-enable unbound-public-attribute
 
   PROTECTED SECTION.
     DATA client             TYPE REF TO z2ui5_if_client.
@@ -114,7 +116,7 @@ CLASS z2ui5_cl_popup_value_help IMPLEMENTATION.
         CREATE DATA mt_data     TYPE HANDLE new_table_desc.
         CREATE DATA ms_data_row TYPE HANDLE new_struct_desc.
 
-      CATCH cx_root.
+      CATCH cx_root ##NO_HANDLER.
 
     ENDTRY.
 
@@ -147,18 +149,18 @@ CLASS z2ui5_cl_popup_value_help IMPLEMENTATION.
 
   METHOD render_view.
 
-    DATA(popup) = z2ui5_cl_ui5_view_builder=>factory( 
-                      )->ele( n = `FragmentDefinition` ns = `core` 
-                      )->a( n = `xmlns` v = `sap.m` 
-                      )->a( n = `xmlns:core` v = `sap.ui.core` 
+    DATA(popup) = z2ui5_cl_ui5_view_builder=>factory(
+                      )->ele( n = `FragmentDefinition` ns = `core`
+                      )->a( n = `xmlns` v = `sap.m`
+                      )->a( n = `xmlns:core` v = `sap.ui.core`
                       )->a( n = `xmlns:form` v = `sap.ui.layout.form` ).
 
-    DATA(dialog) = popup->ele( `Dialog` 
-                          )->a( n = `title` v = z2ui5_cl_popup_context=>rtti_get_data_element_texts( `/IWFND/SU_GWC_RH_VH`  )-medium 
-                          )->a( n = `contentWidth` v = '90%' 
+    DATA(dialog) = popup->ele( `Dialog`
+                          )->a( n = `title` v = z2ui5_cl_popup_context=>rtti_get_data_element_texts( `/IWFND/SU_GWC_RH_VH`  )-medium
+                          )->a( n = `contentWidth` v = '90%'
                           )->a( n = `afterClose` v = client->_event( 'F4_CLOSE' ) ).
 
-    DATA(simple_form) = dialog->ele( n = `SimpleForm` ns = `form` 
+    DATA(simple_form) = dialog->ele( n = `SimpleForm` ns = `form`
                                 )->a( n = `layout` v = 'ResponsiveGridLayout'
                                 )->a( n = `editable` b = abap_true
                                 )->ele( n = `content` ns = `form` ).
@@ -179,23 +181,23 @@ CLASS z2ui5_cl_popup_value_help IMPLEMENTATION.
         CONTINUE.
       ENDIF.
 
-      simple_form->tag( `Label` 
+      simple_form->tag( `Label`
           )->a( n = `text` v = z2ui5_cl_popup_context=>rtti_get_data_element_text_l( dfies->rollname ) ).
 
-      simple_form->tag( `Input` 
-          )->a( n = `value` v = client->_bind_edit( <val> ) 
-          )->a( n = `showValueHelp` b = abap_false 
+      simple_form->tag( `Input`
+          )->a( n = `value` v = client->_bind_edit( <val> )
+          )->a( n = `showValueHelp` b = abap_false
           )->a( n = `submit` v = client->_event( 'F4_INPUT_DONE' ) ).
 
     ENDLOOP.
 
-    simple_form->tag( `Label` 
+    simple_form->tag( `Label`
         )->a( n = `text` v = z2ui5_cl_popup_context=>rtti_get_data_element_text_l( 'SYST_TABIX' ) ).
 
-    simple_form->tag( `Input` 
-        )->a( n = `value` v = client->_bind_edit( mv_rows ) 
-        )->a( n = `showValueHelp` b = abap_false 
-        )->a( n = `submit` v = client->_event( 'F4_INPUT_DONE' ) 
+    simple_form->tag( `Input`
+        )->a( n = `value` v = client->_bind_edit( mv_rows )
+        )->a( n = `showValueHelp` b = abap_false
+        )->a( n = `submit` v = client->_event( 'F4_INPUT_DONE' )
         )->a( n = `maxLength` v = '3' ).
 
     ASSIGN mt_data->* TO FIELD-SYMBOL(<table>).
@@ -204,12 +206,12 @@ CLASS z2ui5_cl_popup_value_help IMPLEMENTATION.
                       )->a( n = `growing`    v = 'true'
                       )->a( n = `width`      v = 'auto'
                       )->a( n = `items`      v = client->_bind( val = <table> )
-                      )->a( n = `headerText` v = mv_check_tab ).
+                      )->a( n = `headerText` t = mv_check_tab ).
 
-    DATA(header) = table->ele( `headerToolbar` 
-                       )->ele( `OverflowToolbar` 
-                       )->tag( `Title` 
-                       )->a( n = `text` v = mv_check_tab 
+    DATA(header) = table->ele( `headerToolbar`
+                       )->ele( `OverflowToolbar`
+                       )->tag( `Title`
+                       )->a( n = `text` t = mv_check_tab
                        )->tag( `ToolbarSpacer` ).
 
     header = z2ui5_cl_layo_pop=>render_layout_function( xml    = header
@@ -221,7 +223,7 @@ CLASS z2ui5_cl_popup_value_help IMPLEMENTATION.
     LOOP AT mo_layout->ms_layout-t_layout REFERENCE INTO DATA(layout).
       DATA(lv_index) = sy-tabix.
 
-      columns->ele( `Column` 
+      columns->ele( `Column`
           )->a( n = `visible` v = client->_bind( val       = layout->visible
                                                         tab       = mo_layout->ms_layout-t_layout
                                                         tab_index = lv_index )
@@ -230,30 +232,30 @@ CLASS z2ui5_cl_popup_value_help IMPLEMENTATION.
 *                       tab_index       = lv_index )
 *                       importance      = client->_bind( val       = layout->importance
 *                       tab             = mo_layout->ms_layout-t_layout
-*                       tab_index       = lv_index ) 
+*                       tab_index       = lv_index )
           )->a( n = `mergeDuplicates` v = client->_bind( val       = layout->merge
                                                         tab       = mo_layout->ms_layout-t_layout
-                                                        tab_index = lv_index ) 
+                                                        tab_index = lv_index )
           )->a( n = `minScreenWidth` v = client->_bind( val       = layout->width
                                                         tab       = mo_layout->ms_layout-t_layout
-                                                        tab_index = lv_index ) 
-          )->tag( `Text` 
+                                                        tab_index = lv_index )
+          )->tag( `Text`
           )->a( n = `text` v = layout->tlabel ).
 
     ENDLOOP.
 
-    DATA(cells) = columns->end( 
-                      )->ele( `items` 
-                      )->ele( `ColumnListItem` 
-                      )->a( n = `vAlign` v = 'Middle' 
-                      )->a( n = `type` v = 'Navigation' 
+    DATA(cells) = columns->end(
+                      )->ele( `items`
+                      )->ele( `ColumnListItem`
+                      )->a( n = `vAlign` v = 'Middle'
+                      )->a( n = `type` v = 'Navigation'
                       )->a( n = `press` v = client->_event( val   = 'F4_ROW_SELECT'
-                                                                    t_arg = VALUE #( ( `${ROW_ID}`  ) ) ) 
+                                                                    arg   = `${ROW_ID}` )
                       )->ele( `cells` ).
 
     LOOP AT mo_layout->ms_layout-t_layout REFERENCE INTO layout.
 
-      cells->ele( `ObjectIdentifier` 
+      cells->ele( `ObjectIdentifier`
           )->a( n = `text` v = |\{{ layout->fname }\}| ).
 
     ENDLOOP.
@@ -411,7 +413,7 @@ CLASS z2ui5_cl_popup_value_help IMPLEMENTATION.
 
         render_view( ).
 
-      CATCH cx_root.
+      CATCH cx_root ##NO_HANDLER.
     ENDTRY.
 
   ENDMETHOD.

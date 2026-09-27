@@ -73,8 +73,19 @@ CLASS ltcl_test_roundtrip DEFINITION FINAL
   FOR TESTING RISK LEVEL HARMLESS DURATION SHORT.
 
   PRIVATE SECTION.
-    DATA mo_action TYPE REF TO z2ui5_cl_core_action.
+    DATA mo_action TYPE REF TO z2ui5_cl_ui5_action.
     DATA mi_client TYPE REF TO z2ui5_if_client.
+
+    " what the roundtrip queued for the frontend, read off the response
+    METHODS popup_xml
+      RETURNING
+        VALUE(result) TYPE string.
+    METHODS popup_destroyed
+      RETURNING
+        VALUE(result) TYPE abap_bool.
+    METHODS view_xml
+      RETURNING
+        VALUE(result) TYPE string.
 
     METHODS client_create
       IMPORTING
@@ -96,16 +107,16 @@ CLASS ltcl_test_roundtrip IMPLEMENTATION.
 
   METHOD client_create.
 
-    mo_action = NEW #( NEW z2ui5_cl_core_handler( `` ) ).
+    mo_action = NEW #( NEW z2ui5_cl_ui5_handler( `` ) ).
     mo_action->mo_app->mo_app = io_app.
-    mi_client = NEW z2ui5_cl_core_client( mo_action ).
+    mi_client = NEW z2ui5_cl_ui5_client( mo_action ).
 
   ENDMETHOD.
 
   METHOD roundtrip_event.
 
     client_create( io_app ).
-    io_app->check_initialized = abap_true.
+    mo_action->mo_app->mv_check_initialized = abap_true.
     mo_action->ms_actual-event = iv_event.
     io_app->main( mi_client ).
 
@@ -120,7 +131,7 @@ CLASS ltcl_test_roundtrip IMPLEMENTATION.
 
     lo_pop->z2ui5_if_app~main( mi_client ).
 
-    cl_abap_unit_assert=>assert_true( xsdbool( mo_action->ms_next-s_set-s_popup-xml CS `Demo Title` ) ).
+    cl_abap_unit_assert=>assert_true( xsdbool( popup_xml( ) CS `Demo Title` ) ).
 
   ENDMETHOD.
 
@@ -131,8 +142,8 @@ CLASS ltcl_test_roundtrip IMPLEMENTATION.
                      iv_event = `TOGGLE_FULLSCREEN` ).
 
     " popup is destroyed and re-rendered as a full page
-    cl_abap_unit_assert=>assert_true( mo_action->ms_next-s_set-s_popup-check_destroy ).
-    cl_abap_unit_assert=>assert_not_initial( mo_action->ms_next-s_set-s_view-xml ).
+    cl_abap_unit_assert=>assert_true( popup_destroyed( ) ).
+    cl_abap_unit_assert=>assert_not_initial( view_xml( ) ).
 
   ENDMETHOD.
 
@@ -142,8 +153,33 @@ CLASS ltcl_test_roundtrip IMPLEMENTATION.
     roundtrip_event( io_app   = lo_pop
                      iv_event = `BUTTON_CONFIRM` ).
 
-    cl_abap_unit_assert=>assert_true( mo_action->ms_next-s_set-s_popup-check_destroy ).
+    cl_abap_unit_assert=>assert_true( popup_destroyed( ) ).
     cl_abap_unit_assert=>assert_bound( mo_action->ms_next-o_app_leave ).
+
+  ENDMETHOD.
+
+  METHOD popup_xml.
+
+    LOOP AT mo_action->ms_next-t_action_front INTO DATA(ls_action)
+         WHERE slot = z2ui5_if_client=>cs_view-popup AND method = `display`.
+      result = ls_action-xml.
+    ENDLOOP.
+
+  ENDMETHOD.
+
+  METHOD popup_destroyed.
+
+    result = xsdbool( line_exists( mo_action->ms_next-t_action_front[ slot   = z2ui5_if_client=>cs_view-popup
+                                                                      method = `destroy` ] ) ).
+
+  ENDMETHOD.
+
+  METHOD view_xml.
+
+    LOOP AT mo_action->ms_next-t_action_front INTO DATA(ls_action)
+         WHERE slot = z2ui5_if_client=>cs_view-main AND method = `display`.
+      result = ls_action-xml.
+    ENDLOOP.
 
   ENDMETHOD.
 
