@@ -63,27 +63,26 @@ CLASS z2ui5_cl_popup_js_loader IMPLEMENTATION.
                       )->a( n = `xmlns` v = `sap.m`
                       )->a( n = `xmlns:core` v = `sap.ui.core`
                       )->a( n = `xmlns:html` v = `http://www.w3.org/1999/xhtml`
-                      )->a( n = `xmlns:z2ui5` v = `z2ui5.cc`
                       )->ele( `Dialog`
                       )->a( n = `title` v = `Setup UI...`
                       )->ele( `content` ).
 
     IF js IS NOT INITIAL.
-      popup->tag( n = `Timer` ns = `z2ui5`
-          )->a( n = `finished` v = client->_event( `TIMER_FINISHED` )
-          )->ele( n = `script` ns = `html`
+      popup->ele( n = `script` ns = `html`
           )->tag( n = `ZZPLAIN` ns = `html`
           " abap2ui5lint-disable-next-line unescaped-text-in-attribute -- raw JavaScript for the script tag; escaping its braces would change the code
           )->a( n = `VALUE` v = js ).
     ENDIF.
 
-    IF check_open_ui5 = abap_true.
-      popup->tag( n = `Info` ns = `z2ui5`
-          )->a( n = `finished` v = client->_event( `INFO_FINISHED` )
-          )->a( n = `ui5_gav` v = client->_bind_edit( ui5_gav ) ).
-    ENDIF.
-
     client->popup_display( popup->stringify( ) ).
+
+    IF js IS NOT INITIAL.
+      " closes the popup in the roundtrip the client timer fires once the
+      " popup with the script has rendered
+      client->follow_up_action( val   = z2ui5_if_client=>cs_event-start_timer
+                                t_arg = VALUE #( ( `TIMER_FINISHED` )
+                                                 ( `0` ) ) ).
+    ENDIF.
 
   ENDMETHOD.
 
@@ -92,16 +91,21 @@ CLASS z2ui5_cl_popup_js_loader IMPLEMENTATION.
     me->client = client.
 
     IF client->check_on_init( ).
+
+      IF check_open_ui5 = abap_true.
+        " the frontend reports the UI5 runtime with the request itself, so
+        " the answer is known right away - no popup, no extra roundtrip
+        ui5_gav = client->get( )-s_ui5-gav.
+        mv_is_open_ui5 = xsdbool( ui5_gav CS `OPEN` ).
+        client->nav_app_leave( ).
+        RETURN.
+      ENDIF.
+
       view_display( ).
       RETURN.
     ENDIF.
 
     CASE client->get( )-event.
-      WHEN `INFO_FINISHED`.
-        mv_is_open_ui5 = xsdbool( ui5_gav CS `OPEN` ).
-        client->popup_destroy( ).
-        client->nav_app_leave( ).
-
       WHEN `TIMER_FINISHED`.
         client->popup_destroy( ).
         client->nav_app_leave( ).

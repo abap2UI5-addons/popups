@@ -41,7 +41,6 @@
     "src/z2ui5_cl_popup_get_range_m.clas.abap|obsolete-model-update||popup_model_update|": 1,
     "src/z2ui5_cl_popup_html.clas.abap|missing-on-navigated-branch|||": 1,
     "src/z2ui5_cl_popup_input_val.clas.abap|obsolete-binder||_bind_edit|": 1,
-    "src/z2ui5_cl_popup_js_loader.clas.abap|obsolete-binder||_bind_edit|": 1,
     "src/z2ui5_cl_popup_messages.clas.abap|missing-on-navigated-branch|||": 1,
     "src/z2ui5_cl_popup_show_tr.clas.abap|missing-on-navigated-branch|||": 1,
     "src/z2ui5_cl_popup_show_tr.clas.abap|obsolete-binder||_bind_edit|": 1,

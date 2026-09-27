@@ -56,6 +56,10 @@ CLASS ltcl_test_roundtrip DEFINITION FINAL
     METHODS popup_destroyed
       RETURNING
         VALUE(result) TYPE abap_bool.
+    " the follow-up actions the roundtrip queued, one JSON array each
+    METHODS follow_up_actions
+      RETURNING
+        VALUE(result) TYPE string_table.
 
     METHODS client_create
       IMPORTING
@@ -102,7 +106,9 @@ CLASS ltcl_test_roundtrip IMPLEMENTATION.
 
     DATA(lv_xml) = popup_xml( ).
     cl_abap_unit_assert=>assert_true( xsdbool( lv_xml CS `script` ) ).
-    cl_abap_unit_assert=>assert_true( xsdbool( lv_xml CS `Timer` ) ).
+    cl_abap_unit_assert=>assert_false( xsdbool( lv_xml CS `z2ui5.cc` ) ).
+    cl_abap_unit_assert=>assert_equals( exp = VALUE string_table( ( `["START_TIMER","TIMER_FINISHED","0"]` ) )
+                                        act = follow_up_actions( ) ).
 
   ENDMETHOD.
 
@@ -121,24 +127,32 @@ CLASS ltcl_test_roundtrip IMPLEMENTATION.
 
   METHOD test_info_open_ui5.
 
+    " the UI5 runtime arrives with the request - the check answers on the
+    " first roundtrip and leaves without ever showing a popup
     DATA(lo_pop) = z2ui5_cl_popup_js_loader=>factory_check_open_ui5( ).
-    lo_pop->ui5_gav = `com.sap.ui5.dist:OPENUI5:zip`.
-    roundtrip_event( io_app   = lo_pop
-                     iv_event = `INFO_FINISHED` ).
+    client_create( lo_pop ).
+    mo_action->mo_handler->ms_request-s_front-s_ui5-gav = `com.sap.ui5.dist:OPENUI5:zip`.
+
+    lo_pop->z2ui5_if_app~main( mi_client ).
 
     cl_abap_unit_assert=>assert_true( lo_pop->mv_is_open_ui5 ).
-    cl_abap_unit_assert=>assert_true( popup_destroyed( ) ).
+    cl_abap_unit_assert=>assert_equals( exp = `com.sap.ui5.dist:OPENUI5:zip`
+                                        act = lo_pop->ui5_gav ).
+    cl_abap_unit_assert=>assert_initial( popup_xml( ) ).
+    cl_abap_unit_assert=>assert_bound( mo_action->ms_next-o_app_leave ).
 
   ENDMETHOD.
 
   METHOD test_info_sap_ui5.
 
     DATA(lo_pop) = z2ui5_cl_popup_js_loader=>factory_check_open_ui5( ).
-    lo_pop->ui5_gav = `com.sap.ui5.dist:sapui5:zip`.
-    roundtrip_event( io_app   = lo_pop
-                     iv_event = `INFO_FINISHED` ).
+    client_create( lo_pop ).
+    mo_action->mo_handler->ms_request-s_front-s_ui5-gav = `com.sap.ui5.dist:sapui5:zip`.
+
+    lo_pop->z2ui5_if_app~main( mi_client ).
 
     cl_abap_unit_assert=>assert_false( lo_pop->mv_is_open_ui5 ).
+    cl_abap_unit_assert=>assert_bound( mo_action->ms_next-o_app_leave ).
 
   ENDMETHOD.
 
@@ -147,6 +161,14 @@ CLASS ltcl_test_roundtrip IMPLEMENTATION.
     LOOP AT mo_action->ms_next-t_action_front INTO DATA(ls_action)
          WHERE slot = z2ui5_if_client=>cs_view-popup AND method = `display`.
       result = ls_action-xml.
+    ENDLOOP.
+
+  ENDMETHOD.
+
+  METHOD follow_up_actions.
+
+    LOOP AT mo_action->ms_next-s_action-t_custom INTO DATA(ls_action).
+      INSERT ls_action-o_json->stringify( ) INTO TABLE result.
     ENDLOOP.
 
   ENDMETHOD.
