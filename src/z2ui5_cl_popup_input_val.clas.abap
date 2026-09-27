@@ -61,30 +61,30 @@ CLASS z2ui5_cl_popup_input_val IMPLEMENTATION.
 
   METHOD view_display.
 
-    DATA(popup) = z2ui5_cl_ui5_view_builder=>factory( 
-                      )->ele( n = `FragmentDefinition` ns = `core` 
-                      )->a( n = `xmlns` v = `sap.m` 
-                      )->a( n = `xmlns:core` v = `sap.ui.core` 
-                      )->ele( `Dialog` 
-                      )->a( n = `title` v = title 
-                      )->a( n = `afterClose` v = client->_event( `BUTTON_CANCEL` ) 
-                      )->ele( `content` 
-                      )->ele( `VBox` 
-                      )->a( n = `class` v = `sapUiMediumMargin` 
-                      )->tag( `Label` 
-                      )->a( n = `text` v = question_text 
-                      )->tag( `Input` 
-                      )->a( n = `value` v = client->_bind_edit( ms_result-value ) 
-                      )->a( n = `submit` v = client->_event( `BUTTON_CONFIRM` ) 
-                      )->end( 
-                      )->end( 
-                      )->ele( `buttons` 
-                      )->tag( `Button` 
-                      )->a( n = `text` v = button_text_cancel 
-                      )->a( n = `press` v = client->_event( `BUTTON_CANCEL` ) 
-                      )->tag( `Button` 
-                      )->a( n = `text` v = button_text_confirm 
-                      )->a( n = `press` v = client->_event( `BUTTON_CONFIRM` ) 
+    DATA(popup) = z2ui5_cl_ui5_view_builder=>factory(
+                      )->ele( n = `FragmentDefinition` ns = `core`
+                      )->a( n = `xmlns` v = `sap.m`
+                      )->a( n = `xmlns:core` v = `sap.ui.core`
+                      )->ele( `Dialog`
+                      )->a( n = `title` t = title
+                      )->a( n = `afterClose` v = client->_event( `BUTTON_CANCEL` )
+                      )->ele( `content`
+                      )->ele( `VBox`
+                      )->a( n = `class` v = `sapUiMediumMargin`
+                      )->tag( `Label`
+                      )->a( n = `text` t = question_text
+                      )->tag( `Input`
+                      )->a( n = `value` v = client->_bind_edit( ms_result-value )
+                      )->a( n = `submit` v = client->_event( `BUTTON_CONFIRM` )
+                      )->end(
+                      )->end(
+                      )->ele( `buttons`
+                      )->tag( `Button`
+                      )->a( n = `text` t = button_text_cancel
+                      )->a( n = `press` v = client->_event( `BUTTON_CANCEL` )
+                      )->tag( `Button`
+                      )->a( n = `text` t = button_text_confirm
+                      )->a( n = `press` v = client->_event( `BUTTON_CONFIRM` )
                       )->a( n = `type` v = `Emphasized` ).
 
     client->popup_display( popup->stringify( ) ).

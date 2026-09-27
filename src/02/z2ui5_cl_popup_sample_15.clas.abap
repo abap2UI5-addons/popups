@@ -52,63 +52,62 @@ CLASS z2ui5_cl_popup_sample_15 IMPLEMENTATION.
 
   METHOD view_display.
 
-    DATA(view) = z2ui5_cl_ui5_view_builder=>factory( 
-                     )->ele( n = `View` ns = `mvc` 
-                     )->a( n = `xmlns` v = `sap.m` 
-                     )->a( n = `xmlns:mvc` v = `sap.ui.core.mvc` 
-                     )->a( n = `xmlns:core` v = `sap.ui.core` 
-                     )->a( n = `displayBlock` v = `true` 
+    DATA(view) = z2ui5_cl_ui5_view_builder=>factory(
+                     )->ele( n = `View` ns = `mvc`
+                     )->a( n = `xmlns` v = `sap.m`
+                     )->a( n = `xmlns:mvc` v = `sap.ui.core.mvc`
+                     )->a( n = `displayBlock` v = `true`
                      )->a( n = `height` v = `100%` ).
 
-    view           = view->ele( `Shell` 
-                         )->ele( `Page` 
-                         )->a( n = `id` v = `page_main` 
-                         )->a( n = `title` v = `abap2UI5 - Popup Display Table` 
-                         )->a( n = `navButtonPress` v = client->_event_nav_app_leave( ) 
+    view           = view->ele( `Shell`
+                         )->ele( `Page`
+                         )->a( n = `id` v = `page_main`
+                         )->a( n = `title` v = `abap2UI5 - Popup Display Table`
+                         )->a( n = `navButtonPress` v = client->_event_nav_app_leave( )
                          )->a( n = `showNavButton` b = client->check_app_prev_stack( ) ).
 
     DATA(vbox) = view->ele( `VBox` ).
 
-    DATA(tab) = vbox->ele( `Table` 
-                    )->a( n = `items` v = client->_bind( val = mt_table ) 
-                    )->ele( `headerToolbar` 
-                    )->ele( `OverflowToolbar` 
-                    )->tag( `ToolbarSpacer` 
-                    )->tag( `Button` 
-                    )->a( n = `text` v = `Display Popup` 
-                    )->a( n = `press` v = client->_event( `BUTTON_START` ) 
-                    )->a( n = `type` v = `Emphasized` 
-                    )->end( 
+    DATA(tab) = vbox->ele( `Table`
+                    )->a( n = `items` v = client->_bind( val = mt_table )
+                    )->ele( `headerToolbar`
+                    )->ele( `OverflowToolbar`
+                    )->tag( `ToolbarSpacer`
+                    )->tag( `Button`
+                    )->a( n = `text` v = `Display Popup`
+                    )->a( n = `press` v = client->_event( `BUTTON_START` )
+                    )->a( n = `type` v = `Emphasized`
+                    )->end(
                     )->end( ).
 
     DATA(lo_columns) = tab->ele( `columns` ).
-    lo_columns->ele( `Column` 
-        )->tag( `Text` 
+    lo_columns->ele( `Column`
+        )->tag( `Text`
         )->a( n = `text` v = `Product` ).
-    lo_columns->ele( `Column` 
-        )->tag( `Text` 
+    lo_columns->ele( `Column`
+        )->tag( `Text`
         )->a( n = `text` v = `Date` ).
-    lo_columns->ele( `Column` 
-        )->tag( `Text` 
+    lo_columns->ele( `Column`
+        )->tag( `Text`
         )->a( n = `text` v = `Name` ).
-    lo_columns->ele( `Column` 
-        )->tag( `Text` 
+    lo_columns->ele( `Column`
+        )->tag( `Text`
         )->a( n = `text` v = `Location` ).
-    lo_columns->ele( `Column` 
-        )->tag( `Text` 
+    lo_columns->ele( `Column`
+        )->tag( `Text`
         )->a( n = `text` v = `Quantity` ).
 
-    DATA(lo_cells) = tab->ele( `items` 
+    DATA(lo_cells) = tab->ele( `items`
                          )->ele( `ColumnListItem` ).
-    lo_cells->tag( `Text` 
+    lo_cells->tag( `Text`
         )->a( n = `text` v = `{PRODUCT}` ).
-    lo_cells->tag( `Text` 
+    lo_cells->tag( `Text`
         )->a( n = `text` v = `{CREATE_DATE}` ).
-    lo_cells->tag( `Text` 
+    lo_cells->tag( `Text`
         )->a( n = `text` v = `{CREATE_BY}` ).
-    lo_cells->tag( `Text` 
+    lo_cells->tag( `Text`
         )->a( n = `text` v = `{STORAGE_LOCATION}` ).
-    lo_cells->tag( `Text` 
+    lo_cells->tag( `Text`
         )->a( n = `text` v = `{QUANTITY}` ).
 
     client->view_display( view->stringify( ) ).
@@ -132,7 +131,7 @@ CLASS z2ui5_cl_popup_sample_15 IMPLEMENTATION.
           DATA(lo_popup_table) = CAST z2ui5_cl_popup_table( client->get_app( client->get( )-s_draft-id_prev_app ) ).
           set_data( ).
           client->view_model_update( ).
-        CATCH cx_root.
+        CATCH cx_root ##NO_HANDLER.
       ENDTRY.
       RETURN.
     ENDIF.

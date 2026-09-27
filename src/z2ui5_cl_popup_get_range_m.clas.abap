@@ -50,67 +50,67 @@ CLASS z2ui5_cl_popup_get_range_m IMPLEMENTATION.
 
   METHOD popup_display.
 
-    DATA(lo_popup) = z2ui5_cl_ui5_view_builder=>factory( 
-                         )->ele( n = `FragmentDefinition` ns = `core` 
-                         )->a( n = `xmlns` v = `sap.m` 
-                         )->a( n = `xmlns:core` v = `sap.ui.core` 
+    DATA(lo_popup) = z2ui5_cl_ui5_view_builder=>factory(
+                         )->ele( n = `FragmentDefinition` ns = `core`
+                         )->a( n = `xmlns` v = `sap.m`
+                         )->a( n = `xmlns:core` v = `sap.ui.core`
                          )->a( n = `xmlns:layout` v = `sap.ui.layout` ).
-    lo_popup = lo_popup->ele( `Dialog` 
-                   )->a( n = `afterClose` v = client->_event( `BUTTON_CANCEL` ) 
-                   )->a( n = `contentHeight` v = `50%` 
-                   )->a( n = `contentWidth` v = `50%` 
+    lo_popup = lo_popup->ele( `Dialog`
+                   )->a( n = `afterClose` v = client->_event( `BUTTON_CANCEL` )
+                   )->a( n = `contentHeight` v = `50%`
+                   )->a( n = `contentWidth` v = `50%`
                    )->a( n = `title` v = `Define Filter Conditions` ).
 
-    DATA(vbox) = lo_popup->ele( `VBox` 
-                     )->a( n = `height` v = `100%` 
+    DATA(vbox) = lo_popup->ele( `VBox`
+                     )->a( n = `height` v = `100%`
                      )->a( n = `justifyContent` v = `SpaceBetween` ).
 
-    DATA(item) = vbox->ele( `List` 
-                     )->a( n = `noData` v = `No conditions defined` 
-                     )->a( n = `items` v = client->_bind( ms_result-t_filter ) 
+    DATA(item) = vbox->ele( `List`
+                     )->a( n = `noData` v = `No conditions defined`
+                     )->a( n = `items` v = client->_bind( ms_result-t_filter )
                      )->ele( `CustomListItem` ).
 
-    DATA(grid) = item->ele( n = `Grid` ns = `layout` 
+    DATA(grid) = item->ele( n = `Grid` ns = `layout`
                      )->a( n = `class` v = `sapUiSmallMarginTop sapUiSmallMarginBottom sapUiSmallMarginBegin` ).
-    grid->tag( `Text` 
+    grid->tag( `Text`
         )->a( n = `text` v = `{NAME}` ).
 
-    grid->ele( `MultiInput` 
-        )->a( n = `tokens` v = `{T_TOKEN}` 
-        )->a( n = `enabled` b = abap_false 
+    grid->ele( `MultiInput`
+        )->a( n = `tokens` v = `{T_TOKEN}`
+        )->a( n = `enabled` b = abap_false
         )->a( n = `valueHelpRequest` v = client->_event( val   = `LIST_OPEN`
-                                                          t_arg = VALUE #( ( `${NAME}` ) ) ) 
-        )->ele( `tokens` 
-        )->tag( `Token` 
-        )->a( n = `key` v = `{KEY}` 
-        )->a( n = `text` v = `{TEXT}` 
-        )->a( n = `visible` v = `{VISIBLE}` 
-        )->a( n = `selected` v = `{SELKZ}` 
+                                                          arg   = `${NAME}` )
+        )->ele( `tokens`
+        )->tag( `Token`
+        )->a( n = `key` v = `{KEY}`
+        )->a( n = `text` v = `{TEXT}`
+        )->a( n = `visible` v = `{VISIBLE}`
+        )->a( n = `selected` v = `{SELKZ}`
         )->a( n = `editable` v = `{EDITABLE}` ).
 
-    grid->tag( `Button` 
-        )->a( n = `text` v = `Select` 
+    grid->tag( `Button`
+        )->a( n = `text` v = `Select`
         )->a( n = `press` v = client->_event( val   = `LIST_OPEN`
-                                          t_arg = VALUE #( ( `${NAME}` ) ) ) ).
-    grid->tag( `Button` 
-        )->a( n = `icon` v = `sap-icon://delete` 
-        )->a( n = `type` v = `Transparent` 
-        )->a( n = `text` v = `Clear` 
+                                          arg   = `${NAME}` ) ).
+    grid->tag( `Button`
+        )->a( n = `icon` v = `sap-icon://delete`
+        )->a( n = `type` v = `Transparent`
+        )->a( n = `text` v = `Clear`
         )->a( n = `press` v = client->_event( val   = `LIST_DELETE`
-                                          t_arg = VALUE #( ( `${NAME}` ) ) ) ).
+                                          arg   = `${NAME}` ) ).
 
-    lo_popup->ele( `buttons` 
-        )->tag( `Button` 
-        )->a( n = `text` v = `Clear All` 
-        )->a( n = `icon` v = `sap-icon://delete` 
-        )->a( n = `type` v = `Transparent` 
-        )->a( n = `press` v = client->_event( `POPUP_DELETE_ALL` ) 
-        )->tag( `Button` 
-        )->a( n = `text` v = `Cancel` 
-        )->a( n = `press` v = client->_event( `BUTTON_CANCEL` ) 
-        )->tag( `Button` 
-        )->a( n = `text` v = `OK` 
-        )->a( n = `press` v = client->_event( `BUTTON_CONFIRM` ) 
+    lo_popup->ele( `buttons`
+        )->tag( `Button`
+        )->a( n = `text` v = `Clear All`
+        )->a( n = `icon` v = `sap-icon://delete`
+        )->a( n = `type` v = `Transparent`
+        )->a( n = `press` v = client->_event( `POPUP_DELETE_ALL` )
+        )->tag( `Button`
+        )->a( n = `text` v = `Cancel`
+        )->a( n = `press` v = client->_event( `BUTTON_CANCEL` )
+        )->tag( `Button`
+        )->a( n = `text` v = `OK`
+        )->a( n = `press` v = client->_event( `BUTTON_CONFIRM` )
         )->a( n = `type` v = `Emphasized` ).
 
     client->popup_display( lo_popup->stringify( ) ).
@@ -146,13 +146,13 @@ CLASS z2ui5_cl_popup_get_range_m IMPLEMENTATION.
     CASE ls_get-event.
 
       WHEN `LIST_DELETE`.
-        ASSIGN ms_result-t_filter[ name = client->get_event_arg( 1 ) ] TO <tab>.
+        ASSIGN ms_result-t_filter[ name = client->get_event_arg( ) ] TO <tab>.
         CLEAR <tab>-t_token.
         CLEAR <tab>-t_range.
         client->popup_model_update( ).
 
       WHEN `LIST_OPEN`.
-        mv_popup_name = client->get_event_arg( 1 ).
+        mv_popup_name = client->get_event_arg( ).
         client->nav_app_call( z2ui5_cl_popup_get_range=>factory(
             ms_result-t_filter[ name = mv_popup_name ]-t_range ) ).
 

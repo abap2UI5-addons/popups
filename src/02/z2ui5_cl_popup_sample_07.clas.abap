@@ -11,7 +11,6 @@ CLASS z2ui5_cl_popup_sample_07 DEFINITION PUBLIC.
         descr   TYPE string,
       END OF ty_s_row.
 
-    DATA mt_tab TYPE STANDARD TABLE OF ty_s_row WITH EMPTY KEY.
     DATA mv_multiselect TYPE abap_bool.
     DATA mv_preselect TYPE abap_bool.
 
@@ -20,6 +19,7 @@ CLASS z2ui5_cl_popup_sample_07 DEFINITION PUBLIC.
     METHODS on_navigation.
 
   PROTECTED SECTION.
+    DATA mt_tab TYPE STANDARD TABLE OF ty_s_row WITH EMPTY KEY.
     DATA client TYPE REF TO z2ui5_if_client.
 
   PRIVATE SECTION.
@@ -64,36 +64,35 @@ CLASS z2ui5_cl_popup_sample_07 IMPLEMENTATION.
 
   METHOD view_display.
 
-    DATA(view) = z2ui5_cl_ui5_view_builder=>factory( 
-                     )->ele( n = `View` ns = `mvc` 
-                     )->a( n = `xmlns` v = `sap.m` 
-                     )->a( n = `xmlns:mvc` v = `sap.ui.core.mvc` 
-                     )->a( n = `xmlns:core` v = `sap.ui.core` 
-                     )->a( n = `displayBlock` v = `true` 
+    DATA(view) = z2ui5_cl_ui5_view_builder=>factory(
+                     )->ele( n = `View` ns = `mvc`
+                     )->a( n = `xmlns` v = `sap.m`
+                     )->a( n = `xmlns:mvc` v = `sap.ui.core.mvc`
+                     )->a( n = `displayBlock` v = `true`
                      )->a( n = `height` v = `100%` ).
-    view->ele( `Shell` 
-        )->ele( `Page` 
-        )->a( n = `title` v = `abap2UI5 - Popup To Select` 
-        )->a( n = `navButtonPress` v = client->_event_nav_app_leave( ) 
-        )->a( n = `showNavButton` b = client->check_app_prev_stack( ) 
-        )->ele( `HBox` 
-        )->tag( `Text` 
-        )->a( n = `text` v = `Multiselect: ` 
-        )->a( n = `class` v = `sapUiTinyMargin` 
-        )->tag( `Switch` 
-        )->a( n = `state` v = client->_bind_edit( mv_multiselect ) 
-        )->a( n = `change` v = client->_event( `MULTISELECT_TOGGLE` ) 
-        )->end( 
-        )->ele( `HBox` 
-        )->tag( `Text` 
-        )->a( n = `text` v = `Preselect all entries: ` 
-        )->a( n = `class` v = `sapUiTinyMargin` 
-        )->tag( `Switch` 
-        )->a( n = `state` v = client->_bind_edit( mv_preselect ) 
-        )->a( n = `enabled` v = client->_bind_edit( mv_multiselect ) 
-        )->end( 
-        )->tag( `Button` 
-        )->a( n = `text` v = `Open Popup...` 
+    view->ele( `Shell`
+        )->ele( `Page`
+        )->a( n = `title` v = `abap2UI5 - Popup To Select`
+        )->a( n = `navButtonPress` v = client->_event_nav_app_leave( )
+        )->a( n = `showNavButton` b = client->check_app_prev_stack( )
+        )->ele( `HBox`
+        )->tag( `Text`
+        )->a( n = `text` v = `Multiselect: `
+        )->a( n = `class` v = `sapUiTinyMargin`
+        )->tag( `Switch`
+        )->a( n = `state` v = client->_bind_edit( mv_multiselect )
+        )->a( n = `change` v = client->_event( `MULTISELECT_TOGGLE` )
+        )->end(
+        )->ele( `HBox`
+        )->tag( `Text`
+        )->a( n = `text` v = `Preselect all entries: `
+        )->a( n = `class` v = `sapUiTinyMargin`
+        )->tag( `Switch`
+        )->a( n = `state` v = client->_bind_edit( mv_preselect )
+        )->a( n = `enabled` v = client->_bind_edit( mv_multiselect )
+        )->end(
+        )->tag( `Button`
+        )->a( n = `text` v = `Open Popup...`
         )->a( n = `press` v = client->_event( `POPUP` ) ).
 
     client->view_display( view->stringify( ) ).
@@ -149,7 +148,7 @@ CLASS z2ui5_cl_popup_sample_07 IMPLEMENTATION.
 
         ENDIF.
 
-      CATCH cx_root.
+      CATCH cx_root ##NO_HANDLER.
     ENDTRY.
 
   ENDMETHOD.

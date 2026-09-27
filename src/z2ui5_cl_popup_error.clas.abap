@@ -33,24 +33,24 @@ CLASS z2ui5_cl_popup_error IMPLEMENTATION.
 
   METHOD view_display.
 
-    DATA(popup) = z2ui5_cl_ui5_view_builder=>factory( 
-                      )->ele( n = `FragmentDefinition` ns = `core` 
-                      )->a( n = `xmlns` v = `sap.m` 
-                      )->a( n = `xmlns:core` v = `sap.ui.core` 
-                      )->ele( `Dialog` 
-                      )->a( n = `title` v = title 
-                      )->a( n = `afterClose` v = client->_event( `BUTTON_CONFIRM` ) 
-                      )->ele( `content` 
-                      )->ele( `VBox` 
-                      )->a( n = `class` v = `sapUiMediumMargin` 
-                      )->tag( `Text` 
-                      )->a( n = `text` v = error->get_text( ) 
-                      )->end( 
-                      )->end( 
-                      )->ele( `buttons` 
-                      )->tag( `Button` 
-                      )->a( n = `text` v = `OK` 
-                      )->a( n = `press` v = client->_event( `BUTTON_CONFIRM` ) 
+    DATA(popup) = z2ui5_cl_ui5_view_builder=>factory(
+                      )->ele( n = `FragmentDefinition` ns = `core`
+                      )->a( n = `xmlns` v = `sap.m`
+                      )->a( n = `xmlns:core` v = `sap.ui.core`
+                      )->ele( `Dialog`
+                      )->a( n = `title` t = title
+                      )->a( n = `afterClose` v = client->_event( `BUTTON_CONFIRM` )
+                      )->ele( `content`
+                      )->ele( `VBox`
+                      )->a( n = `class` v = `sapUiMediumMargin`
+                      )->tag( `Text`
+                      )->a( n = `text` v = error->get_text( )
+                      )->end(
+                      )->end(
+                      )->ele( `buttons`
+                      )->tag( `Button`
+                      )->a( n = `text` v = `OK`
+                      )->a( n = `press` v = client->_event( `BUTTON_CONFIRM` )
                       )->a( n = `type` v = `Emphasized` ).
 
     client->popup_display( popup->stringify( ) ).

@@ -3,6 +3,7 @@ CLASS z2ui5_cl_popup_show_tr DEFINITION
   CREATE PUBLIC.
 
   PUBLIC SECTION.
+    " abap2ui5lint-disable unbound-public-attribute -- a popup's attributes are its interface to the app that called it, which reads them once the popup returns
     INTERFACES z2ui5_if_app.
 
     DATA client       TYPE REF TO z2ui5_if_client.
@@ -19,6 +20,7 @@ CLASS z2ui5_cl_popup_show_tr DEFINITION
     CLASS-METHODS factory
       RETURNING
         VALUE(result) TYPE REF TO z2ui5_cl_popup_show_tr.
+    " abap2ui5lint-enable unbound-public-attribute
 
   PROTECTED SECTION.
     METHODS on_init.
@@ -51,48 +53,48 @@ CLASS z2ui5_cl_popup_show_tr IMPLEMENTATION.
 
   METHOD render_view.
 
-    DATA(popup) = z2ui5_cl_ui5_view_builder=>factory( 
-                      )->ele( n = `FragmentDefinition` ns = `core` 
-                      )->a( n = `xmlns` v = `sap.m` 
+    DATA(popup) = z2ui5_cl_ui5_view_builder=>factory(
+                      )->ele( n = `FragmentDefinition` ns = `core`
+                      )->a( n = `xmlns` v = `sap.m`
                       )->a( n = `xmlns:core` v = `sap.ui.core` ).
 
-    popup->ele( `Dialog` 
-        )->a( n = `contentWidth` v = '40%' 
-        )->a( n = `afterClose` v = client->_event( 'CLOSE' ) 
-        )->a( n = `title` v = z2ui5_cl_popup_context=>rtti_get_data_element_texts( `SRET_TRORD`  )-long 
-        )->ele( `Table` 
-        )->a( n = `mode` v = 'SingleSelectLeft' 
-        )->a( n = `items` v = client->_bind_edit( mt_data ) 
-        )->ele( `columns` 
-        )->ele( `Column` 
-        )->tag( `Text` 
-        )->a( n = `text` v = z2ui5_cl_popup_context=>rtti_get_data_element_texts( `SRET_TRORD`  )-short 
-        )->end( 
-        )->ele( `Column` 
-        )->tag( `Text` 
-        )->a( n = `text` v = z2ui5_cl_popup_context=>rtti_get_data_element_texts( `CC_TEXT`  )-short 
-        )->end( 
-        )->end( 
-        )->ele( `items` 
-        )->ele( `ColumnListItem` 
-        )->a( n = `selected` v = '{SELKZ}' 
-        )->ele( `cells` 
-        )->tag( `Text` 
-        )->a( n = `text` v = '{TRANSPORT}' 
-        )->tag( `Text` 
-        )->a( n = `text` v = '{SHORT_DESCRIPTION}' 
-        )->end( 
-        )->end( 
-        )->end( 
-        )->end( 
-        )->ele( `buttons` 
-        )->tag( `Button` 
-        )->a( n = `text` v = 'No Transport' 
-        )->a( n = `press` v = client->_event( 'LOCL' ) 
-        )->a( n = `type` v = 'Default' 
-        )->tag( `Button` 
-        )->a( n = `text` v = 'Select' 
-        )->a( n = `press` v = client->_event( 'SELECT' ) 
+    popup->ele( `Dialog`
+        )->a( n = `contentWidth` v = '40%'
+        )->a( n = `afterClose` v = client->_event( 'CLOSE' )
+        )->a( n = `title` v = z2ui5_cl_popup_context=>rtti_get_data_element_texts( `SRET_TRORD`  )-long
+        )->ele( `Table`
+        )->a( n = `mode` v = 'SingleSelectLeft'
+        )->a( n = `items` v = client->_bind_edit( mt_data )
+        )->ele( `columns`
+        )->ele( `Column`
+        )->tag( `Text`
+        )->a( n = `text` v = z2ui5_cl_popup_context=>rtti_get_data_element_texts( `SRET_TRORD`  )-short
+        )->end(
+        )->ele( `Column`
+        )->tag( `Text`
+        )->a( n = `text` v = z2ui5_cl_popup_context=>rtti_get_data_element_texts( `CC_TEXT`  )-short
+        )->end(
+        )->end(
+        )->ele( `items`
+        )->ele( `ColumnListItem`
+        )->a( n = `selected` v = '{SELKZ}'
+        )->ele( `cells`
+        )->tag( `Text`
+        )->a( n = `text` v = '{TRANSPORT}'
+        )->tag( `Text`
+        )->a( n = `text` v = '{SHORT_DESCRIPTION}'
+        )->end(
+        )->end(
+        )->end(
+        )->end(
+        )->ele( `buttons`
+        )->tag( `Button`
+        )->a( n = `text` v = 'No Transport'
+        )->a( n = `press` v = client->_event( 'LOCL' )
+        )->a( n = `type` v = 'Default'
+        )->tag( `Button`
+        )->a( n = `text` v = 'Select'
+        )->a( n = `press` v = client->_event( 'SELECT' )
         )->a( n = `type` v = 'Emphasized' ).
 
     client->popup_display( popup->stringify( ) ).

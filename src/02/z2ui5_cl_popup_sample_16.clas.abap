@@ -28,7 +28,7 @@ CLASS z2ui5_cl_popup_sample_16 IMPLEMENTATION.
         IF CAST z2ui5_cl_popup_file_dl( lo_prev )->result( ).
           client->message_box_display( `the input is downloaded` ).
         ENDIF.
-      CATCH cx_root.
+      CATCH cx_root ##NO_HANDLER.
     ENDTRY.
 
   ENDMETHOD.
@@ -36,20 +36,19 @@ CLASS z2ui5_cl_popup_sample_16 IMPLEMENTATION.
 
   METHOD view_display.
 
-    DATA(view) = z2ui5_cl_ui5_view_builder=>factory( 
-                     )->ele( n = `View` ns = `mvc` 
-                     )->a( n = `xmlns` v = `sap.m` 
-                     )->a( n = `xmlns:mvc` v = `sap.ui.core.mvc` 
-                     )->a( n = `xmlns:core` v = `sap.ui.core` 
-                     )->a( n = `displayBlock` v = `true` 
+    DATA(view) = z2ui5_cl_ui5_view_builder=>factory(
+                     )->ele( n = `View` ns = `mvc`
+                     )->a( n = `xmlns` v = `sap.m`
+                     )->a( n = `xmlns:mvc` v = `sap.ui.core.mvc`
+                     )->a( n = `displayBlock` v = `true`
                      )->a( n = `height` v = `100%` ).
-    view->ele( `Shell` 
-        )->ele( `Page` 
-        )->a( n = `title` v = `abap2UI5 - Popup File Download` 
-        )->a( n = `navButtonPress` v = client->_event_nav_app_leave( ) 
-        )->a( n = `showNavButton` b = client->check_app_prev_stack( ) 
-        )->tag( `Button` 
-        )->a( n = `text` v = `Open Popup...` 
+    view->ele( `Shell`
+        )->ele( `Page`
+        )->a( n = `title` v = `abap2UI5 - Popup File Download`
+        )->a( n = `navButtonPress` v = client->_event_nav_app_leave( )
+        )->a( n = `showNavButton` b = client->check_app_prev_stack( )
+        )->tag( `Button`
+        )->a( n = `text` v = `Open Popup...`
         )->a( n = `press` v = client->_event( `POPUP` ) ).
 
     client->view_display( view->stringify( ) ).

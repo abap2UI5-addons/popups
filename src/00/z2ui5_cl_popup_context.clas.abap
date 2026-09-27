@@ -413,6 +413,16 @@ CLASS z2ui5_cl_popup_context DEFINITION PUBLIC FINAL CREATE PUBLIC.
     CLASS-METHODS filter_get_token_range_mapping
       RETURNING
         VALUE(result) TYPE ty_t_name_value.
+    CLASS-METHODS filter_get_range_by_token
+      IMPORTING
+        val           TYPE string
+      RETURNING
+        VALUE(result) TYPE ty_s_range.
+    CLASS-METHODS filter_get_range_t_by_token_t
+      IMPORTING
+        val           TYPE ty_t_token
+      RETURNING
+        VALUE(result) TYPE ty_t_range.
     CLASS-METHODS filter_get_token_t_by_range_t
       IMPORTING
         val           TYPE ANY TABLE
@@ -1118,9 +1128,9 @@ CLASS z2ui5_cl_popup_context IMPLEMENTATION.
       APPEND ls_comp TO lt_comps.
     ENDIF.
 
-    DATA(strucdescr) = cl_abap_structdescr=>create( p_components = lt_comps ).
+    DATA(strucdescr) = cl_abap_structdescr=>create( lt_comps ).
 
-    DATA(tabdescr) = cl_abap_tabledescr=>create( p_line_type = strucdescr ).
+    DATA(tabdescr) = cl_abap_tabledescr=>create( strucdescr ).
 
     IF mt_data IS NOT BOUND.
       CREATE DATA mt_data TYPE HANDLE tabdescr.
@@ -2529,6 +2539,77 @@ CLASS z2ui5_cl_popup_context IMPLEMENTATION.
                       (   n = `NP`      v = `!(*{LOW}*)` )
                       (   n = `!<leer>` v = `!(<leer>)` )
                       (   n = `<leer>`  v = `<leer>` ) ).
+
+  ENDMETHOD.
+
+  METHOD filter_get_range_by_token.
+
+    DATA(lv_value) = val.
+    IF lv_value IS INITIAL.
+      RETURN.
+    ENDIF.
+    DATA(lv_length) = strlen( lv_value ) - 1.
+
+    CASE lv_value(1).
+
+      WHEN `=`.
+        result = VALUE #( sign   = `I`
+                          option = `EQ`
+                          low    = lv_value+1 ).
+      WHEN `<`.
+        IF lv_value+1(1) = `=`.
+          result = VALUE #( sign   = `I`
+                            option = `LE`
+                            low    = lv_value+2 ).
+        ELSE.
+          result = VALUE #( sign   = `I`
+                            option = `LT`
+                            low    = lv_value+1 ).
+        ENDIF.
+      WHEN `>`.
+        IF lv_value+1(1) = `=`.
+          result = VALUE #( sign   = `I`
+                            option = `GE`
+                            low    = lv_value+2 ).
+        ELSE.
+          result = VALUE #( sign   = `I`
+                            option = `GT`
+                            low    = lv_value+1 ).
+        ENDIF.
+
+      WHEN `*`.
+        IF lv_length > 0 AND lv_value+lv_length(1) = `*`.
+          lv_value = substring( val = lv_value off = 1 len = lv_length - 1 ).
+          result = VALUE #( sign   = `I`
+                            option = `CP`
+                            low    = lv_value ).
+        ELSEIF lv_length = 0.
+          " Single '*' means contains-pattern with empty value
+          result = VALUE #( sign   = `I`
+                            option = `CP`
+                            low    = `` ).
+        ENDIF.
+
+      WHEN OTHERS.
+        IF lv_value CS `...`.
+          SPLIT lv_value AT `...` INTO result-low result-high.
+          result-sign   = `I`.
+          result-option = `BT`.
+        ELSE.
+          result = VALUE #( sign   = `I`
+                            option = `EQ`
+                            low    = lv_value ).
+        ENDIF.
+
+    ENDCASE.
+
+  ENDMETHOD.
+
+  METHOD filter_get_range_t_by_token_t.
+
+    LOOP AT val INTO DATA(ls_token).
+      INSERT filter_get_range_by_token( ls_token-text ) INTO TABLE result.
+    ENDLOOP.
 
   ENDMETHOD.
 

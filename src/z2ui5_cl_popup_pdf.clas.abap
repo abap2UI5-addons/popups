@@ -1,6 +1,7 @@
 CLASS z2ui5_cl_popup_pdf DEFINITION PUBLIC.
 
   PUBLIC SECTION.
+    " abap2ui5lint-disable unbound-public-attribute -- a popup's attributes are its interface to the app that called it, which reads them once the popup returns
     INTERFACES z2ui5_if_app.
 
     CLASS-METHODS factory
@@ -26,6 +27,7 @@ CLASS z2ui5_cl_popup_pdf DEFINITION PUBLIC.
     METHODS result
       RETURNING
         VALUE(result) TYPE ty_s_result.
+    " abap2ui5lint-enable unbound-public-attribute
 
   PROTECTED SECTION.
     DATA client              TYPE REF TO z2ui5_if_client.
@@ -61,34 +63,34 @@ CLASS z2ui5_cl_popup_pdf IMPLEMENTATION.
 
   METHOD view_display.
 
-    DATA(popup) = z2ui5_cl_ui5_view_builder=>factory( 
-                      )->ele( n = `FragmentDefinition` ns = `core` 
-                      )->a( n = `xmlns` v = `sap.m` 
-                      )->a( n = `xmlns:core` v = `sap.ui.core` 
-                      )->a( n = `xmlns:html` v = `http://www.w3.org/1999/xhtml` 
-                      )->ele( `Dialog` 
-                      )->a( n = `title` v = title 
-                      )->a( n = `stretch` b = abap_true 
-                      )->a( n = `afterClose` v = client->_event( `BUTTON_CANCEL` ) 
-                      )->ele( `content` 
-                      )->ele( `VBox` 
-                      )->a( n = `class` v = `sapUiMediumMargin` 
-                      )->tag( `Label` 
-                      )->a( n = `text` v = question_text 
-                      )->ele( n = `iframe` ns = `html` 
-                      )->a( n = `src` v = mv_pdf 
-                      )->a( n = `height` v = `800px` 
-                      )->a( n = `width` v = `99%` 
-                      )->end( 
-                      )->end( 
-                      )->end( 
-                      )->ele( `buttons` 
-                      )->tag( `Button` 
-                      )->a( n = `text` v = button_text_cancel 
-                      )->a( n = `press` v = client->_event( `BUTTON_CANCEL` ) 
-                      )->tag( `Button` 
-                      )->a( n = `text` v = button_text_confirm 
-                      )->a( n = `press` v = client->_event( `BUTTON_CONFIRM` ) 
+    DATA(popup) = z2ui5_cl_ui5_view_builder=>factory(
+                      )->ele( n = `FragmentDefinition` ns = `core`
+                      )->a( n = `xmlns` v = `sap.m`
+                      )->a( n = `xmlns:core` v = `sap.ui.core`
+                      )->a( n = `xmlns:html` v = `http://www.w3.org/1999/xhtml`
+                      )->ele( `Dialog`
+                      )->a( n = `title` t = title
+                      )->a( n = `stretch` b = abap_true
+                      )->a( n = `afterClose` v = client->_event( `BUTTON_CANCEL` )
+                      )->ele( `content`
+                      )->ele( `VBox`
+                      )->a( n = `class` v = `sapUiMediumMargin`
+                      )->tag( `Label`
+                      )->a( n = `text` t = question_text
+                      )->ele( n = `iframe` ns = `html`
+                      )->a( n = `src` t = mv_pdf
+                      )->a( n = `height` v = `800px`
+                      )->a( n = `width` v = `99%`
+                      )->end(
+                      )->end(
+                      )->end(
+                      )->ele( `buttons`
+                      )->tag( `Button`
+                      )->a( n = `text` t = button_text_cancel
+                      )->a( n = `press` v = client->_event( `BUTTON_CANCEL` )
+                      )->tag( `Button`
+                      )->a( n = `text` t = button_text_confirm
+                      )->a( n = `press` v = client->_event( `BUTTON_CONFIRM` )
                       )->a( n = `type` v = `Emphasized` ).
 
     client->popup_display( popup->stringify( ) ).

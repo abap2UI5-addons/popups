@@ -1,6 +1,7 @@
 CLASS z2ui5_cl_popup_js_loader DEFINITION PUBLIC.
 
   PUBLIC SECTION.
+    " abap2ui5lint-disable unbound-public-attribute -- a popup's attributes are its interface to the app that called it, which reads them once the popup returns
     INTERFACES z2ui5_if_app.
 
     CLASS-METHODS factory
@@ -20,6 +21,7 @@ CLASS z2ui5_cl_popup_js_loader DEFINITION PUBLIC.
 
     DATA mv_is_open_ui5 TYPE abap_bool.
     DATA ui5_gav        TYPE string.
+    " abap2ui5lint-enable unbound-public-attribute
 
   PROTECTED SECTION.
     DATA client         TYPE REF TO z2ui5_if_client.
@@ -56,27 +58,28 @@ CLASS z2ui5_cl_popup_js_loader IMPLEMENTATION.
 
   METHOD view_display.
 
-    DATA(popup) = z2ui5_cl_ui5_view_builder=>factory( 
-                      )->ele( n = `FragmentDefinition` ns = `core` 
-                      )->a( n = `xmlns` v = `sap.m` 
-                      )->a( n = `xmlns:core` v = `sap.ui.core` 
-                      )->a( n = `xmlns:html` v = `http://www.w3.org/1999/xhtml` 
-                      )->a( n = `xmlns:z2ui5` v = `z2ui5.cc` 
-                      )->ele( `Dialog` 
-                      )->a( n = `title` v = `Setup UI...` 
+    DATA(popup) = z2ui5_cl_ui5_view_builder=>factory(
+                      )->ele( n = `FragmentDefinition` ns = `core`
+                      )->a( n = `xmlns` v = `sap.m`
+                      )->a( n = `xmlns:core` v = `sap.ui.core`
+                      )->a( n = `xmlns:html` v = `http://www.w3.org/1999/xhtml`
+                      )->a( n = `xmlns:z2ui5` v = `z2ui5.cc`
+                      )->ele( `Dialog`
+                      )->a( n = `title` v = `Setup UI...`
                       )->ele( `content` ).
 
     IF js IS NOT INITIAL.
-      popup->tag( n = `Timer` ns = `z2ui5` 
-          )->a( n = `finished` v = client->_event( `TIMER_FINISHED` ) 
-          )->ele( n = `script` ns = `html` 
-          )->tag( n = `ZZPLAIN` ns = `html` 
+      popup->tag( n = `Timer` ns = `z2ui5`
+          )->a( n = `finished` v = client->_event( `TIMER_FINISHED` )
+          )->ele( n = `script` ns = `html`
+          )->tag( n = `ZZPLAIN` ns = `html`
+          " abap2ui5lint-disable-next-line unescaped-text-in-attribute -- raw JavaScript for the script tag; escaping its braces would change the code
           )->a( n = `VALUE` v = js ).
     ENDIF.
 
     IF check_open_ui5 = abap_true.
-      popup->tag( n = `Info` ns = `z2ui5` 
-          )->a( n = `finished` v = client->_event( `INFO_FINISHED` ) 
+      popup->tag( n = `Info` ns = `z2ui5`
+          )->a( n = `finished` v = client->_event( `INFO_FINISHED` )
           )->a( n = `ui5_gav` v = client->_bind_edit( ui5_gav ) ).
     ENDIF.
 

@@ -1,6 +1,7 @@
 CLASS z2ui5_cl_popup_file_dl DEFINITION PUBLIC.
 
   PUBLIC SECTION.
+    " abap2ui5lint-disable unbound-public-attribute -- a popup's attributes are its interface to the app that called it, which reads them once the popup returns
     INTERFACES z2ui5_if_app.
 
     CLASS-METHODS factory
@@ -24,6 +25,7 @@ CLASS z2ui5_cl_popup_file_dl DEFINITION PUBLIC.
     METHODS result
       RETURNING
         VALUE(result) TYPE abap_bool.
+    " abap2ui5lint-enable unbound-public-attribute
 
   PROTECTED SECTION.
     DATA check_confirmed     TYPE abap_bool.
@@ -69,55 +71,55 @@ CLASS z2ui5_cl_popup_file_dl IMPLEMENTATION.
 
   METHOD view_display.
 
-    DATA(popup) = z2ui5_cl_ui5_view_builder=>factory( 
-                      )->ele( n = `FragmentDefinition` ns = `core` 
-                      )->a( n = `xmlns` v = `sap.m` 
-                      )->a( n = `xmlns:core` v = `sap.ui.core` 
-                      )->a( n = `xmlns:html` v = `http://www.w3.org/1999/xhtml` 
-                      )->a( n = `xmlns:z2ui5` v = `z2ui5.cc` 
-                      )->ele( `Dialog` 
-                      )->a( n = `title` v = title 
-                      )->a( n = `afterClose` v = client->_event( `BUTTON_CANCEL` ) 
+    DATA(popup) = z2ui5_cl_ui5_view_builder=>factory(
+                      )->ele( n = `FragmentDefinition` ns = `core`
+                      )->a( n = `xmlns` v = `sap.m`
+                      )->a( n = `xmlns:core` v = `sap.ui.core`
+                      )->a( n = `xmlns:html` v = `http://www.w3.org/1999/xhtml`
+                      )->a( n = `xmlns:z2ui5` v = `z2ui5.cc`
+                      )->ele( `Dialog`
+                      )->a( n = `title` t = title
+                      )->a( n = `afterClose` v = client->_event( `BUTTON_CANCEL` )
                       )->ele( `content` ).
 
     IF mv_check_download = abap_true.
       DATA(lv_csv_x) = z2ui5_cl_popup_context=>conv_get_xstring_by_string( mv_value ).
       DATA(lv_base64) = z2ui5_cl_popup_context=>conv_encode_x_base64( lv_csv_x ).
-      popup->ele( n = `iframe` ns = `html` 
-          )->a( n = `src` v = mv_type && lv_base64 
+      popup->ele( n = `iframe` ns = `html`
+          )->a( n = `src` t = mv_type && lv_base64
           )->a( n = `hidden` v = `hidden` ).
 
-      popup->tag( n = `Timer` ns = `z2ui5` 
+      popup->tag( n = `Timer` ns = `z2ui5`
           )->a( n = `finished` v = client->_event( `CALLBACK_DOWNLOAD` ) ).
 
     ENDIF.
 
-    popup->ele( `VBox` 
-        )->a( n = `class` v = `sapUiMediumMargin` 
-        )->tag( `Label` 
-        )->a( n = `text` v = `Name` 
-        )->tag( `Input` 
-        )->a( n = `value` v = mv_name 
-        )->a( n = `enabled` b = abap_false 
-        )->tag( `Label` 
-        )->a( n = `text` v = `Type` 
-        )->tag( `Input` 
-        )->a( n = `value` v = mv_type 
-        )->a( n = `enabled` b = abap_false 
-        )->tag( `Label` 
-        )->a( n = `text` v = `Size` 
-        )->tag( `Input` 
-        )->a( n = `value` v = mv_size 
-        )->a( n = `enabled` b = abap_false 
-        )->end( 
-        )->end( 
-        )->ele( `buttons` 
-        )->tag( `Button` 
-        )->a( n = `text` v = button_text_cancel 
-        )->a( n = `press` v = client->_event( `BUTTON_CANCEL` ) 
-        )->tag( `Button` 
-        )->a( n = `text` v = button_text_confirm 
-        )->a( n = `press` v = client->_event( `BUTTON_CONFIRM` ) 
+    popup->ele( `VBox`
+        )->a( n = `class` v = `sapUiMediumMargin`
+        )->tag( `Label`
+        )->a( n = `text` v = `Name`
+        )->tag( `Input`
+        )->a( n = `value` t = mv_name
+        )->a( n = `enabled` b = abap_false
+        )->tag( `Label`
+        )->a( n = `text` v = `Type`
+        )->tag( `Input`
+        )->a( n = `value` t = mv_type
+        )->a( n = `enabled` b = abap_false
+        )->tag( `Label`
+        )->a( n = `text` v = `Size`
+        )->tag( `Input`
+        )->a( n = `value` t = mv_size
+        )->a( n = `enabled` b = abap_false
+        )->end(
+        )->end(
+        )->ele( `buttons`
+        )->tag( `Button`
+        )->a( n = `text` t = button_text_cancel
+        )->a( n = `press` v = client->_event( `BUTTON_CANCEL` )
+        )->tag( `Button`
+        )->a( n = `text` t = button_text_confirm
+        )->a( n = `press` v = client->_event( `BUTTON_CONFIRM` )
         )->a( n = `type` v = `Emphasized` ).
 
     client->popup_display( popup->stringify( ) ).

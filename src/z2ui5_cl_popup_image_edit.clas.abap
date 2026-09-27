@@ -82,7 +82,7 @@ CLASS z2ui5_cl_popup_image_edit IMPLEMENTATION.
       WHEN `SAVE`.
 
         mv_confirmed = abap_true.
-        mv_image = client->get_event_arg( 1 ).
+        mv_image = client->get_event_arg( ).
         client->popup_destroy( ).
         client->nav_app_leave( ).
 
@@ -98,40 +98,44 @@ CLASS z2ui5_cl_popup_image_edit IMPLEMENTATION.
 
   METHOD display.
 
-    DATA(popup) = z2ui5_cl_ui5_view_builder=>factory( 
-                      )->ele( n = `FragmentDefinition` ns = `core` 
-                      )->a( n = `xmlns` v = `sap.m` 
-                      )->a( n = `xmlns:core` v = `sap.ui.core` 
-                      )->a( n = `xmlns:ie` v = `sap.suite.ui.commons.imageeditor` 
-                      )->ele( `Dialog` 
-                      )->a( n = `title` v = mv_title 
-                      )->a( n = `icon` v = `sap-icon://edit` 
-                      )->a( n = `contentHeight` v = `80%` 
-                      )->a( n = `contentWidth` v = `80%` 
-                      )->a( n = `verticalScrolling` b = abap_false 
+    DATA(popup) = z2ui5_cl_ui5_view_builder=>factory(
+                      )->ele( n = `FragmentDefinition` ns = `core`
+                      )->a( n = `xmlns` v = `sap.m`
+                      )->a( n = `xmlns:core` v = `sap.ui.core`
+                      )->a( n = `xmlns:ie` v = `sap.suite.ui.commons.imageeditor`
+                      )->ele( `Dialog`
+                      )->a( n = `title` t = mv_title
+                      )->a( n = `icon` v = `sap-icon://edit`
+                      )->a( n = `contentHeight` v = `80%`
+                      )->a( n = `contentWidth` v = `80%`
+                      )->a( n = `verticalScrolling` b = abap_false
                       )->a( n = `horizontalScrolling` b = abap_false ).
 
-    popup->ele( n = `ImageEditorContainer` ns = `ie` 
-        )->a( n = `enabledButtons` v = mv_enabledbuttons 
-        )->a( n = `mode` v = mv_mode 
-        )->ele( n = `ImageEditor` ns = `ie` 
-        )->a( n = `id` v = `imageEditor` 
-        )->a( n = `src` v = mv_image 
-        )->a( n = `customShapeSrc` v = mv_customshapesrc 
-        )->a( n = `keepCropAspectRatio` v = mv_keepcropaspectratio 
-        )->a( n = `keepResizeAspectRatio` v = mv_keepresizeaspectratio 
-        )->a( n = `scaleCropArea` v = mv_scalecroparea 
-        )->a( n = `customShapeSrcType` v = mv_customshapesrctype ).
+    popup->ele( n = `ImageEditorContainer` ns = `ie`
+        )->a( n = `enabledButtons` t = mv_enabledbuttons
+        )->a( n = `mode` t = mv_mode
+        )->ele( n = `ImageEditor` ns = `ie`
+        )->a( n = `id` v = `imageEditor`
+        )->a( n = `src` v = mv_image
+        )->a( n = `customShapeSrc` t = mv_customshapesrc
+        )->a( n = `keepCropAspectRatio` t = mv_keepcropaspectratio
+        )->a( n = `keepResizeAspectRatio` t = mv_keepresizeaspectratio
+        )->a( n = `scaleCropArea` t = mv_scalecroparea
+        )->a( n = `customShapeSrcType` t = mv_customshapesrctype ).
 
-    popup->ele( `buttons` 
-        )->tag( `Button` 
-        )->a( n = `text` v = mv_cancel_text 
-        )->a( n = `type` v = `Reject` 
-        )->a( n = `press` v = client->_event( `CANCEL` ) 
-        )->tag( `Button` 
-        )->a( n = `text` v = mv_save_text 
-        )->a( n = `type` v = `Emphasized` 
-        )->a( n = `press` v = client->_event_client( client->cs_event-image_editor_popup_close ) ).
+    popup->ele( `buttons`
+        )->tag( `Button`
+        )->a( n = `text` t = mv_cancel_text
+        )->a( n = `type` v = `Reject`
+        )->a( n = `press` v = client->_event( `CANCEL` )
+        )->tag( `Button`
+        )->a( n = `text` t = mv_save_text
+        )->a( n = `type` v = `Emphasized`
+        " the PNG is read off the live editor into the event argument, and the
+        " SAVE branch destroys the popup on the roundtrip, as CANCEL does -
+        " cs_event-image_editor_popup_close, which bundled the three, is gone
+        )->a( n = `press` v = client->_event( val = `SAVE`
+                                              arg = `$controller.slotValue('POPUP','imageEditor','getImagePngDataURL')` ) ).
 
     client->popup_display( popup->stringify( ) ).
 
