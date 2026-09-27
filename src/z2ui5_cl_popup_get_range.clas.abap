@@ -25,6 +25,7 @@ CLASS z2ui5_cl_popup_get_range DEFINITION PUBLIC.
         check_confirmed TYPE abap_bool,
       END OF ty_s_result.
 
+    " abap2ui5lint-disable-next-line unbound-public-attribute -- a popup's attributes are its interface to the app that called it, which reads them once the popup returns
     DATA ms_result TYPE ty_s_result.
 
     METHODS result
