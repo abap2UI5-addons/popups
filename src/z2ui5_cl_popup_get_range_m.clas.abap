@@ -78,8 +78,6 @@ CLASS z2ui5_cl_popup_get_range_m IMPLEMENTATION.
     grid->ele( `MultiInput`
         )->a( n = `tokens` v = `{T_TOKEN}`
         )->a( n = `enabled` b = abap_false
-        )->a( n = `valueHelpRequest` v = client->_event( val   = `LIST_OPEN`
-                                                          arg   = `${NAME}` )
         )->ele( `tokens`
         )->tag( `Token`
         )->a( n = `key` v = `{KEY}`
