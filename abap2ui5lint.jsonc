@@ -60,12 +60,11 @@
       "exclude": [
         // (a) not served by the harness
         "z2ui5_cl_popup_file_ul\\.",
-        "z2ui5_cl_popup_js_loader\\.",
         "z2ui5_cl_popup_image_edit\\.",
         "z2ui5_cl_popup_sample_19\\.",
         // (b) embeds html: content on purpose
         "z2ui5_cl_popup_demo_output\\.",
-        "z2ui5_cl_popup_file_dl\\.",
+        "z2ui5_cl_popup_js_loader\\.",
         "z2ui5_cl_popup_pdf\\."
       ]
     }

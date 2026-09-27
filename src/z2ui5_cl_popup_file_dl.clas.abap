@@ -36,6 +36,7 @@ CLASS z2ui5_cl_popup_file_dl DEFINITION PUBLIC.
     DATA button_text_cancel  TYPE string.
 
     METHODS view_display.
+    METHODS download.
 
   PRIVATE SECTION.
 ENDCLASS.
@@ -75,24 +76,10 @@ CLASS z2ui5_cl_popup_file_dl IMPLEMENTATION.
                       )->ele( n = `FragmentDefinition` ns = `core`
                       )->a( n = `xmlns` v = `sap.m`
                       )->a( n = `xmlns:core` v = `sap.ui.core`
-                      )->a( n = `xmlns:html` v = `http://www.w3.org/1999/xhtml`
-                      )->a( n = `xmlns:z2ui5` v = `z2ui5.cc`
                       )->ele( `Dialog`
                       )->a( n = `title` t = title
                       )->a( n = `afterClose` v = client->_event( `BUTTON_CANCEL` )
                       )->ele( `content` ).
-
-    IF mv_check_download = abap_true.
-      DATA(lv_csv_x) = z2ui5_cl_popup_context=>conv_get_xstring_by_string( mv_value ).
-      DATA(lv_base64) = z2ui5_cl_popup_context=>conv_encode_x_base64( lv_csv_x ).
-      popup->ele( n = `iframe` ns = `html`
-          )->a( n = `src` t = mv_type && lv_base64
-          )->a( n = `hidden` v = `hidden` ).
-
-      popup->tag( n = `Timer` ns = `z2ui5`
-          )->a( n = `finished` v = client->_event( `CALLBACK_DOWNLOAD` ) ).
-
-    ENDIF.
 
     popup->ele( `VBox`
         )->a( n = `class` v = `sapUiMediumMargin`
@@ -126,6 +113,26 @@ CLASS z2ui5_cl_popup_file_dl IMPLEMENTATION.
 
   ENDMETHOD.
 
+  METHOD download.
+
+    " The browser saves the file through the DOWNLOAD_B64_FILE frontend action
+    " (a data: URL on a temporary anchor, named after mv_name). The popup
+    " stays open for this response and closes on CALLBACK_DOWNLOAD, which the
+    " client timer fires right after the download has been handed over: the
+    " actions an app queues do not survive its own nav_app_leave( ), so the
+    " download and the leave cannot share one roundtrip.
+    DATA(lv_csv_x) = z2ui5_cl_popup_context=>conv_get_xstring_by_string( mv_value ).
+    DATA(lv_base64) = z2ui5_cl_popup_context=>conv_encode_x_base64( lv_csv_x ).
+
+    client->follow_up_action( val   = z2ui5_if_client=>cs_event-download_b64_file
+                              t_arg = VALUE #( ( mv_type && lv_base64 )
+                                               ( mv_name ) ) ).
+    client->follow_up_action( val   = z2ui5_if_client=>cs_event-start_timer
+                              t_arg = VALUE #( ( `CALLBACK_DOWNLOAD` )
+                                               ( `0` ) ) ).
+
+  ENDMETHOD.
+
   METHOD z2ui5_if_app~main.
 
     me->client = client.
@@ -144,7 +151,7 @@ CLASS z2ui5_cl_popup_file_dl IMPLEMENTATION.
 
       WHEN `BUTTON_CONFIRM`.
         mv_check_download = abap_true.
-        view_display( ).
+        download( ).
 
       WHEN `BUTTON_CANCEL`.
         client->popup_destroy( ).

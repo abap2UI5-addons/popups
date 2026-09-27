@@ -53,6 +53,10 @@ CLASS ltcl_test_roundtrip DEFINITION FINAL
     METHODS popup_destroyed
       RETURNING
         VALUE(result) TYPE abap_bool.
+    " the follow-up actions the roundtrip queued, one JSON array each
+    METHODS follow_up_actions
+      RETURNING
+        VALUE(result) TYPE string_table.
 
     METHODS client_create
       IMPORTING
@@ -101,19 +105,31 @@ CLASS ltcl_test_roundtrip IMPLEMENTATION.
     DATA(lv_xml) = popup_xml( ).
     cl_abap_unit_assert=>assert_true( xsdbool( lv_xml CS `Download Title` ) ).
     cl_abap_unit_assert=>assert_false( xsdbool( lv_xml CS `iframe` ) ).
+    cl_abap_unit_assert=>assert_initial( follow_up_actions( ) ).
 
   ENDMETHOD.
 
   METHOD test_confirm_starts_dl.
 
-    DATA(lo_pop) = z2ui5_cl_popup_file_dl=>factory( `col1;col2` ).
+    DATA(lo_pop) = z2ui5_cl_popup_file_dl=>factory( i_file = `col1;col2`
+                                                  i_name = `data.csv` ).
     roundtrip_event( io_app   = lo_pop
                      iv_event = `BUTTON_CONFIRM` ).
 
-    " confirm re-renders the popup with the hidden download iframe and timer
-    DATA(lv_xml) = popup_xml( ).
-    cl_abap_unit_assert=>assert_true( xsdbool( lv_xml CS `iframe` ) ).
+    " confirm hands the file to the browser and arms the timer that closes
+    " the popup - the popup itself stays as it is for this response
+    DATA(lt_action) = follow_up_actions( ).
+    cl_abap_unit_assert=>assert_equals( exp = 2
+                                        act = lines( lt_action ) ).
+    cl_abap_unit_assert=>assert_equals(
+        exp = `["DOWNLOAD_B64_FILE","data:text/csv;base64,Y29sMTtjb2wy","data.csv"]`
+        act = lt_action[ 1 ] ).
+    cl_abap_unit_assert=>assert_equals( exp = `["START_TIMER","CALLBACK_DOWNLOAD","0"]`
+                                        act = lt_action[ 2 ] ).
+    cl_abap_unit_assert=>assert_true( lo_pop->mv_check_download ).
+    cl_abap_unit_assert=>assert_initial( popup_xml( ) ).
     cl_abap_unit_assert=>assert_false( popup_destroyed( ) ).
+    cl_abap_unit_assert=>assert_not_bound( mo_action->ms_next-o_app_leave ).
 
   ENDMETHOD.
 
@@ -125,6 +141,7 @@ CLASS ltcl_test_roundtrip IMPLEMENTATION.
 
     cl_abap_unit_assert=>assert_true( popup_destroyed( ) ).
     cl_abap_unit_assert=>assert_bound( mo_action->ms_next-o_app_leave ).
+    cl_abap_unit_assert=>assert_true( lo_pop->result( ) ).
 
   ENDMETHOD.
 
@@ -136,6 +153,7 @@ CLASS ltcl_test_roundtrip IMPLEMENTATION.
 
     cl_abap_unit_assert=>assert_true( popup_destroyed( ) ).
     cl_abap_unit_assert=>assert_bound( mo_action->ms_next-o_app_leave ).
+    cl_abap_unit_assert=>assert_false( lo_pop->result( ) ).
 
   ENDMETHOD.
 
@@ -144,6 +162,14 @@ CLASS ltcl_test_roundtrip IMPLEMENTATION.
     LOOP AT mo_action->ms_next-t_action_front INTO DATA(ls_action)
          WHERE slot = z2ui5_if_client=>cs_view-popup AND method = `display`.
       result = ls_action-xml.
+    ENDLOOP.
+
+  ENDMETHOD.
+
+  METHOD follow_up_actions.
+
+    LOOP AT mo_action->ms_next-s_action-t_custom INTO DATA(ls_action).
+      INSERT ls_action-o_json->stringify( ) INTO TABLE result.
     ENDLOOP.
 
   ENDMETHOD.
