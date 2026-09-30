@@ -36,7 +36,6 @@ CLASS z2ui5_cl_popup_sample_14 IMPLEMENTATION.
 
       WHEN `BUTTON_START`.
         set_data( ).
-        client->view_model_update( ).
 
       WHEN `PREVIEW_FILTER`.
         client->nav_app_call( z2ui5_cl_popup_get_range_m=>factory( mt_filter ) ).
@@ -153,7 +152,6 @@ CLASS z2ui5_cl_popup_sample_14 IMPLEMENTATION.
 
             mt_filter = lo_value_help->result( )-t_filter.
             set_data( ).
-            client->view_model_update( ).
           ENDIF.
         CATCH cx_root ##NO_HANDLER.
       ENDTRY.

@@ -56,7 +56,6 @@ CLASS z2ui5_cl_popup_sample_07 IMPLEMENTATION.
                                THEN abap_false
                                ELSE mv_preselect ).
 
-        client->view_model_update( ).
     ENDCASE.
 
   ENDMETHOD.
@@ -80,7 +79,7 @@ CLASS z2ui5_cl_popup_sample_07 IMPLEMENTATION.
         )->a( n = `text` v = `Multiselect: `
         )->a( n = `class` v = `sapUiTinyMargin`
         )->tag( `Switch`
-        )->a( n = `state` v = client->_bind_edit( mv_multiselect )
+        )->a( n = `state` v = client->_bind( mv_multiselect )
         )->a( n = `change` v = client->_event( `MULTISELECT_TOGGLE` )
         )->end(
         )->ele( `HBox`
@@ -88,8 +87,8 @@ CLASS z2ui5_cl_popup_sample_07 IMPLEMENTATION.
         )->a( n = `text` v = `Preselect all entries: `
         )->a( n = `class` v = `sapUiTinyMargin`
         )->tag( `Switch`
-        )->a( n = `state` v = client->_bind_edit( mv_preselect )
-        )->a( n = `enabled` v = client->_bind_edit( mv_multiselect )
+        )->a( n = `state` v = client->_bind( mv_preselect )
+        )->a( n = `enabled` v = client->_bind( mv_multiselect )
         )->end(
         )->tag( `Button`
         )->a( n = `text` v = `Open Popup...`

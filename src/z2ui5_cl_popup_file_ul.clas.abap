@@ -79,8 +79,8 @@ CLASS z2ui5_cl_popup_file_ul IMPLEMENTATION.
                       )->tag( `Label`
                       )->a( n = `text` t = question_text
                       )->tag( n = `FileUploader` ns = `z2ui5`
-                      )->a( n = `value` v = client->_bind_edit( mv_value )
-                      )->a( n = `path` v = client->_bind_edit( mv_path )
+                      )->a( n = `value` v = client->_bind( mv_value )
+                      )->a( n = `path` v = client->_bind( mv_path )
                       )->a( n = `placeholder` v = `filepath here...`
                       )->a( n = `upload` v = client->_event( `UPLOAD` )
                       )->end(
@@ -119,7 +119,6 @@ CLASS z2ui5_cl_popup_file_ul IMPLEMENTATION.
 
         CLEAR mv_value.
         CLEAR mv_path.
-        client->popup_model_update( ).
 
       WHEN `BUTTON_CONFIRM` OR `BUTTON_CANCEL`.
         ms_result-check_confirmed = xsdbool( lv_event = `BUTTON_CONFIRM` ).

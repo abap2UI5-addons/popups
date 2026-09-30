@@ -67,7 +67,7 @@ CLASS z2ui5_cl_popup_textedit IMPLEMENTATION.
                       )->tag( `TextArea`
                       )->a( n = `growing` b = abap_true
                       )->a( n = `editable` b = mv_check_editable
-                      )->a( n = `value` v = client->_bind_edit( ms_result-text )
+                      )->a( n = `value` v = client->_bind( ms_result-text )
                       )->end(
                       )->ele( `buttons`
                       )->tag( `Button`

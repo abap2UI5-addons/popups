@@ -66,7 +66,7 @@ CLASS z2ui5_cl_popup_get_range_m IMPLEMENTATION.
                      )->a( n = `justifyContent` v = `SpaceBetween` ).
 
     DATA(item) = vbox->ele( `List`
-                     )->a( n = `noData` v = `No conditions defined`
+                     )->a( n = `noDataText` v = `No conditions defined`
                      )->a( n = `items` v = client->_bind( ms_result-t_filter )
                      )->ele( `CustomListItem` ).
 
@@ -147,7 +147,6 @@ CLASS z2ui5_cl_popup_get_range_m IMPLEMENTATION.
         ASSIGN ms_result-t_filter[ name = client->get_event_arg( ) ] TO <tab>.
         CLEAR <tab>-t_token.
         CLEAR <tab>-t_range.
-        client->popup_model_update( ).
 
       WHEN `LIST_OPEN`.
         mv_popup_name = client->get_event_arg( ).
@@ -168,7 +167,6 @@ CLASS z2ui5_cl_popup_get_range_m IMPLEMENTATION.
           CLEAR lr_filter->t_range.
           CLEAR lr_filter->t_token.
         ENDLOOP.
-        client->popup_model_update( ).
 
     ENDCASE.
   ENDMETHOD.

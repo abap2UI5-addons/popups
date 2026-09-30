@@ -185,7 +185,7 @@ CLASS z2ui5_cl_popup_value_help IMPLEMENTATION.
           )->a( n = `text` v = z2ui5_cl_popup_context=>rtti_get_data_element_text_l( dfies->rollname ) ).
 
       simple_form->tag( `Input`
-          )->a( n = `value` v = client->_bind_edit( <val> )
+          )->a( n = `value` v = client->_bind( <val> )
           )->a( n = `showValueHelp` b = abap_false
           )->a( n = `submit` v = client->_event( 'F4_INPUT_DONE' ) ).
 
@@ -195,7 +195,7 @@ CLASS z2ui5_cl_popup_value_help IMPLEMENTATION.
         )->a( n = `text` v = z2ui5_cl_popup_context=>rtti_get_data_element_text_l( 'SYST_TABIX' ) ).
 
     simple_form->tag( `Input`
-        )->a( n = `value` v = client->_bind_edit( mv_rows )
+        )->a( n = `value` v = client->_bind( mv_rows )
         )->a( n = `showValueHelp` b = abap_false
         )->a( n = `submit` v = client->_event( 'F4_INPUT_DONE' )
         )->a( n = `maxLength` v = '3' ).
@@ -302,8 +302,6 @@ CLASS z2ui5_cl_popup_value_help IMPLEMENTATION.
                                                                   it_dfies           = mt_dfies ).
 
         get_data( result ).
-
-        client->popup_model_update( ).
 
       WHEN OTHERS.
 

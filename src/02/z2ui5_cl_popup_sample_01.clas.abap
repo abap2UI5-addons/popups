@@ -69,7 +69,7 @@ CLASS z2ui5_cl_popup_sample_01 IMPLEMENTATION.
         )->tag( `Label`
         )->a( n = `text` v = `ARBGB`
         )->tag( `Input`
-        )->a( n = `value` v = client->_bind_edit( mv_arbgb )
+        )->a( n = `value` v = client->_bind( mv_arbgb )
         )->a( n = `showValueHelp` b = abap_true
         )->a( n = `valueHelpRequest` v = client->_event( val   = 'CALL_POPUP_F4'
                                                                      t_arg = VALUE #( ( `ARBGB` ) ( `T100` ) ) ) ).
@@ -120,8 +120,6 @@ CLASS z2ui5_cl_popup_sample_01 IMPLEMENTATION.
             WHEN OTHERS.
 
           ENDCASE.
-
-          client->view_model_update( ).
 
         ENDIF.
 

@@ -96,8 +96,8 @@ CLASS z2ui5_cl_popup_to_select IMPLEMENTATION.
                       )->a( n = `xmlns:core` v = `sap.ui.core` ).
     DATA(tab) = popup->ele( `TableSelectDialog`
                     )->a( n = `items` v = |\{path:'|
-                          && client->_bind_edit( val  = <tab_out>
-                                                 path = abap_true )
+                          && client->_bind( val  = <tab_out>
+                                            path = abap_true )
                           && |', sorter : \{ path : '{ to_upper( sort_field ) }', descending : |
                           && z2ui5_cl_popup_context=>boolean_abap_2_json( descending )
                           && | \} \}|
@@ -285,7 +285,6 @@ CLASS z2ui5_cl_popup_to_select IMPLEMENTATION.
     z2ui5_cl_popup_context=>itab_filter_by_val( EXPORTING val = client->get_event_arg( )
                                                  ignore_case     = abap_true
                                        CHANGING  tab             = <tab_out> ).
-    client->popup_model_update( ).
 
   ENDMETHOD.
 
