@@ -30,7 +30,7 @@ CLASS ltcl_test IMPLEMENTATION.
                                         act = lo_pop->question_text ).
     cl_abap_unit_assert=>assert_equals( exp = `Information`
                                         act = lo_pop->title ).
-    cl_abap_unit_assert=>assert_equals( exp = `sap-icon://information`
+    cl_abap_unit_assert=>assert_equals( exp = `sap-icon://message-information`
                                         act = lo_pop->icon ).
     cl_abap_unit_assert=>assert_equals( exp = `OK`
                                         act = lo_pop->button_text_confirm ).

@@ -130,7 +130,6 @@ CLASS z2ui5_cl_popup_sample_15 IMPLEMENTATION.
       TRY.
           DATA(lo_popup_table) = CAST z2ui5_cl_popup_table( client->get_app( client->get( )-s_draft-id_prev_app ) ).
           set_data( ).
-          client->view_model_update( ).
         CATCH cx_root ##NO_HANDLER.
       ENDTRY.
       RETURN.

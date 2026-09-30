@@ -7,7 +7,7 @@ CLASS z2ui5_cl_popup_to_inform DEFINITION PUBLIC.
       IMPORTING
         i_text          TYPE string
         i_title         TYPE string DEFAULT `Information`
-        i_icon          TYPE string DEFAULT `sap-icon://information`
+        i_icon          TYPE string DEFAULT `sap-icon://message-information`
         i_button_text   TYPE string DEFAULT `OK`
       RETURNING
         VALUE(r_result) TYPE REF TO z2ui5_cl_popup_to_inform.
@@ -71,6 +71,8 @@ CLASS z2ui5_cl_popup_to_inform IMPLEMENTATION.
     IF client->check_on_init( ).
       view_display( ).
       RETURN.
+    ELSEIF client->check_on_navigated( ).
+      view_display( ).
     ENDIF.
 
     IF client->check_on_event( `BUTTON_CONFIRM` ).

@@ -39,6 +39,8 @@ CLASS z2ui5_cl_popup_show_tr IMPLEMENTATION.
     IF client->check_on_init( ).
       on_init( ).
       render_view( ).
+    ELSEIF client->check_on_navigated( ).
+      render_view( ).
     ELSE.
       on_event( ).
     ENDIF.
@@ -64,7 +66,7 @@ CLASS z2ui5_cl_popup_show_tr IMPLEMENTATION.
         )->a( n = `title` v = z2ui5_cl_popup_context=>rtti_get_data_element_texts( `SRET_TRORD`  )-long
         )->ele( `Table`
         )->a( n = `mode` v = 'SingleSelectLeft'
-        )->a( n = `items` v = client->_bind_edit( mt_data )
+        )->a( n = `items` v = client->_bind( mt_data )
         )->ele( `columns`
         )->ele( `Column`
         )->tag( `Text`

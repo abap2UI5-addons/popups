@@ -92,6 +92,8 @@ CLASS z2ui5_cl_popup_messages IMPLEMENTATION.
     IF client->check_on_init( ).
       view_display( ).
       RETURN.
+    ELSEIF client->check_on_navigated( ).
+      view_display( ).
     ENDIF.
 
     IF client->check_on_event( `BUTTON_CONTINUE` ).

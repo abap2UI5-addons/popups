@@ -126,7 +126,7 @@ CLASS z2ui5_cl_popup_search_help IMPLEMENTATION.
           )->a( n = `text` v = z2ui5_cl_popup_context=>rtti_get_data_element_text_l( dfies->rollname ) ).
 
       simple_form->tag( `Input`
-          )->a( n = `value` v = client->_bind_edit( <val> )
+          )->a( n = `value` v = client->_bind( <val> )
           )->a( n = `showValueHelp` b = abap_false
           )->a( n = `submit` v = client->_event( 'SHLP_INPUT_DONE' )
           )->a( n = `enabled` b = enabled ).
@@ -241,8 +241,6 @@ CLASS z2ui5_cl_popup_search_help IMPLEMENTATION.
                                                           mt_data        = mt_data
                                                           ms_data_row    = ms_data_row ).
 
-        client->popup_model_update( ).
-
       WHEN OTHERS.
 
         z2ui5_cl_layo_pop=>on_event_layout( client = client
@@ -278,17 +276,15 @@ CLASS z2ui5_cl_popup_search_help IMPLEMENTATION.
   METHOD on_after_layout.
 
     " only relevant when returning from another app
-    IF client->check_on_navigated( ) = abap_false.
-      RETURN.
+    IF client->check_on_navigated( ).
+      TRY.
+          DATA(app) = CAST z2ui5_cl_layo_pop( client->get_app( client->get( )-s_draft-id_prev_app ) ).
+          mo_layout = app->mo_layout.
+          render_view( ).
+
+        CATCH cx_root ##NO_HANDLER.
+      ENDTRY.
     ENDIF.
-
-    TRY.
-        DATA(app) = CAST z2ui5_cl_layo_pop( client->get_app( client->get( )-s_draft-id_prev_app ) ).
-        mo_layout = app->mo_layout.
-        render_view( ).
-
-      CATCH cx_root ##NO_HANDLER.
-    ENDTRY.
 
   ENDMETHOD.
 

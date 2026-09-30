@@ -81,8 +81,8 @@ CLASS z2ui5_cl_popup_get_range IMPLEMENTATION.
                      )->a( n = `justifyContent` v = `SpaceBetween` ).
 
     DATA(item) = vbox->ele( `List`
-                     )->a( n = `noData` v = `No conditions defined`
-                     )->a( n = `items` v = client->_bind_edit( mt_filter )
+                     )->a( n = `noDataText` v = `No conditions defined`
+                     )->a( n = `items` v = client->_bind( mt_filter )
                      )->ele( `CustomListItem` ).
 
     DATA(grid) = item->ele( n = `Grid` ns = `layout` ).
@@ -104,6 +104,7 @@ CLASS z2ui5_cl_popup_get_range IMPLEMENTATION.
         )->tag( `Button`
         )->a( n = `icon` v = `sap-icon://decline`
         )->a( n = `type` v = `Transparent`
+        )->a( n = `tooltip` v = `Delete condition`
         )->a( n = `press` v = client->_event( val   = `POPUP_DELETE`
                                                 arg   = `${KEY}` ) ).
 
@@ -175,15 +176,12 @@ CLASS z2ui5_cl_popup_get_range IMPLEMENTATION.
 
       WHEN `POPUP_ADD`.
         INSERT VALUE #( key = z2ui5_cl_popup_context=>uuid_get_c32( ) ) INTO TABLE mt_filter.
-        client->popup_model_update( ).
 
       WHEN `POPUP_DELETE`.
         DELETE mt_filter WHERE key = client->get_event_arg( ).
-        client->popup_model_update( ).
 
       WHEN `POPUP_DELETE_ALL`.
         CLEAR mt_filter.
-        client->popup_model_update( ).
 
     ENDCASE.
 

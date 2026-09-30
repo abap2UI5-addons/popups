@@ -43,7 +43,6 @@ CLASS z2ui5_cl_popup_sample_19 IMPLEMENTATION.
 
       WHEN `BUTTON_START`.
         set_data( ).
-        client->view_model_update( ).
 
       WHEN `UPDATE_TOKENS`.
         LOOP AT mt_tokens_removed INTO DATA(ls_token).
@@ -59,7 +58,6 @@ CLASS z2ui5_cl_popup_sample_19 IMPLEMENTATION.
 
         mt_range = z2ui5_cl_popup_context=>filter_get_range_t_by_token_t( mt_token ).
         set_data( ).
-        client->view_model_update( ).
 
       WHEN `FILTER_VALUE_HELP`.
         client->nav_app_call( z2ui5_cl_popup_get_range=>factory( mt_range ) ).
@@ -103,8 +101,8 @@ CLASS z2ui5_cl_popup_sample_19 IMPLEMENTATION.
 
     DATA(vbox) = view->ele( `VBox` ).
     vbox->tag( n = `MultiInputExt` ns = `z2ui5`
-        )->a( n = `addedTokens` v = client->_bind_edit( mt_tokens_added )
-        )->a( n = `removedTokens` v = client->_bind_edit( mt_tokens_removed )
+        )->a( n = `addedTokens` v = client->_bind( mt_tokens_added )
+        )->a( n = `removedTokens` v = client->_bind( mt_tokens_removed )
         )->a( n = `change` v = client->_event( `UPDATE_TOKENS` )
         )->a( n = `MultiInputId` v = `MultiInput` ).
 
@@ -118,7 +116,6 @@ CLASS z2ui5_cl_popup_sample_19 IMPLEMENTATION.
                     )->a( n = `width` v = `30%`
                     )->a( n = `id` v = `MultiInput`
                     )->a( n = `tokens` v = client->_bind( mt_token )
-                    )->a( n = `showClearIcon` b = abap_true
                     )->a( n = `valueHelpRequest` v = client->_event( `FILTER_VALUE_HELP` )
                     )->tag( n = `Item` ns = `core`
                     )->a( n = `key` v = `{KEY}`
@@ -196,7 +193,6 @@ CLASS z2ui5_cl_popup_sample_19 IMPLEMENTATION.
           mt_range = lo_value_help->result( )-t_range.
           mt_token = z2ui5_cl_popup_context=>filter_get_token_t_by_range_t( mt_range ).
           set_data( ).
-          client->view_model_update( ).
 
         CATCH cx_root ##NO_HANDLER.
       ENDTRY.

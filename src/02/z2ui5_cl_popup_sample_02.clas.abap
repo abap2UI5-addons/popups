@@ -70,7 +70,7 @@ CLASS z2ui5_cl_popup_sample_02 IMPLEMENTATION.
         )->tag( `Label`
         )->a( n = `text` v = `SPLD`
         )->tag( `Input`
-        )->a( n = `value` v = client->_bind_edit( ms_usr01-spld )
+        )->a( n = `value` v = client->_bind( ms_usr01-spld )
         )->a( n = `showValueHelp` b = abap_true
         )->a( n = `valueHelpRequest` v = client->_event( val   = 'CALL_POPUP_SEARCH'
                                                                      t_arg = VALUE #( ( `SPLD` ) ( `USR01` ) ) ) ).
@@ -116,8 +116,6 @@ CLASS z2ui5_cl_popup_sample_02 IMPLEMENTATION.
         IF app->mv_return_value IS NOT INITIAL.
 
           ms_usr01-spld = app->mv_return_value.
-
-          client->view_model_update( ).
 
         ENDIF.
 

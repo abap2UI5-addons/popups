@@ -74,7 +74,7 @@ CLASS z2ui5_cl_popup_input_val IMPLEMENTATION.
                       )->tag( `Label`
                       )->a( n = `text` t = question_text
                       )->tag( `Input`
-                      )->a( n = `value` v = client->_bind_edit( ms_result-value )
+                      )->a( n = `value` v = client->_bind( ms_result-value )
                       )->a( n = `submit` v = client->_event( `BUTTON_CONFIRM` )
                       )->end(
                       )->end(

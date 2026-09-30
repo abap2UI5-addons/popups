@@ -7,7 +7,7 @@ CLASS z2ui5_cl_popup_demo_output DEFINITION PUBLIC FINAL CREATE PUBLIC.
       IMPORTING
         i_output        TYPE REF TO object
         i_title         TYPE string DEFAULT `Output`
-        i_icon          TYPE string DEFAULT `sap-icon://textFormatting`
+        i_icon          TYPE string DEFAULT `sap-icon://text-formatting`
         i_button_text   TYPE string DEFAULT `OK`
         i_stretch       TYPE abap_bool DEFAULT abap_false
         i_as_page       TYPE abap_bool DEFAULT abap_false
@@ -163,6 +163,8 @@ CLASS z2ui5_cl_popup_demo_output IMPLEMENTATION.
     IF client->check_on_init( ).
       view_display( ).
       RETURN.
+    ELSEIF client->check_on_navigated( ).
+      view_display( ).
     ENDIF.
 
     IF client->check_on_event( `TOGGLE_FULLSCREEN` ).
