@@ -131,9 +131,9 @@ CLASS z2ui5_cl_pop_value_help IMPLEMENTATION.
 
         SELECT *
           FROM (mv_check_tab)
-          WHERE (where)
           INTO CORRESPONDING FIELDS OF TABLE @<table>
-          UP TO @mv_rows ROWS.
+          UP TO @mv_rows ROWS
+          WHERE (where).
 
         IF sy-subrc <> 0.
           client->message_toast_display( 'No Entries found.' ).
