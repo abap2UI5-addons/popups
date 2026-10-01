@@ -35,8 +35,19 @@ Ready-to-use popup and dialog apps for [abap2UI5](https://github.com/abap2UI5/ab
 
 Installed alongside via abapGit; declared in the abaplint configs:
 
-* [abap2UI5](https://github.com/abap2UI5/abap2UI5)
-* [layout-management](https://github.com/abap2UI5-addons/layout-management) — used by the Value-Help/Search-Help popups in `src/03/`
+* [abap2UI5](https://github.com/abap2UI5/abap2UI5) — **pinned to a release
+  tag** (the `"branch"` key of the core dependency, abap2UI5 CONVENTIONS §9):
+  users install a release next to this addon, so the checks run against that
+  release and not against the framework's `main`. Four abaplint configs carry
+  the pin (`abaplint.jsonc`, `.github/abaplint/abap_cloud.jsonc`,
+  `.github/abaplint/rename.json`, and the downported `<tag>-702` form in
+  `.github/abaplint/abap_702.jsonc`); read and move them only with
+  `scripts/core-pin.mjs` (`get` fails when they disagree). `bump-core.yaml`
+  moves the pin weekly to the newest release after abaplint passed on it, and
+  the scheduled runs of `abap-standard` / `abap-cloud` lint once against the
+  core's `main` as the canary (`core-pin.mjs set main`, never committed). Do
+  not drop the key: abaplint then clones `main` silently.
+* [layout-management](https://github.com/abap2UI5-addons/layout-management) — used by the Value-Help/Search-Help popups in `src/03/`; resolved from its `main` branch (it has no release tags to pin)
 
 ## Security
 
