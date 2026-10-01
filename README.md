@@ -11,7 +11,6 @@
 [![check-rename](https://github.com/abap2UI5-addons/popups/actions/workflows/check-rename.yaml/badge.svg)](https://github.com/abap2UI5-addons/popups/actions/workflows/check-rename.yaml)
 <br>
 [![publish-702](https://github.com/abap2UI5-addons/popups/actions/workflows/publish-702.yaml/badge.svg)](https://github.com/abap2UI5-addons/popups/actions/workflows/publish-702.yaml)
-[![build-rename](https://github.com/abap2UI5-addons/popups/actions/workflows/build-rename.yaml/badge.svg)](https://github.com/abap2UI5-addons/popups/actions/workflows/build-rename.yaml)
 
 # Popups
 
