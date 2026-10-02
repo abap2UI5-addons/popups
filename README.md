@@ -56,7 +56,7 @@ The value-help and search-help popups read the DDIC check table the user selects
 
 #### Dependencies
 * [abap2UI5](https://github.com/abap2UI5/abap2UI5)
-* [layout-management](https://github.com/abap2UI5-addons/layout-management)
+* [layout-management](https://github.com/abap2UI5-addons/layout-management) — pull it together with this repository: the Value-Help/Search-Help popups build their views with `z2ui5_cl_ui5_view_builder`, so an older layout-management (whose `z2ui5_cl_layo_pop=>render_layout_function` still takes a `z2ui5_cl_xml_view`) fails activation with `"HEADER" is not type-compatible with formal parameter "XML"`
 
 No dependency on abap-util at installation time — the needed utilities are embedded as a vendored copy (see above).
 

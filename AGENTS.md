@@ -47,7 +47,10 @@ Installed alongside via abapGit; declared in the abaplint configs:
   the scheduled runs of `abap-standard` / `abap-cloud` lint once against the
   core's `main` as the canary (`core-pin.mjs set main`, never committed). Do
   not drop the key: abaplint then clones `main` silently.
-* [layout-management](https://github.com/abap2UI5-addons/layout-management) — used by the Value-Help/Search-Help popups in `src/03/`; resolved from its `main` branch (it has no release tags to pin)
+* [layout-management](https://github.com/abap2UI5-addons/layout-management) — used by the Value-Help/Search-Help popups in `src/03/`; resolved from its `main` branch (it has no release tags to pin). A system that pulls this repository but not layout-management
+  fails activation of `src/03/` with `"HEADER" is not type-compatible with formal
+  parameter "XML"` (the old `render_layout_function` takes `z2ui5_cl_xml_view`);
+  CI cannot see that skew — the fix is pulling layout-management
 
 ## Security
 
@@ -66,6 +69,8 @@ This project follows the conventions of the abap2UI5 core framework (see its [AG
 Run `npx abaplint` before considering changes complete (0 issues expected). CI:
 
 * `ABAP_STANDARD` / `ABAP_CLOUD` — lint against Standard ABAP and ABAP Cloud
+  (`uncaught_exception` is on: a checked exception that is neither caught nor
+  declared is only a warning in SE80/ADT, so abaplint is where it is caught)
 * `ABAP_702` — lint the downported `702` branch; `npm run downport` /
   `auto_downport` produce it (`abaplint --fix` against `.github/abaplint/abap_702.jsonc`)
 * `renaming` (`rename_test.yaml`) — namespace-rename check
