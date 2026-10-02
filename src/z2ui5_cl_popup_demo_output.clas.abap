@@ -41,7 +41,7 @@ CLASS z2ui5_cl_popup_demo_output IMPLEMENTATION.
 
   METHOD factory.
 
-    r_result = NEW #( ).
+    CREATE OBJECT r_result.
     r_result->title               = i_title.
     r_result->icon                = i_icon.
     r_result->button_text_confirm = i_button_text.
@@ -86,7 +86,8 @@ CLASS z2ui5_cl_popup_demo_output IMPLEMENTATION.
 
   METHOD render_popup.
 
-    DATA(popup) = z2ui5_cl_ui5_view_builder=>factory(
+    DATA popup TYPE REF TO z2ui5_cl_ui5_view_builder.
+    popup = z2ui5_cl_ui5_view_builder=>factory(
                       )->ele( n = `FragmentDefinition` ns = `core`
                       )->a( n = `xmlns` v = `sap.m`
                       )->a( n = `xmlns:core` v = `sap.ui.core`
@@ -124,7 +125,8 @@ CLASS z2ui5_cl_popup_demo_output IMPLEMENTATION.
 
   METHOD render_page.
 
-    DATA(page) = z2ui5_cl_ui5_view_builder=>factory(
+    DATA page TYPE REF TO z2ui5_cl_ui5_view_builder.
+    page = z2ui5_cl_ui5_view_builder=>factory(
                      )->ele( n = `View` ns = `mvc`
                      )->a( n = `xmlns` v = `sap.m`
                      )->a( n = `xmlns:mvc` v = `sap.ui.core.mvc`
@@ -157,28 +159,31 @@ CLASS z2ui5_cl_popup_demo_output IMPLEMENTATION.
   ENDMETHOD.
 
   METHOD z2ui5_if_app~main.
+      DATA temp1 TYPE xsdboolean.
 
     me->client = client.
 
-    IF client->check_on_init( ).
+    IF client->check_on_init( ) IS NOT INITIAL.
       view_display( ).
       RETURN.
-    ELSEIF client->check_on_navigated( ).
+    ELSEIF client->check_on_navigated( ) IS NOT INITIAL.
       view_display( ).
     ENDIF.
 
-    IF client->check_on_event( `TOGGLE_FULLSCREEN` ).
+    IF client->check_on_event( `TOGGLE_FULLSCREEN` ) IS NOT INITIAL.
       IF as_page = abap_true.
         client->view_destroy( ).
       ELSE.
         client->popup_destroy( ).
       ENDIF.
-      as_page = xsdbool( as_page = abap_false ).
+
+      temp1 = boolc( as_page = abap_false ).
+      as_page = temp1.
       view_display( ).
       RETURN.
     ENDIF.
 
-    IF client->check_on_event( `BUTTON_CONFIRM` ).
+    IF client->check_on_event( `BUTTON_CONFIRM` ) IS NOT INITIAL.
       client->popup_destroy( ).
       client->nav_app_leave( ).
     ENDIF.

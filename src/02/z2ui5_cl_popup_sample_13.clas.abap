@@ -61,10 +61,17 @@ CLASS z2ui5_cl_popup_sample_13 IMPLEMENTATION.
 
 
   METHOD on_navigation.
+        DATA lo_prev TYPE REF TO z2ui5_if_app.
+        DATA temp1 TYPE REF TO z2ui5_cl_popup_pdf.
+        DATA lv_text TYPE z2ui5_cl_popup_pdf=>ty_s_result-text.
 
     TRY.
-        DATA(lo_prev) = client->get_app( client->get( )-s_draft-id_prev_app ).
-        DATA(lv_text) = CAST z2ui5_cl_popup_pdf( lo_prev )->result( )-text.
+
+        lo_prev = client->get_app( client->get( )-s_draft-id_prev_app ).
+
+        temp1 ?= lo_prev.
+
+        lv_text = temp1->result( )-text.
         client->message_box_display( `pdf viewer closed` ).
       CATCH cx_root ##NO_HANDLER.
     ENDTRY.
@@ -74,7 +81,8 @@ CLASS z2ui5_cl_popup_sample_13 IMPLEMENTATION.
 
   METHOD view_display.
 
-    DATA(view) = z2ui5_cl_ui5_view_builder=>factory(
+    DATA view TYPE REF TO z2ui5_cl_ui5_view_builder.
+    view = z2ui5_cl_ui5_view_builder=>factory(
                      )->ele( n = `View` ns = `mvc`
                      )->a( n = `xmlns` v = `sap.m`
                      )->a( n = `xmlns:mvc` v = `sap.ui.core.mvc`
@@ -95,12 +103,16 @@ CLASS z2ui5_cl_popup_sample_13 IMPLEMENTATION.
 
 
   METHOD on_event.
+        DATA lv_pdf TYPE string.
+        DATA lo_app TYPE REF TO z2ui5_cl_popup_pdf.
 
     CASE client->get( )-event.
 
       WHEN `POPUP`.
-        DATA(lv_pdf) = get_example_pdf( ).
-        DATA(lo_app) = z2ui5_cl_popup_pdf=>factory( lv_pdf ).
+
+        lv_pdf = get_example_pdf( ).
+
+        lo_app = z2ui5_cl_popup_pdf=>factory( lv_pdf ).
         client->nav_app_call( lo_app ).
     ENDCASE.
 

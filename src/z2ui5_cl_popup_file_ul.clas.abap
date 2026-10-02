@@ -47,7 +47,7 @@ CLASS z2ui5_cl_popup_file_ul IMPLEMENTATION.
 
   METHOD factory.
 
-    r_result = NEW #( ).
+    CREATE OBJECT r_result.
     r_result->title               = i_title.
 
     r_result->question_text       = i_text.
@@ -65,7 +65,8 @@ CLASS z2ui5_cl_popup_file_ul IMPLEMENTATION.
 
   METHOD view_display.
 
-    DATA(popup) = z2ui5_cl_ui5_view_builder=>factory(
+    DATA popup TYPE REF TO z2ui5_cl_ui5_view_builder.
+    popup = z2ui5_cl_ui5_view_builder=>factory(
                       )->ele( n = `FragmentDefinition` ns = `core`
                       )->a( n = `xmlns` v = `sap.m`
                       )->a( n = `xmlns:core` v = `sap.ui.core`
@@ -100,20 +101,25 @@ CLASS z2ui5_cl_popup_file_ul IMPLEMENTATION.
   ENDMETHOD.
 
   METHOD z2ui5_if_app~main.
+    DATA lv_event TYPE z2ui5_if_client=>ty_s_get-event.
+        DATA lv_data TYPE xstring.
+        DATA temp1 TYPE xsdboolean.
 
     me->client = client.
 
-    IF client->check_on_init( ).
+    IF client->check_on_init( ) IS NOT INITIAL.
       view_display( ).
       RETURN.
     ENDIF.
 
-    DATA(lv_event) = client->get( )-event.
+
+    lv_event = client->get( )-event.
     CASE lv_event.
 
       WHEN `UPLOAD`.
 
-        DATA(lv_data) = z2ui5_cl_popup_context=>conv_get_xstring_by_data_uri( mv_value ).
+
+        lv_data = z2ui5_cl_popup_context=>conv_get_xstring_by_data_uri( mv_value ).
         ms_result-value = z2ui5_cl_popup_context=>conv_get_string_by_xstring( lv_data ).
         check_confirm_enabled = abap_true.
 
@@ -121,7 +127,9 @@ CLASS z2ui5_cl_popup_file_ul IMPLEMENTATION.
         CLEAR mv_path.
 
       WHEN `BUTTON_CONFIRM` OR `BUTTON_CANCEL`.
-        ms_result-check_confirmed = xsdbool( lv_event = `BUTTON_CONFIRM` ).
+
+        temp1 = boolc( lv_event = `BUTTON_CONFIRM` ).
+        ms_result-check_confirmed = temp1.
         client->popup_destroy( ).
         client->nav_app_leave( ).
     ENDCASE.

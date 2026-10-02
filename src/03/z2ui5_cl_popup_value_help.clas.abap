@@ -61,7 +61,7 @@ CLASS z2ui5_cl_popup_value_help IMPLEMENTATION.
 
     me->client = client.
 
-    IF client->check_on_init( ).
+    IF client->check_on_init( ) IS NOT INITIAL.
       on_init( ).
 
       IF mv_check_tab IS INITIAL.
@@ -77,6 +77,7 @@ CLASS z2ui5_cl_popup_value_help IMPLEMENTATION.
   ENDMETHOD.
 
   METHOD on_init.
+    DATA result TYPE string.
 
     get_dfies( ).
 
@@ -87,7 +88,8 @@ CLASS z2ui5_cl_popup_value_help IMPLEMENTATION.
     create_objects( ).
     prefill_inputs( ).
 
-    DATA(result) = z2ui5_cl_popup_context=>tab_get_where_by_dfies( mv_check_tab_field = mv_check_tab_field
+
+    result = z2ui5_cl_popup_context=>tab_get_where_by_dfies( mv_check_tab_field = mv_check_tab_field
                                                               ms_data_row        = ms_data_row
                                                               it_dfies           = mt_dfies ).
 
@@ -99,18 +101,33 @@ CLASS z2ui5_cl_popup_value_help IMPLEMENTATION.
   METHOD create_objects.
 
     DATA index TYPE int4.
+        DATA temp1 TYPE cl_abap_structdescr=>component_table.
+        DATA temp2 LIKE LINE OF temp1.
+        DATA temp3 TYPE REF TO cl_abap_datadescr.
+        DATA comp LIKE temp1.
+        DATA new_struct_desc TYPE REF TO cl_abap_structdescr.
+        DATA new_table_desc TYPE REF TO cl_abap_tabledescr.
 
     TRY.
 
-        DATA(comp) = VALUE cl_abap_structdescr=>component_table(
-                               ( name = 'ROW_ID'
-                                 type = CAST #( cl_abap_datadescr=>describe_by_data( index ) ) ) ).
+
+        CLEAR temp1.
+
+        temp2-name = 'ROW_ID'.
+
+        temp3 ?= cl_abap_datadescr=>describe_by_data( index ).
+        temp2-type = temp3.
+        INSERT temp2 INTO TABLE temp1.
+
+        comp = temp1.
 
         APPEND LINES OF z2ui5_cl_popup_context=>rtti_get_t_attri_by_table_name( mv_check_tab  ) TO comp.
 
-        DATA(new_struct_desc) = cl_abap_structdescr=>create( comp ).
 
-        DATA(new_table_desc) = cl_abap_tabledescr=>create( p_line_type  = new_struct_desc
+        new_struct_desc = cl_abap_structdescr=>create( comp ).
+
+
+        new_table_desc = cl_abap_tabledescr=>create( p_line_type  = new_struct_desc
                                                            p_table_kind = cl_abap_tabledescr=>tablekind_std ).
 
         CREATE DATA mt_data     TYPE HANDLE new_table_desc.
@@ -131,8 +148,8 @@ CLASS z2ui5_cl_popup_value_help IMPLEMENTATION.
 
         SELECT *
           FROM (mv_check_tab)
-          INTO CORRESPONDING FIELDS OF TABLE @<table>
-          UP TO @mv_rows ROWS
+          INTO CORRESPONDING FIELDS OF TABLE <table>
+          UP TO mv_rows ROWS
           WHERE (where).
 
         IF sy-subrc <> 0.
@@ -149,23 +166,42 @@ CLASS z2ui5_cl_popup_value_help IMPLEMENTATION.
 
   METHOD render_view.
 
-    DATA(popup) = z2ui5_cl_ui5_view_builder=>factory(
+    DATA popup TYPE REF TO z2ui5_cl_ui5_view_builder.
+    DATA dialog TYPE REF TO z2ui5_cl_ui5_view_builder.
+    DATA simple_form TYPE REF TO z2ui5_cl_ui5_view_builder.
+    DATA temp3 LIKE LINE OF mt_dfies.
+    DATA dfies LIKE REF TO temp3.
+      FIELD-SYMBOLS <row> TYPE data.
+      FIELD-SYMBOLS <val> TYPE any.
+    FIELD-SYMBOLS <table> TYPE data.
+    DATA table TYPE REF TO z2ui5_cl_ui5_view_builder.
+    DATA header TYPE REF TO z2ui5_cl_ui5_view_builder.
+    DATA columns TYPE REF TO z2ui5_cl_ui5_view_builder.
+    DATA temp4 LIKE LINE OF mo_layout->ms_layout-t_layout.
+    DATA layout LIKE REF TO temp4.
+      DATA lv_index LIKE sy-tabix.
+    DATA cells TYPE REF TO z2ui5_cl_ui5_view_builder.
+    popup = z2ui5_cl_ui5_view_builder=>factory(
                       )->ele( n = `FragmentDefinition` ns = `core`
                       )->a( n = `xmlns` v = `sap.m`
                       )->a( n = `xmlns:core` v = `sap.ui.core`
                       )->a( n = `xmlns:form` v = `sap.ui.layout.form` ).
 
-    DATA(dialog) = popup->ele( `Dialog`
+
+    dialog = popup->ele( `Dialog`
                           )->a( n = `title` v = z2ui5_cl_popup_context=>rtti_get_data_element_texts( `/IWFND/SU_GWC_RH_VH`  )-medium
                           )->a( n = `contentWidth` v = '90%'
                           )->a( n = `afterClose` v = client->_event( 'F4_CLOSE' ) ).
 
-    DATA(simple_form) = dialog->ele( n = `SimpleForm` ns = `form`
+
+    simple_form = dialog->ele( n = `SimpleForm` ns = `form`
                                 )->a( n = `layout` v = 'ResponsiveGridLayout'
                                 )->a( n = `editable` b = abap_true
                                 )->ele( n = `content` ns = `form` ).
 
-    LOOP AT mt_dfies REFERENCE INTO DATA(dfies).
+
+
+    LOOP AT mt_dfies REFERENCE INTO dfies.
 
       IF dfies->fieldname = `MANDT`.
         CONTINUE.
@@ -174,9 +210,11 @@ CLASS z2ui5_cl_popup_value_help IMPLEMENTATION.
         CONTINUE.
       ENDIF.
 
-      ASSIGN ms_data_row->* TO FIELD-SYMBOL(<row>).
 
-      ASSIGN COMPONENT dfies->fieldname OF STRUCTURE <row> TO FIELD-SYMBOL(<val>).
+      ASSIGN ms_data_row->* TO <row>.
+
+
+      ASSIGN COMPONENT dfies->fieldname OF STRUCTURE <row> TO <val>.
       IF sy-subrc <> 0.
         CONTINUE.
       ENDIF.
@@ -200,15 +238,18 @@ CLASS z2ui5_cl_popup_value_help IMPLEMENTATION.
         )->a( n = `submit` v = client->_event( 'F4_INPUT_DONE' )
         )->a( n = `maxLength` v = '3' ).
 
-    ASSIGN mt_data->* TO FIELD-SYMBOL(<table>).
 
-    DATA(table) = dialog->ele( `Table`
+    ASSIGN mt_data->* TO <table>.
+
+
+    table = dialog->ele( `Table`
                       )->a( n = `growing`    v = 'true'
                       )->a( n = `width`      v = 'auto'
                       )->a( n = `items`      v = client->_bind( val = <table> )
                       )->a( n = `headerText` t = mv_check_tab ).
 
-    DATA(header) = table->ele( `headerToolbar`
+
+    header = table->ele( `headerToolbar`
                        )->ele( `OverflowToolbar`
                        )->tag( `Title`
                        )->a( n = `text` t = mv_check_tab
@@ -218,10 +259,14 @@ CLASS z2ui5_cl_popup_value_help IMPLEMENTATION.
                                                         client = client
                                                         layout = mo_layout ).
 
-    DATA(columns) = table->ele( `columns` ).
 
-    LOOP AT mo_layout->ms_layout-t_layout REFERENCE INTO DATA(layout).
-      DATA(lv_index) = sy-tabix.
+    columns = table->ele( `columns` ).
+
+
+
+    LOOP AT mo_layout->ms_layout-t_layout REFERENCE INTO layout.
+
+      lv_index = sy-tabix.
 
       columns->ele( `Column`
           )->a( n = `visible` v = client->_bind( val       = layout->visible
@@ -244,7 +289,8 @@ CLASS z2ui5_cl_popup_value_help IMPLEMENTATION.
 
     ENDLOOP.
 
-    DATA(cells) = columns->end(
+
+    cells = columns->end(
                       )->ele( `items`
                       )->ele( `ColumnListItem`
                       )->a( n = `vAlign` v = 'Middle'
@@ -267,6 +313,12 @@ CLASS z2ui5_cl_popup_value_help IMPLEMENTATION.
   METHOD on_event.
 
     FIELD-SYMBOLS <tab> TYPE STANDARD TABLE.
+        DATA lt_arg TYPE string_table.
+        FIELD-SYMBOLS <row> TYPE any.
+        FIELD-SYMBOLS <temp1> LIKE LINE OF lt_arg.
+        DATA temp2 LIKE sy-tabix.
+        FIELD-SYMBOLS <value> TYPE any.
+        DATA result TYPE string.
 
     CASE client->get( )-event.
 
@@ -278,13 +330,24 @@ CLASS z2ui5_cl_popup_value_help IMPLEMENTATION.
 
       WHEN `F4_ROW_SELECT`.
 
-        DATA(lt_arg) = client->get( )-t_event_arg.
+
+        lt_arg = client->get( )-t_event_arg.
 
         ASSIGN mt_data->* TO <tab>.
 
-        ASSIGN <tab>[ lt_arg[ 1 ] ] TO FIELD-SYMBOL(<row>).
 
-        ASSIGN COMPONENT mv_check_tab_field OF STRUCTURE <row> TO FIELD-SYMBOL(<value>).
+
+
+        temp2 = sy-tabix.
+        READ TABLE lt_arg INDEX 1 ASSIGNING <temp1>.
+        sy-tabix = temp2.
+        IF sy-subrc <> 0.
+          ASSERT 1 = 0.
+        ENDIF.
+        READ TABLE <tab> INDEX <temp1> ASSIGNING <row>.
+
+
+        ASSIGN COMPONENT mv_check_tab_field OF STRUCTURE <row> TO <value>.
         IF sy-subrc <> 0.
           RETURN.
         ENDIF.
@@ -297,7 +360,8 @@ CLASS z2ui5_cl_popup_value_help IMPLEMENTATION.
 
       WHEN 'F4_INPUT_DONE'.
 
-        DATA(result) = z2ui5_cl_popup_context=>tab_get_where_by_dfies( mv_check_tab_field = mv_check_tab_field
+
+        result = z2ui5_cl_popup_context=>tab_get_where_by_dfies( mv_check_tab_field = mv_check_tab_field
                                                                   ms_data_row        = ms_data_row
                                                                   it_dfies           = mt_dfies ).
 
@@ -316,14 +380,18 @@ CLASS z2ui5_cl_popup_value_help IMPLEMENTATION.
 
     FIELD-SYMBOLS <tab>  TYPE STANDARD TABLE.
     FIELD-SYMBOLS <line> TYPE any.
+      DATA lv_tabix LIKE sy-tabix.
+      FIELD-SYMBOLS <row> TYPE any.
 
     ASSIGN mt_data->* TO <tab>.
 
     LOOP AT <tab> ASSIGNING <line>.
 
-      DATA(lv_tabix) = sy-tabix.
 
-      ASSIGN COMPONENT 'ROW_ID' OF STRUCTURE <line> TO FIELD-SYMBOL(<row>).
+      lv_tabix = sy-tabix.
+
+
+      ASSIGN COMPONENT 'ROW_ID' OF STRUCTURE <line> TO <row>.
       IF sy-subrc = 0.
         <row> = lv_tabix.
       ENDIF.
@@ -333,7 +401,7 @@ CLASS z2ui5_cl_popup_value_help IMPLEMENTATION.
 
   METHOD factory.
 
-    result = NEW #( ).
+    CREATE OBJECT result.
 
     result->mv_table = i_table.
     result->mv_field = i_fname.
@@ -343,9 +411,17 @@ CLASS z2ui5_cl_popup_value_help IMPLEMENTATION.
 
   METHOD get_dfies.
 
-    DATA(t_dfies) = z2ui5_cl_popup_context=>rtti_get_t_dfies_by_table_name( mv_table ).
+    DATA t_dfies TYPE z2ui5_cl_popup_context=>ty_t_dfies.
+    DATA dfies TYPE REF TO z2ui5_cl_popup_context=>ty_s_dfies.
+    DATA temp5 TYPE string.
+    DATA temp6 TYPE string.
+    DATA temp7 TYPE z2ui5_cl_popup_context=>ty_s_dfies.
+      DATA temp8 TYPE string.
+      DATA temp9 TYPE z2ui5_cl_popup_context=>ty_s_dfies.
+    t_dfies = z2ui5_cl_popup_context=>rtti_get_t_dfies_by_table_name( mv_table ).
 
-    READ TABLE t_dfies REFERENCE INTO DATA(dfies) WITH KEY fieldname = mv_field.
+
+    READ TABLE t_dfies REFERENCE INTO dfies WITH KEY fieldname = mv_field.
     IF sy-subrc <> 0.
 
       client->popup_destroy( ).
@@ -358,14 +434,30 @@ CLASS z2ui5_cl_popup_value_help IMPLEMENTATION.
       RETURN.
     ENDIF.
 
-    mt_dfies = z2ui5_cl_popup_context=>rtti_get_t_dfies_by_table_name( CONV #( dfies->checktable ) ).
+
+    temp5 = dfies->checktable.
+    mt_dfies = z2ui5_cl_popup_context=>rtti_get_t_dfies_by_table_name( temp5 ).
 
     " determine the field of the check table, first via the data element
-    mv_check_tab_field = VALUE #( mt_dfies[ rollname = dfies->rollname ]-fieldname OPTIONAL ).
+
+    CLEAR temp6.
+
+    READ TABLE mt_dfies INTO temp7 WITH KEY rollname = dfies->rollname.
+    IF sy-subrc = 0.
+      temp6 = temp7-fieldname.
+    ENDIF.
+    mv_check_tab_field = temp6.
 
     " as a fallback, try to find it via the domain
     IF mv_check_tab_field IS INITIAL.
-      mv_check_tab_field = VALUE #( mt_dfies[ domname = dfies->domname ]-fieldname OPTIONAL ).
+
+      CLEAR temp8.
+
+      READ TABLE mt_dfies INTO temp9 WITH KEY domname = dfies->domname.
+      IF sy-subrc = 0.
+        temp8 = temp9-fieldname.
+      ENDIF.
+      mv_check_tab_field = temp8.
     ENDIF.
     mv_check_tab = dfies->checktable.
 
@@ -373,15 +465,21 @@ CLASS z2ui5_cl_popup_value_help IMPLEMENTATION.
 
   METHOD prefill_inputs.
 
-    LOOP AT mt_dfies REFERENCE INTO DATA(dfies).
+    DATA temp10 LIKE LINE OF mt_dfies.
+    DATA dfies LIKE REF TO temp10.
+      FIELD-SYMBOLS <row> TYPE data.
+      FIELD-SYMBOLS <val> TYPE any.
+    LOOP AT mt_dfies REFERENCE INTO dfies.
 
       IF NOT ( dfies->keyflag = abap_true OR dfies->fieldname = mv_check_tab_field ).
         CONTINUE.
       ENDIF.
 
-      ASSIGN ms_data_row->* TO FIELD-SYMBOL(<row>).
 
-      ASSIGN COMPONENT dfies->fieldname OF STRUCTURE <row> TO FIELD-SYMBOL(<val>).
+      ASSIGN ms_data_row->* TO <row>.
+
+
+      ASSIGN COMPONENT dfies->fieldname OF STRUCTURE <row> TO <val>.
       IF sy-subrc <> 0.
         CONTINUE.
       ENDIF.
@@ -397,6 +495,8 @@ CLASS z2ui5_cl_popup_value_help IMPLEMENTATION.
   ENDMETHOD.
 
   METHOD on_after_layout.
+        DATA temp11 TYPE REF TO z2ui5_cl_layo_pop.
+        DATA app LIKE temp11.
 
     " only relevant when returning from another app
     IF client->get( )-check_on_navigated = abap_false.
@@ -405,7 +505,10 @@ CLASS z2ui5_cl_popup_value_help IMPLEMENTATION.
 
     TRY.
         " check if the previous app was the layout popup
-        DATA(app) = CAST z2ui5_cl_layo_pop( client->get_app( client->get( )-s_draft-id_prev_app ) ).
+
+        temp11 ?= client->get_app( client->get( )-s_draft-id_prev_app ).
+
+        app = temp11.
 
         mo_layout = app->mo_layout.
 
@@ -418,7 +521,8 @@ CLASS z2ui5_cl_popup_value_help IMPLEMENTATION.
 
   METHOD get_layout.
 
-    DATA(class) = z2ui5_cl_popup_context=>rtti_get_classname_by_ref( me ).
+    DATA class TYPE string.
+    class = z2ui5_cl_popup_context=>rtti_get_classname_by_ref( me ).
 
     mo_layout = z2ui5_cl_layo_manager=>factory( control  = z2ui5_cl_layo_manager=>m_table
                                                 data     = mt_data

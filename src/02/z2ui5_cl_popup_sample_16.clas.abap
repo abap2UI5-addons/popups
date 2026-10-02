@@ -21,11 +21,16 @@ ENDCLASS.
 CLASS z2ui5_cl_popup_sample_16 IMPLEMENTATION.
 
   METHOD on_navigation.
+        DATA lo_prev TYPE REF TO z2ui5_if_app.
+        DATA temp1 TYPE REF TO z2ui5_cl_popup_file_dl.
 
     TRY.
-        DATA(lo_prev) = client->get_app( client->get( )-s_draft-id_prev_app ).
 
-        IF CAST z2ui5_cl_popup_file_dl( lo_prev )->result( ).
+        lo_prev = client->get_app( client->get( )-s_draft-id_prev_app ).
+
+
+        temp1 ?= lo_prev.
+        IF temp1->result( ) IS NOT INITIAL.
           client->message_box_display( `the input is downloaded` ).
         ENDIF.
       CATCH cx_root ##NO_HANDLER.
@@ -36,7 +41,8 @@ CLASS z2ui5_cl_popup_sample_16 IMPLEMENTATION.
 
   METHOD view_display.
 
-    DATA(view) = z2ui5_cl_ui5_view_builder=>factory(
+    DATA view TYPE REF TO z2ui5_cl_ui5_view_builder.
+    view = z2ui5_cl_ui5_view_builder=>factory(
                      )->ele( n = `View` ns = `mvc`
                      )->a( n = `xmlns` v = `sap.m`
                      )->a( n = `xmlns:mvc` v = `sap.ui.core.mvc`
@@ -57,11 +63,13 @@ CLASS z2ui5_cl_popup_sample_16 IMPLEMENTATION.
 
 
   METHOD on_event.
+        DATA lo_app TYPE REF TO z2ui5_cl_popup_file_dl.
 
     CASE client->get( )-event.
 
       WHEN `POPUP`.
-        DATA(lo_app) = z2ui5_cl_popup_file_dl=>factory( get_file( ) ).
+
+        lo_app = z2ui5_cl_popup_file_dl=>factory( get_file( ) ).
         client->nav_app_call( lo_app ).
     ENDCASE.
 

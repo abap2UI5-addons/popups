@@ -14,14 +14,16 @@ CLASS ltcl_test IMPLEMENTATION.
 
   METHOD test_factory.
 
-    DATA(lo_pop) = z2ui5_cl_popup_html=>factory( `<p>Hello</p>` ).
+    DATA lo_pop TYPE REF TO z2ui5_cl_popup_html.
+    lo_pop = z2ui5_cl_popup_html=>factory( `<p>Hello</p>` ).
     cl_abap_unit_assert=>assert_bound( lo_pop ).
 
   ENDMETHOD.
 
   METHOD test_factory_custom.
 
-    DATA(lo_pop) = z2ui5_cl_popup_html=>factory(
+    DATA lo_pop TYPE REF TO z2ui5_cl_popup_html.
+    lo_pop = z2ui5_cl_popup_html=>factory(
       i_html        = `<h1>Title</h1>`
       i_title       = `My HTML`
       i_icon        = `sap-icon://hint`
@@ -68,9 +70,11 @@ CLASS ltcl_test_roundtrip IMPLEMENTATION.
 
   METHOD client_create.
 
-    mo_action = NEW #( NEW z2ui5_cl_ui5_handler( `` ) ).
+    DATA temp1 TYPE REF TO z2ui5_cl_ui5_handler.
+    CREATE OBJECT temp1 TYPE z2ui5_cl_ui5_handler EXPORTING VAL = ``.
+    CREATE OBJECT mo_action EXPORTING VAL = temp1.
     mo_action->mo_app->mo_app = io_app.
-    mi_client = NEW z2ui5_cl_ui5_client( mo_action ).
+    CREATE OBJECT mi_client TYPE z2ui5_cl_ui5_client EXPORTING ACTION = mo_action.
 
   ENDMETHOD.
 
@@ -85,21 +89,28 @@ CLASS ltcl_test_roundtrip IMPLEMENTATION.
 
   METHOD test_init_displays_popup.
 
-    DATA(lo_pop) = z2ui5_cl_popup_html=>factory( i_html  = `<h1>Title</h1>`
+    DATA lo_pop TYPE REF TO z2ui5_cl_popup_html.
+    DATA lv_xml TYPE string.
+    DATA temp1 TYPE xsdboolean.
+    lo_pop = z2ui5_cl_popup_html=>factory( i_html  = `<h1>Title</h1>`
                                                i_title = `My HTML` ).
     client_create( lo_pop ).
 
     lo_pop->z2ui5_if_app~main( mi_client ).
 
-    DATA(lv_xml) = popup_xml( ).
+
+    lv_xml = popup_xml( ).
     cl_abap_unit_assert=>assert_not_initial( lv_xml ).
-    cl_abap_unit_assert=>assert_true( xsdbool( lv_xml CS `My HTML` ) ).
+
+    temp1 = boolc( lv_xml CS `My HTML` ).
+    cl_abap_unit_assert=>assert_true( temp1 ).
 
   ENDMETHOD.
 
   METHOD test_confirm_closes.
 
-    DATA(lo_pop) = z2ui5_cl_popup_html=>factory( `<p>Hello</p>` ).
+    DATA lo_pop TYPE REF TO z2ui5_cl_popup_html.
+    lo_pop = z2ui5_cl_popup_html=>factory( `<p>Hello</p>` ).
     roundtrip_event( io_app   = lo_pop
                      iv_event = `BUTTON_CONFIRM` ).
 
@@ -110,7 +121,8 @@ CLASS ltcl_test_roundtrip IMPLEMENTATION.
 
   METHOD popup_xml.
 
-    LOOP AT mo_action->ms_next-t_action_front INTO DATA(ls_action)
+    DATA ls_action LIKE LINE OF mo_action->ms_next-t_action_front.
+    LOOP AT mo_action->ms_next-t_action_front INTO ls_action
          WHERE slot = z2ui5_if_client=>cs_view-popup AND method = `display`.
       result = ls_action-xml.
     ENDLOOP.
@@ -119,8 +131,13 @@ CLASS ltcl_test_roundtrip IMPLEMENTATION.
 
   METHOD popup_destroyed.
 
-    result = xsdbool( line_exists( mo_action->ms_next-t_action_front[ slot   = z2ui5_if_client=>cs_view-popup
-                                                                      method = `destroy` ] ) ).
+    DATA temp1 LIKE sy-subrc.
+    DATA temp2 TYPE xsdboolean.
+    READ TABLE mo_action->ms_next-t_action_front WITH KEY slot = z2ui5_if_client=>cs_view-popup method = `destroy` TRANSPORTING NO FIELDS.
+    temp1 = sy-subrc.
+
+    temp2 = boolc( temp1 = 0 ).
+    result = temp2.
 
   ENDMETHOD.
 

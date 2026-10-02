@@ -39,14 +39,14 @@ CLASS z2ui5_cl_popup_js_loader IMPLEMENTATION.
 
   METHOD factory.
 
-    r_result = NEW #( ).
+    CREATE OBJECT r_result.
     r_result->js           = i_js.
     r_result->user_command = i_result.
 
   ENDMETHOD.
 
   METHOD factory_check_open_ui5.
-    r_result = NEW #( ).
+    CREATE OBJECT r_result.
     r_result->check_open_ui5 = abap_true.
   ENDMETHOD.
 
@@ -58,7 +58,9 @@ CLASS z2ui5_cl_popup_js_loader IMPLEMENTATION.
 
   METHOD view_display.
 
-    DATA(popup) = z2ui5_cl_ui5_view_builder=>factory(
+    DATA popup TYPE REF TO z2ui5_cl_ui5_view_builder.
+      DATA temp4 TYPE string_table.
+    popup = z2ui5_cl_ui5_view_builder=>factory(
                       )->ele( n = `FragmentDefinition` ns = `core`
                       )->a( n = `xmlns` v = `sap.m`
                       )->a( n = `xmlns:core` v = `sap.ui.core`
@@ -79,24 +81,30 @@ CLASS z2ui5_cl_popup_js_loader IMPLEMENTATION.
     IF js IS NOT INITIAL.
       " closes the popup in the roundtrip the client timer fires once the
       " popup with the script has rendered
+
+      CLEAR temp4.
+      INSERT `TIMER_FINISHED` INTO TABLE temp4.
+      INSERT `0` INTO TABLE temp4.
       client->follow_up_action( val   = z2ui5_if_client=>cs_event-start_timer
-                                t_arg = VALUE #( ( `TIMER_FINISHED` )
-                                                 ( `0` ) ) ).
+                                t_arg = temp4 ).
     ENDIF.
 
   ENDMETHOD.
 
   METHOD z2ui5_if_app~main.
+        DATA temp1 TYPE xsdboolean.
 
     me->client = client.
 
-    IF client->check_on_init( ).
+    IF client->check_on_init( ) IS NOT INITIAL.
 
       IF check_open_ui5 = abap_true.
         " the frontend reports the UI5 runtime with the request itself, so
         " the answer is known right away - no popup, no extra roundtrip
         ui5_gav = client->get( )-s_ui5-gav.
-        mv_is_open_ui5 = xsdbool( ui5_gav CS `OPEN` ).
+
+        temp1 = boolc( ui5_gav CS `OPEN` ).
+        mv_is_open_ui5 = temp1.
         client->nav_app_leave( ).
         RETURN.
       ENDIF.

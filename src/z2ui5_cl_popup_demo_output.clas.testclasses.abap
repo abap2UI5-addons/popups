@@ -38,15 +38,21 @@ CLASS ltcl_test IMPLEMENTATION.
 
   METHOD test_factory.
 
-    DATA(lo_pop) = z2ui5_cl_popup_demo_output=>factory( NEW ltcl_output_stub( ) ).
+    DATA lo_pop TYPE REF TO z2ui5_cl_popup_demo_output.
+    DATA temp1 TYPE REF TO ltcl_output_stub.
+    CREATE OBJECT temp1 TYPE ltcl_output_stub.
+    lo_pop = z2ui5_cl_popup_demo_output=>factory( temp1 ).
     cl_abap_unit_assert=>assert_bound( lo_pop ).
 
   ENDMETHOD.
 
   METHOD test_factory_custom.
 
-    DATA(lo_pop) = z2ui5_cl_popup_demo_output=>factory(
-      i_output      = NEW ltcl_output_stub( )
+    DATA lo_pop TYPE REF TO z2ui5_cl_popup_demo_output.
+    DATA temp2 TYPE REF TO ltcl_output_stub.
+    CREATE OBJECT temp2 TYPE ltcl_output_stub.
+    lo_pop = z2ui5_cl_popup_demo_output=>factory(
+      i_output      = temp2
       i_title       = `My Output`
       i_icon        = `sap-icon://hint`
       i_button_text = `Close`
@@ -58,8 +64,11 @@ CLASS ltcl_test IMPLEMENTATION.
 
   METHOD test_factory_as_page.
 
-    DATA(lo_pop) = z2ui5_cl_popup_demo_output=>factory(
-      i_output  = NEW ltcl_output_stub( )
+    DATA lo_pop TYPE REF TO z2ui5_cl_popup_demo_output.
+    DATA temp3 TYPE REF TO ltcl_output_stub.
+    CREATE OBJECT temp3 TYPE ltcl_output_stub.
+    lo_pop = z2ui5_cl_popup_demo_output=>factory(
+      i_output  = temp3
       i_as_page = abap_true ).
 
     cl_abap_unit_assert=>assert_bound( lo_pop ).
@@ -107,9 +116,11 @@ CLASS ltcl_test_roundtrip IMPLEMENTATION.
 
   METHOD client_create.
 
-    mo_action = NEW #( NEW z2ui5_cl_ui5_handler( `` ) ).
+    DATA temp4 TYPE REF TO z2ui5_cl_ui5_handler.
+    CREATE OBJECT temp4 TYPE z2ui5_cl_ui5_handler EXPORTING VAL = ``.
+    CREATE OBJECT mo_action EXPORTING VAL = temp4.
     mo_action->mo_app->mo_app = io_app.
-    mi_client = NEW z2ui5_cl_ui5_client( mo_action ).
+    CREATE OBJECT mi_client TYPE z2ui5_cl_ui5_client EXPORTING ACTION = mo_action.
 
   ENDMETHOD.
 
@@ -125,19 +136,28 @@ CLASS ltcl_test_roundtrip IMPLEMENTATION.
   METHOD test_init_displays_popup.
 
     " any object without a GET method works - the HTML extraction is guarded
-    DATA(lo_pop) = z2ui5_cl_popup_demo_output=>factory( i_output = NEW z2ui5_cx_popup_error( `x` )
+    DATA lo_pop TYPE REF TO z2ui5_cl_popup_demo_output.
+    DATA temp5 TYPE REF TO z2ui5_cx_popup_error.
+    DATA temp1 TYPE xsdboolean.
+    CREATE OBJECT temp5 TYPE z2ui5_cx_popup_error EXPORTING VAL = `x`.
+    lo_pop = z2ui5_cl_popup_demo_output=>factory( i_output = temp5
                                                       i_title  = `Demo Title` ).
     client_create( lo_pop ).
 
     lo_pop->z2ui5_if_app~main( mi_client ).
 
-    cl_abap_unit_assert=>assert_true( xsdbool( popup_xml( ) CS `Demo Title` ) ).
+
+    temp1 = boolc( popup_xml( ) CS `Demo Title` ).
+    cl_abap_unit_assert=>assert_true( temp1 ).
 
   ENDMETHOD.
 
   METHOD test_toggle_fullscreen.
 
-    DATA(lo_pop) = z2ui5_cl_popup_demo_output=>factory( NEW z2ui5_cx_popup_error( `x` ) ).
+    DATA lo_pop TYPE REF TO z2ui5_cl_popup_demo_output.
+    DATA temp6 TYPE REF TO z2ui5_cx_popup_error.
+    CREATE OBJECT temp6 TYPE z2ui5_cx_popup_error EXPORTING VAL = `x`.
+    lo_pop = z2ui5_cl_popup_demo_output=>factory( temp6 ).
     roundtrip_event( io_app   = lo_pop
                      iv_event = `TOGGLE_FULLSCREEN` ).
 
@@ -149,7 +169,10 @@ CLASS ltcl_test_roundtrip IMPLEMENTATION.
 
   METHOD test_confirm_closes.
 
-    DATA(lo_pop) = z2ui5_cl_popup_demo_output=>factory( NEW z2ui5_cx_popup_error( `x` ) ).
+    DATA lo_pop TYPE REF TO z2ui5_cl_popup_demo_output.
+    DATA temp7 TYPE REF TO z2ui5_cx_popup_error.
+    CREATE OBJECT temp7 TYPE z2ui5_cx_popup_error EXPORTING VAL = `x`.
+    lo_pop = z2ui5_cl_popup_demo_output=>factory( temp7 ).
     roundtrip_event( io_app   = lo_pop
                      iv_event = `BUTTON_CONFIRM` ).
 
@@ -160,7 +183,8 @@ CLASS ltcl_test_roundtrip IMPLEMENTATION.
 
   METHOD popup_xml.
 
-    LOOP AT mo_action->ms_next-t_action_front INTO DATA(ls_action)
+    DATA ls_action LIKE LINE OF mo_action->ms_next-t_action_front.
+    LOOP AT mo_action->ms_next-t_action_front INTO ls_action
          WHERE slot = z2ui5_if_client=>cs_view-popup AND method = `display`.
       result = ls_action-xml.
     ENDLOOP.
@@ -169,14 +193,20 @@ CLASS ltcl_test_roundtrip IMPLEMENTATION.
 
   METHOD popup_destroyed.
 
-    result = xsdbool( line_exists( mo_action->ms_next-t_action_front[ slot   = z2ui5_if_client=>cs_view-popup
-                                                                      method = `destroy` ] ) ).
+    DATA temp1 LIKE sy-subrc.
+    DATA temp2 TYPE xsdboolean.
+    READ TABLE mo_action->ms_next-t_action_front WITH KEY slot = z2ui5_if_client=>cs_view-popup method = `destroy` TRANSPORTING NO FIELDS.
+    temp1 = sy-subrc.
+
+    temp2 = boolc( temp1 = 0 ).
+    result = temp2.
 
   ENDMETHOD.
 
   METHOD view_xml.
 
-    LOOP AT mo_action->ms_next-t_action_front INTO DATA(ls_action)
+    DATA ls_action LIKE LINE OF mo_action->ms_next-t_action_front.
+    LOOP AT mo_action->ms_next-t_action_front INTO ls_action
          WHERE slot = z2ui5_if_client=>cs_view-main AND method = `display`.
       result = ls_action-xml.
     ENDLOOP.

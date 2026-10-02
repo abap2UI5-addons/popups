@@ -62,12 +62,18 @@ ENDCLASS.
 CLASS z2ui5_cl_popup_to_select IMPLEMENTATION.
 
   METHOD factory.
+    DATA temp18 TYPE string.
 
-    r_result = NEW #( ).
-    r_result->title = COND #(
-      WHEN i_title IS NOT INITIAL THEN i_title
-      WHEN i_multiselect = abap_true THEN `Multi Select`
-      ELSE `Single Select` ).
+    CREATE OBJECT r_result.
+
+    IF i_title IS NOT INITIAL.
+      temp18 = i_title.
+    ELSEIF i_multiselect = abap_true.
+      temp18 = `Multi Select`.
+    ELSE.
+      temp18 = `Single Select`.
+    ENDIF.
+    r_result->title = temp18.
 
     r_result->sort_field        = i_sort_field.
     r_result->descending        = i_descending.
@@ -87,14 +93,32 @@ CLASS z2ui5_cl_popup_to_select IMPLEMENTATION.
   METHOD display.
 
     FIELD-SYMBOLS <tab_out> TYPE STANDARD TABLE.
+    DATA popup TYPE REF TO z2ui5_cl_ui5_view_builder.
+    DATA temp19 TYPE string_table.
+    DATA tab TYPE REF TO z2ui5_cl_ui5_view_builder.
+    DATA lt_comp TYPE abap_component_tab.
+    DATA list TYPE REF TO z2ui5_cl_ui5_view_builder.
+    DATA cells TYPE REF TO z2ui5_cl_ui5_view_builder.
+    DATA ls_comp LIKE LINE OF lt_comp.
+    DATA columns TYPE REF TO z2ui5_cl_ui5_view_builder.
+      DATA temp21 TYPE z2ui5_cl_popup_context=>ty_s_data_element_text-medium.
+      DATA data_element_name TYPE string.
+      DATA medium_label TYPE z2ui5_cl_popup_context=>ty_s_data_element_text-medium.
+      DATA text LIKE temp21.
 
     ASSIGN mr_tab_popup->* TO <tab_out>.
 
-    DATA(popup) = z2ui5_cl_ui5_view_builder=>factory(
+
+    popup = z2ui5_cl_ui5_view_builder=>factory(
                       )->ele( n = `FragmentDefinition` ns = `core`
                       )->a( n = `xmlns` v = `sap.m`
                       )->a( n = `xmlns:core` v = `sap.ui.core` ).
-    DATA(tab) = popup->ele( `TableSelectDialog`
+
+    CLEAR temp19.
+    INSERT `${$parameters>/value}` INTO TABLE temp19.
+    INSERT `${$parameters>/clearButtonPressed}` INTO TABLE temp19.
+
+    tab = popup->ele( `TableSelectDialog`
                     )->a( n = `items` v = |\{path:'|
                           && client->_bind( val  = <tab_out>
                                             path = abap_true )
@@ -104,7 +128,7 @@ CLASS z2ui5_cl_popup_to_select IMPLEMENTATION.
                     )->a( n = `cancel` v = client->_event( `CANCEL` )
                     )->a( n = `search` v = client->_event(
                                val   = `SEARCH`
-                               t_arg = VALUE #( ( `${$parameters>/value}` ) ( `${$parameters>/clearButtonPressed}` ) ) )
+                               t_arg = temp19 )
                     )->a( n = `confirm` v = client->_event( val   = `CONFIRM`
                                            arg   = `${$parameters>/selectedContexts[0]/sPath}` )
                     )->a( n = `growing` b = abap_true
@@ -114,27 +138,38 @@ CLASS z2ui5_cl_popup_to_select IMPLEMENTATION.
                     )->a( n = `title` t = title
                     )->a( n = `multiSelect` b = multiselect ).
 
-    DATA(lt_comp) = z2ui5_cl_popup_context=>rtti_get_t_attri_by_any( <tab_out> ).
+
+    lt_comp = z2ui5_cl_popup_context=>rtti_get_t_attri_by_any( <tab_out> ).
     DELETE lt_comp WHERE name = `ZZSELKZ`.
 
-    DATA(list) = tab->ele( `ColumnListItem`
+
+    list = tab->ele( `ColumnListItem`
                      )->a( n = `vAlign` v = `Top`
                      )->a( n = `selected` v = `{ZZSELKZ}` ).
-    DATA(cells) = list->ele( `cells` ).
 
-    LOOP AT lt_comp INTO DATA(ls_comp).
+    cells = list->ele( `cells` ).
+
+
+    LOOP AT lt_comp INTO ls_comp.
       cells->tag( `Text`
           )->a( n = `text` v = |\{{ ls_comp-name }\}| ).
     ENDLOOP.
 
-    DATA(columns) = tab->ele( `columns` ).
+
+    columns = tab->ele( `columns` ).
     LOOP AT lt_comp INTO ls_comp.
-      DATA(text) = COND #(
-                     LET data_element_name = z2ui5_cl_popup_context=>rtti_get_ddic_type_name( ls_comp-type )
-                         medium_label = z2ui5_cl_popup_context=>rtti_get_data_element_texts( data_element_name )-medium IN
-                     WHEN medium_label IS NOT INITIAL
-                     THEN medium_label
-                     ELSE ls_comp-name ).
+
+
+      data_element_name = z2ui5_cl_popup_context=>rtti_get_ddic_type_name( ls_comp-type ).
+
+      medium_label = z2ui5_cl_popup_context=>rtti_get_data_element_texts( data_element_name )-medium.
+      IF medium_label IS NOT INITIAL.
+        temp21 = medium_label.
+      ELSE.
+        temp21 = ls_comp-name.
+      ENDIF.
+
+      text = temp21.
       columns->ele( `Column`
           )->a( n = `width` v = `8rem`
           )->ele( `header`
@@ -150,7 +185,7 @@ CLASS z2ui5_cl_popup_to_select IMPLEMENTATION.
 
     me->client = client.
 
-    IF client->check_on_init( ).
+    IF client->check_on_init( ) IS NOT INITIAL.
       set_output_table( ).
       display( ).
       RETURN.
@@ -195,10 +230,12 @@ CLASS z2ui5_cl_popup_to_select IMPLEMENTATION.
     FIELD-SYMBOLS <row>      TYPE any.
     FIELD-SYMBOLS <row2>     TYPE any.
     FIELD-SYMBOLS <field>    TYPE any.
+    DATA ls_sel_tab_type TYPE z2ui5_cl_popup_context=>ty_s_sel_tab_type.
 
     ASSIGN mr_tab->* TO <tab>.
 
-    DATA(ls_sel_tab_type) = z2ui5_cl_popup_context=>rtti_create_sel_tab_type( ir_tab = mr_tab
+
+    ls_sel_tab_type = z2ui5_cl_popup_context=>rtti_create_sel_tab_type( ir_tab = mr_tab
                                                                      add_sel_field      = abap_true ).
     check_table_line = ls_sel_tab_type-check_table_line.
 

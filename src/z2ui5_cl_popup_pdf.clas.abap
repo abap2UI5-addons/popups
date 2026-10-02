@@ -46,7 +46,7 @@ CLASS z2ui5_cl_popup_pdf IMPLEMENTATION.
 
   METHOD factory.
 
-    r_result = NEW #( ).
+    CREATE OBJECT r_result.
     r_result->title               = i_title.
     r_result->question_text       = i_label.
     r_result->button_text_confirm = i_button_text_confirm.
@@ -63,7 +63,8 @@ CLASS z2ui5_cl_popup_pdf IMPLEMENTATION.
 
   METHOD view_display.
 
-    DATA(popup) = z2ui5_cl_ui5_view_builder=>factory(
+    DATA popup TYPE REF TO z2ui5_cl_ui5_view_builder.
+    popup = z2ui5_cl_ui5_view_builder=>factory(
                       )->ele( n = `FragmentDefinition` ns = `core`
                       )->a( n = `xmlns` v = `sap.m`
                       )->a( n = `xmlns:core` v = `sap.ui.core`
@@ -98,19 +99,24 @@ CLASS z2ui5_cl_popup_pdf IMPLEMENTATION.
   ENDMETHOD.
 
   METHOD z2ui5_if_app~main.
+    DATA lv_event TYPE z2ui5_if_client=>ty_s_get-event.
+        DATA temp1 TYPE xsdboolean.
 
     me->client = client.
 
-    IF client->check_on_init( ).
+    IF client->check_on_init( ) IS NOT INITIAL.
       view_display( ).
       RETURN.
     ENDIF.
 
-    DATA(lv_event) = client->get( )-event.
+
+    lv_event = client->get( )-event.
     CASE lv_event.
 
       WHEN `BUTTON_CONFIRM` OR `BUTTON_CANCEL`.
-        ms_result-check_confirmed = xsdbool( lv_event = `BUTTON_CONFIRM` ).
+
+        temp1 = boolc( lv_event = `BUTTON_CONFIRM` ).
+        ms_result-check_confirmed = temp1.
         client->popup_destroy( ).
         client->nav_app_leave( ).
     ENDCASE.
