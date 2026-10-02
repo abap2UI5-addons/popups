@@ -59,7 +59,9 @@ CLASS ltcl_test_roundtrip DEFINITION FINAL
     " the follow-up actions the roundtrip queued, one JSON array each
     METHODS follow_up_actions
       RETURNING
-        VALUE(result) TYPE string_table.
+        VALUE(result) TYPE string_table
+      RAISING
+        z2ui5_cx_ajson_error.
 
     METHODS client_create
       IMPORTING
