@@ -14,7 +14,7 @@ CLASS z2ui5_cl_pop_show_tr DEFINITION
         iv_tabname   TYPE string
         is_transport TYPE z2ui5_cl_popup_context=>ty_s_transport.
 
-    DATA mt_data TYPE STANDARD TABLE OF z2ui5_cl_popup_context=>ty_s_transport WITH EMPTY KEY.
+    DATA mt_data TYPE STANDARD TABLE OF z2ui5_cl_popup_context=>ty_s_transport WITH DEFAULT KEY.
 
     CLASS-METHODS factory
       RETURNING
@@ -34,7 +34,7 @@ CLASS z2ui5_cl_pop_show_tr IMPLEMENTATION.
 
     me->client = client.
 
-    IF client->check_on_init( ).
+    IF client->check_on_init( ) IS NOT INITIAL.
       on_init( ).
       render_view( ).
     ELSE.
@@ -51,7 +51,8 @@ CLASS z2ui5_cl_pop_show_tr IMPLEMENTATION.
 
   METHOD render_view.
 
-    DATA(popup) = z2ui5_cl_xml_view=>factory_popup( ).
+    DATA popup TYPE REF TO z2ui5_cl_xml_view.
+    popup = z2ui5_cl_xml_view=>factory_popup( ).
 
     popup->dialog( contentwidth = '40%'
                    afterclose   = client->_event( 'CLOSE' )
@@ -80,6 +81,7 @@ CLASS z2ui5_cl_pop_show_tr IMPLEMENTATION.
   ENDMETHOD.
 
   METHOD on_event.
+        DATA line TYPE z2ui5_cl_popup_context=>ty_s_transport.
     CASE client->get( )-event.
 
       WHEN `CLOSE`.
@@ -90,7 +92,8 @@ CLASS z2ui5_cl_pop_show_tr IMPLEMENTATION.
 
       WHEN `SELECT`.
 
-        READ TABLE mt_data INTO DATA(line) WITH KEY selkz = abap_true.
+
+        READ TABLE mt_data INTO line WITH KEY selkz = abap_true.
         IF sy-subrc = 0.
           ms_transport = line.
         ENDIF.
@@ -111,7 +114,7 @@ CLASS z2ui5_cl_pop_show_tr IMPLEMENTATION.
   ENDMETHOD.
 
   METHOD factory.
-    result = NEW #( ).
+    CREATE OBJECT result.
   ENDMETHOD.
 
   METHOD add_data_to_tranport.

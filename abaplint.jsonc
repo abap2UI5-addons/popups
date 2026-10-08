@@ -4,28 +4,27 @@
   },
   "dependencies": [
     {
-      "url": "https://github.com/abapedia/steampunk-2305-api-intersect-702",
+      "url": "https://github.com/open-abap/open-abap-core",
       "folder": "/deps",
       "files": "/src/**/*.*"
     },
     {
-      // A release tag, not main: users install a release next to this addon
-      // (abap2UI5 CONVENTIONS §9). scripts/core-pin.mjs reads and moves it in
-      // every abaplint config at once, bump-core moves it weekly after the gates
-      // passed on the new tag, and the weekly canary run lints once against main.
+      // the downported form of the release the other configs pin - moved with
+      // them by scripts/core-pin.mjs (abap2UI5 CONVENTIONS §9)
       "url": "https://github.com/abap2UI5/abap2UI5",
-      "branch": "1.146.0",
+      "branch": "1.146.0-702",
       "folder": "/abap2UI5",
       "files": "/src/**/*.*"
     },
     {
       "url": "https://github.com/abap2UI5-addons/layout-management",
-      "folder": "/layout-management",
+      "branch": "702",
+      "folder": "/abap2UI5-layout",
       "files": "/src/**/*.*"
     }
   ],
   "syntax": {
-    "version": "v750",
+    "version": "v702",
     "errorNamespace": "."
   },
   "rules": {
@@ -35,17 +34,13 @@
     "check_include": true,
     "check_syntax": true,
     "global_class": true,
-    "definitions_top": false,
+    "definitions_top": true,
     "implement_methods": true,
     "method_implemented_twice": true,
     "parser_error": true,
     "superclass_final": true,
     "uncaught_exception": true,
     "unknown_types": true,
-    "whitespace_end": true,
-    "xml_consistency": true,
-    "exporting": true,
-    "omit_parameter_name": true,
-    "prefix_is_current_class": true
+    "xml_consistency": true
   }
 }

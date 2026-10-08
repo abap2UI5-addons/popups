@@ -47,20 +47,31 @@ CLASS z2ui5_cl_popup_sample_02 IMPLEMENTATION.
 
   METHOD render_main.
 
-    DATA(view) = z2ui5_cl_ui5_view_builder=>factory(
+    DATA view TYPE REF TO z2ui5_cl_ui5_view_builder.
+    DATA page TYPE REF TO z2ui5_cl_ui5_view_builder.
+    DATA temp2 TYPE xsdboolean.
+    DATA temp1 TYPE string_table.
+    view = z2ui5_cl_ui5_view_builder=>factory(
                      )->ele( n = `View` ns = `mvc`
                      )->a( n = `xmlns` v = `sap.m`
                      )->a( n = `xmlns:mvc` v = `sap.ui.core.mvc`
                      )->a( n = `xmlns:form` v = `sap.ui.layout.form`
                      )->a( n = `displayBlock` v = `true`
                      )->a( n = `height` v = `100%` ).
-    DATA(page) = view->ele( `Shell`
+
+
+    temp2 = boolc( client->get( )-s_draft-id_prev_app_stack IS NOT INITIAL ).
+    page = view->ele( `Shell`
                      )->ele( `Page`
                      )->a( n = `title` v = 'Search-Help'
                      )->a( n = `navButtonPress` v = client->_event( 'BACK' )
-                     )->a( n = `showNavButton` b = xsdbool( client->get( )-s_draft-id_prev_app_stack IS NOT INITIAL )
+                     )->a( n = `showNavButton` b = temp2
                      )->a( n = `class` v = 'sapUiContentPadding' ).
 
+
+    CLEAR temp1.
+    INSERT `SPLD` INTO TABLE temp1.
+    INSERT `USR01` INTO TABLE temp1.
     page->ele( n = `SimpleForm` ns = `form`
         )->a( n = `title` v = 'Search-Help'
         )->a( n = `editable` b = abap_true
@@ -73,7 +84,7 @@ CLASS z2ui5_cl_popup_sample_02 IMPLEMENTATION.
         )->a( n = `value` v = client->_bind( ms_usr01-spld )
         )->a( n = `showValueHelp` b = abap_true
         )->a( n = `valueHelpRequest` v = client->_event( val   = 'CALL_POPUP_SEARCH'
-                                                                     t_arg = VALUE #( ( `SPLD` ) ( `USR01` ) ) ) ).
+                                                                     t_arg = temp1 ) ).
 
     client->view_display( view->stringify( ) ).
 
@@ -82,7 +93,7 @@ CLASS z2ui5_cl_popup_sample_02 IMPLEMENTATION.
   METHOD z2ui5_if_app~main.
     me->client = client.
 
-    IF client->check_on_init( ).
+    IF client->check_on_init( ) IS NOT INITIAL.
       on_init( ).
     ENDIF.
 
@@ -93,25 +104,69 @@ CLASS z2ui5_cl_popup_sample_02 IMPLEMENTATION.
 
   METHOD call_search.
 
-    DATA(lt_arg) = client->get( )-t_event_arg.
-    DATA(search_field) = VALUE string( lt_arg[ 1 ] ).
-    DATA(search_table) = VALUE string( lt_arg[ 2 ] ).
+    DATA lt_arg TYPE string_table.
+    DATA temp3 TYPE string.
+    FIELD-SYMBOLS <temp1> LIKE LINE OF lt_arg.
+    DATA temp2 LIKE sy-tabix.
+    DATA search_field LIKE temp3.
+    DATA temp4 TYPE string.
+    FIELD-SYMBOLS <temp3> LIKE LINE OF lt_arg.
+    DATA temp6 LIKE sy-tabix.
+    DATA search_table LIKE temp4.
+    DATA temp5 LIKE REF TO ms_usr01.
+DATA temp7 TYPE string.
+    lt_arg = client->get( )-t_event_arg.
 
-    client->nav_app_call( z2ui5_cl_popup_search_help=>factory( i_table = search_table
+    CLEAR temp3.
+
+
+    temp2 = sy-tabix.
+    READ TABLE lt_arg INDEX 1 ASSIGNING <temp1>.
+    sy-tabix = temp2.
+    IF sy-subrc <> 0.
+      ASSERT 1 = 0.
+    ENDIF.
+    temp3 = <temp1>.
+
+    search_field = temp3.
+
+    CLEAR temp4.
+
+
+    temp6 = sy-tabix.
+    READ TABLE lt_arg INDEX 2 ASSIGNING <temp3>.
+    sy-tabix = temp6.
+    IF sy-subrc <> 0.
+      ASSERT 1 = 0.
+    ENDIF.
+    temp4 = <temp3>.
+
+    search_table = temp4.
+
+
+    GET REFERENCE OF ms_usr01 INTO temp5.
+
+temp7 = ms_usr01-spld.
+client->nav_app_call( z2ui5_cl_popup_search_help=>factory( i_table = search_table
                                                              i_fname = search_field
-                                                             i_value = CONV #( ms_usr01-spld )
-                                                             i_data  = REF #( ms_usr01 ) ) ).
+                                                             i_value = temp7
+                                                             i_data  = temp5 ) ).
 
   ENDMETHOD.
 
   METHOD on_after_search.
+        DATA temp6 TYPE REF TO z2ui5_cl_popup_search_help.
+        DATA app LIKE temp6.
 
     IF client->get( )-check_on_navigated = abap_false.
       RETURN.
     ENDIF.
 
     TRY.
-        DATA(app) = CAST z2ui5_cl_popup_search_help( client->get_app( client->get( )-s_draft-id_prev_app ) ).
+
+        temp6 ?= client->get_app( client->get( )-s_draft-id_prev_app ).
+
+        app = temp6.
 
         IF app->mv_return_value IS NOT INITIAL.
 
