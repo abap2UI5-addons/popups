@@ -66,15 +66,23 @@ This project follows the conventions of the abap2UI5 core framework (see its [AG
 
 ## Validation
 
-Run `npx abaplint` before considering changes complete (0 issues expected). CI:
+Run `npm run check` before considering changes complete: it runs the same
+abaplint, abap2UI5-linter and rename steps as CI, and all of them must pass.
+CI:
 
-* `ABAP_STANDARD` / `ABAP_CLOUD` — lint against Standard ABAP and ABAP Cloud
+* `abap-standard` / `abap-cloud` — lint against Standard ABAP
+  (`abaplint.jsonc`) and ABAP Cloud (`.github/abaplint/abap_cloud.jsonc`)
   (`uncaught_exception` is on: a checked exception that is neither caught nor
-  declared is only a warning in SE80/ADT, so abaplint is where it is caught)
-* `ABAP_702` — lint the downported `702` branch; `npm run downport` /
-  `auto_downport` produce it (`abaplint --fix` against `.github/abaplint/abap_702.jsonc`)
-* `renaming` (`rename_test.yaml`) — namespace-rename check
-* `build_rename` — manual workflow that pushes a namespace-renamed branch
+  declared is only a warning in SE80/ADT, so abaplint is where it is caught);
+  their scheduled runs lint once against the core's `main` (the canary above)
+* `check-abap2ui5` — the abap2UI5-linter over the app classes and their
+  views (`abap2ui5lint.jsonc`)
+* `publish-702` / `abap-702` — `publish-702` writes the downported `702`
+  branch on every push to `main` (`npm run auto_downport`: `abaplint --fix`
+  against `.github/abaplint/abap_702.jsonc`), and `abap-702` lints it
+* `check-rename` — namespace-rename check (`.github/abaplint/rename.json`)
+* `build-rename` — manual workflow that pushes a namespace-renamed branch
   `rename_<name>` for a parallel install
+* `bump-core` — moves the abap2UI5 release pin, see Dependencies
 
 All `.abap`/`.xml`/config files are LF-only (`.gitattributes` enforces it).
