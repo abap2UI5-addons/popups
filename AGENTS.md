@@ -22,7 +22,7 @@ Ready-to-use popup and dialog apps for [abap2UI5](https://github.com/abap2UI5/ab
 
 ## The Utility Copy Principle (`src/00/`)
 
-`z2ui5_cl_popup_context` is a **renamed copy** of `zabaputil_cl_util_context` from the [abap-util](https://github.com/abap-util/abap-util) **master catalog** (which contains all utility classes with all methods), **trimmed to the methods the popup apps actually use**. This repo has no install-time dependency on abap-util — abapGit has no dependency management, so utilities are vendored instead of referenced. The same pattern is used by the abap2UI5 core (`z2ui5_cl_a2ui5_context` in its `src/00/03/`).
+`z2ui5_cl_popup_context` is a **renamed copy** of `zabaputil_cl_util_context` from the [abap-util](https://github.com/abap-util/abap-util) **master catalog** (which contains all utility classes with all methods), **trimmed to the methods the popup apps actually use**. This repo has no install-time dependency on abap-util — abapGit has no dependency management, so utilities are vendored instead of referenced. The same pattern is used by the abap2UI5 core (`z2ui5_cl_ui5_util_context` in its `src/00/03/`).
 
 **How the copy is maintained:**
 
@@ -66,15 +66,23 @@ This project follows the conventions of the abap2UI5 core framework (see its [AG
 
 ## Validation
 
-Run `npx abaplint` before considering changes complete (0 issues expected). CI:
+Run `npm run check` before considering changes complete: it runs the same
+abaplint, abap2UI5-linter and rename steps as CI, and all of them must pass.
+CI:
 
-* `ABAP_STANDARD` / `ABAP_CLOUD` — lint against Standard ABAP and ABAP Cloud
+* `abap-standard` / `abap-cloud` — lint against Standard ABAP
+  (`abaplint.jsonc`) and ABAP Cloud (`.github/abaplint/abap_cloud.jsonc`)
   (`uncaught_exception` is on: a checked exception that is neither caught nor
-  declared is only a warning in SE80/ADT, so abaplint is where it is caught)
-* `ABAP_702` — lint the downported `702` branch; `npm run downport` /
-  `auto_downport` produce it (`abaplint --fix` against `.github/abaplint/abap_702.jsonc`)
-* `renaming` (`rename_test.yaml`) — namespace-rename check
-* `build_rename` — manual workflow that pushes a namespace-renamed branch
+  declared is only a warning in SE80/ADT, so abaplint is where it is caught);
+  their scheduled runs lint once against the core's `main` (the canary above)
+* `check-abap2ui5` — the abap2UI5-linter over the app classes and their
+  views (`abap2ui5lint.jsonc`)
+* `publish-702` / `abap-702` — `publish-702` writes the downported `702`
+  branch on every push to `main` (`npm run auto_downport`: `abaplint --fix`
+  against `.github/abaplint/abap_702.jsonc`), and `abap-702` lints it
+* `check-rename` — namespace-rename check (`.github/abaplint/rename.json`)
+* `build-rename` — manual workflow that pushes a namespace-renamed branch
   `rename_<name>` for a parallel install
+* `bump-core` — moves the abap2UI5 release pin, see Dependencies
 
 All `.abap`/`.xml`/config files are LF-only (`.gitattributes` enforces it).
