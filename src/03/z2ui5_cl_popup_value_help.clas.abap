@@ -354,7 +354,11 @@ CLASS z2ui5_cl_popup_value_help IMPLEMENTATION.
 
     ENDIF.
 
+    " a field without a check table has no values to offer - back to the
+    " caller, as for an unknown field: staying here without a view left the
+    " caller's screen on display with every event routed to this popup
     IF dfies->checktable IS INITIAL.
+      client->nav_app_leave( client->get_app( client->get( )-s_draft-id_prev_app_stack ) ).
       RETURN.
     ENDIF.
 
