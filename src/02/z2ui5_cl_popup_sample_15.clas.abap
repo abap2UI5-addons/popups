@@ -128,7 +128,7 @@ CLASS z2ui5_cl_popup_sample_15 IMPLEMENTATION.
 
     IF client->get( )-check_on_navigated = abap_true.
       TRY.
-          DATA(lo_popup_table) = CAST z2ui5_cl_popup_table( client->get_app( client->get( )-s_draft-id_prev_app ) ).
+          DATA(lo_popup_table) = CAST z2ui5_cl_popup_table( client->get_app( client->get( )-s_draft-id_prev_app ) ) ##NEEDED.
           set_data( ).
         CATCH cx_root ##NO_HANDLER.
       ENDTRY.

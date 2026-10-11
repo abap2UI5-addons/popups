@@ -64,7 +64,7 @@ CLASS z2ui5_cl_popup_sample_13 IMPLEMENTATION.
 
     TRY.
         DATA(lo_prev) = client->get_app( client->get( )-s_draft-id_prev_app ).
-        DATA(lv_text) = CAST z2ui5_cl_popup_pdf( lo_prev )->result( )-text.
+        DATA(lv_text) = CAST z2ui5_cl_popup_pdf( lo_prev )->result( )-text ##NEEDED.
         client->message_box_display( `pdf viewer closed` ).
       CATCH cx_root ##NO_HANDLER.
     ENDTRY.

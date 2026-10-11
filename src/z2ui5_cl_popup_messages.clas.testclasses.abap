@@ -35,7 +35,7 @@ CLASS ltcl_test IMPLEMENTATION.
 
     TRY.
         DATA(lv_val) = 1 / 0 ##NEEDED.
-      CATCH cx_root INTO DATA(lx).
+      CATCH cx_root INTO DATA(lx) ##NO_HANDLER.
     ENDTRY.
 
     DATA(lo_pop) = z2ui5_cl_popup_messages=>factory( lx ).

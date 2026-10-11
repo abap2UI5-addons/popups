@@ -70,7 +70,7 @@ CLASS z2ui5_cl_popup_sample_06 IMPLEMENTATION.
 
     TRY.
         DATA(lo_prev) = client->get_app( client->get( )-s_draft-id_prev_app ).
-        DATA(lo_dummy) = CAST z2ui5_cl_popup_to_inform( lo_prev ).
+        DATA(lo_dummy) = CAST z2ui5_cl_popup_to_inform( lo_prev ) ##NEEDED.
         client->message_box_display( `callback after popup to inform` ).
       CATCH cx_root ##NO_HANDLER.
     ENDTRY.
