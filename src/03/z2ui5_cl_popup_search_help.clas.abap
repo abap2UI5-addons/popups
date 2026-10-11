@@ -11,7 +11,7 @@ CLASS z2ui5_cl_popup_search_help DEFINITION
     DATA mv_shlpfield    TYPE string.
     DATA mv_value        TYPE string.
     DATA mv_return_value TYPE string.
-    DATA mv_rows         TYPE int1 VALUE '50'.
+    DATA mv_rows         TYPE int1 VALUE '50' ##NEEDED.
     DATA mt_data         TYPE REF TO data.
     DATA ms_data_row     TYPE REF TO data.
     DATA mo_layout       TYPE REF TO z2ui5_cl_layo_manager.
@@ -19,7 +19,7 @@ CLASS z2ui5_cl_popup_search_help DEFINITION
     DATA mt_result_desc  TYPE z2ui5_cl_popup_context=>ty_t_dfies_2.
     DATA mr_data         TYPE REF TO data.
 
-    TYPES ty_t_dfies TYPE z2ui5_cl_popup_context=>ty_t_dfies_2.
+    TYPES ty_t_dfies TYPE z2ui5_cl_popup_context=>ty_t_dfies_2 ##NEEDED.
 
     CLASS-METHODS factory
       IMPORTING
