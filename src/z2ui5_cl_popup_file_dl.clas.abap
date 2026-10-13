@@ -47,8 +47,9 @@ CLASS z2ui5_cl_popup_file_dl IMPLEMENTATION.
   METHOD factory.
 
     DATA lv_size_kb TYPE p LENGTH 8 DECIMALS 2.
+    DATA temp6 TYPE string.
 
-    r_result = NEW #( ).
+    CREATE OBJECT r_result.
     r_result->title               = i_title.
 
     r_result->question_text       = i_text.
@@ -60,7 +61,9 @@ CLASS z2ui5_cl_popup_file_dl IMPLEMENTATION.
     " packed target avoids the integer division that displayed 0 for small
     " files, condense drops the trailing sign blank of the conversion
     lv_size_kb                    = strlen( i_file ) / 1000.
-    r_result->mv_size             = condense( CONV string( lv_size_kb ) ).
+
+    temp6 = lv_size_kb.
+    r_result->mv_size             = condense( temp6 ).
 
   ENDMETHOD.
 
@@ -72,7 +75,8 @@ CLASS z2ui5_cl_popup_file_dl IMPLEMENTATION.
 
   METHOD view_display.
 
-    DATA(popup) = z2ui5_cl_ui5_view_builder=>factory(
+    DATA popup TYPE REF TO z2ui5_cl_ui5_view_builder.
+    popup = z2ui5_cl_ui5_view_builder=>factory(
                       )->ele( n = `FragmentDefinition` ns = `core`
                       )->a( n = `xmlns` v = `sap.m`
                       )->a( n = `xmlns:core` v = `sap.ui.core`
@@ -121,15 +125,29 @@ CLASS z2ui5_cl_popup_file_dl IMPLEMENTATION.
     " client timer fires right after the download has been handed over: the
     " actions an app queues do not survive its own nav_app_leave( ), so the
     " download and the leave cannot share one roundtrip.
-    DATA(lv_csv_x) = z2ui5_cl_popup_context=>conv_get_xstring_by_string( mv_value ).
-    DATA(lv_base64) = z2ui5_cl_popup_context=>conv_encode_x_base64( lv_csv_x ).
+    DATA lv_csv_x TYPE xstring.
+    DATA lv_base64 TYPE string.
+    DATA temp7 TYPE string_table.
+    DATA temp2 LIKE LINE OF temp7.
+    DATA temp9 TYPE string_table.
+    lv_csv_x = z2ui5_cl_popup_context=>conv_get_xstring_by_string( mv_value ).
 
+    lv_base64 = z2ui5_cl_popup_context=>conv_encode_x_base64( lv_csv_x ).
+
+
+    CLEAR temp7.
+
+    temp2 = mv_type && lv_base64.
+    INSERT temp2 INTO TABLE temp7.
+    INSERT mv_name INTO TABLE temp7.
     client->follow_up_action( val   = z2ui5_if_client=>cs_event-download_b64_file
-                              t_arg = VALUE #( ( mv_type && lv_base64 )
-                                               ( mv_name ) ) ).
+                              t_arg = temp7 ).
+
+    CLEAR temp9.
+    INSERT `CALLBACK_DOWNLOAD` INTO TABLE temp9.
+    INSERT `0` INTO TABLE temp9.
     client->follow_up_action( val   = z2ui5_if_client=>cs_event-start_timer
-                              t_arg = VALUE #( ( `CALLBACK_DOWNLOAD` )
-                                               ( `0` ) ) ).
+                              t_arg = temp9 ).
 
   ENDMETHOD.
 
@@ -137,7 +155,7 @@ CLASS z2ui5_cl_popup_file_dl IMPLEMENTATION.
 
     me->client = client.
 
-    IF client->check_on_init( ).
+    IF client->check_on_init( ) IS NOT INITIAL.
       view_display( ).
       RETURN.
     ENDIF.

@@ -21,11 +21,16 @@ ENDCLASS.
 CLASS z2ui5_cl_demo_app_168 IMPLEMENTATION.
 
   METHOD on_navigation.
+        DATA lo_prev TYPE REF TO z2ui5_if_app.
+        DATA temp1 TYPE REF TO z2ui5_cl_pop_file_dl.
 
     TRY.
-        DATA(lo_prev) = client->get_app( client->get( )-s_draft-id_prev_app ).
 
-        IF CAST z2ui5_cl_pop_file_dl( lo_prev )->result( ).
+        lo_prev = client->get_app( client->get( )-s_draft-id_prev_app ).
+
+
+        temp1 ?= lo_prev.
+        IF temp1->result( ) IS NOT INITIAL.
           client->message_box_display( `the input is downloaded` ).
         ENDIF.
       CATCH cx_root.
@@ -36,7 +41,8 @@ CLASS z2ui5_cl_demo_app_168 IMPLEMENTATION.
 
   METHOD view_display.
 
-    DATA(view) = z2ui5_cl_xml_view=>factory( ).
+    DATA view TYPE REF TO z2ui5_cl_xml_view.
+    view = z2ui5_cl_xml_view=>factory( ).
     view->shell(
         )->page(
                 title          = `abap2UI5 - Popup File Download`
@@ -52,11 +58,13 @@ CLASS z2ui5_cl_demo_app_168 IMPLEMENTATION.
 
 
   METHOD on_event.
+        DATA lo_app TYPE REF TO z2ui5_cl_pop_file_dl.
 
     CASE client->get( )-event.
 
       WHEN `POPUP`.
-        DATA(lo_app) = z2ui5_cl_pop_file_dl=>factory( get_file( ) ).
+
+        lo_app = z2ui5_cl_pop_file_dl=>factory( get_file( ) ).
         client->nav_app_call( lo_app ).
     ENDCASE.
 
