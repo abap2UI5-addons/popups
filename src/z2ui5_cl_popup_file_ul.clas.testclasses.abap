@@ -74,6 +74,8 @@ CLASS ltcl_test_roundtrip DEFINITION FINAL
 
     METHODS test_init_displays_popup FOR TESTING RAISING cx_static_check.
     METHODS test_upload_decodes_file FOR TESTING RAISING cx_static_check.
+    METHODS test_upload_name_bytes   FOR TESTING RAISING cx_static_check.
+    METHODS test_upload_multiple     FOR TESTING RAISING cx_static_check.
     METHODS test_confirm             FOR TESTING RAISING cx_static_check.
     METHODS test_cancel              FOR TESTING RAISING cx_static_check.
 
@@ -123,6 +125,62 @@ CLASS ltcl_test_roundtrip IMPLEMENTATION.
                                         act = lo_pop->result( )-value ).
     cl_abap_unit_assert=>assert_true( lo_pop->check_confirm_enabled ).
     cl_abap_unit_assert=>assert_initial( lo_pop->mv_value ).
+
+  ENDMETHOD.
+
+  METHOD test_upload_name_bytes.
+
+    " a binary file: its name without the folder, and its bytes as they are
+    DATA(lo_pop) = z2ui5_cl_popup_file_ul=>factory( i_file_type = `png` ).
+    lo_pop->mv_value = `data:image/png;base64,iVBORw==`.
+    lo_pop->mv_path = `C:\fakepath\logo.png`.
+    roundtrip_event( io_app   = lo_pop
+                     iv_event = `UPLOAD` ).
+
+    DATA(ls_result) = lo_pop->result( ).
+    cl_abap_unit_assert=>assert_equals( exp = `logo.png`
+                                        act = ls_result-name ).
+    cl_abap_unit_assert=>assert_equals( exp = CONV xstring( `89504E47` )
+                                        act = ls_result-content ).
+    cl_abap_unit_assert=>assert_equals( exp = 1
+                                        act = lines( ls_result-files ) ).
+    " no UTF-8 text - no value, and no dump
+    cl_abap_unit_assert=>assert_initial( ls_result-value ).
+
+  ENDMETHOD.
+
+  METHOD test_upload_multiple.
+
+    DATA(lo_pop) = z2ui5_cl_popup_file_ul=>factory( i_multiple = abap_true ).
+    lo_pop->mv_value = `data:text/plain;base64,YQ==`.
+    lo_pop->mv_path = `a.txt`.
+    roundtrip_event( io_app   = lo_pop
+                     iv_event = `UPLOAD` ).
+    lo_pop->mv_value = `data:text/plain;base64,Yg==`.
+    lo_pop->mv_path = `b.txt`.
+    roundtrip_event( io_app   = lo_pop
+                     iv_event = `UPLOAD` ).
+
+    DATA(ls_result) = lo_pop->result( ).
+    cl_abap_unit_assert=>assert_equals( exp = 2
+                                        act = lines( ls_result-files ) ).
+    cl_abap_unit_assert=>assert_equals( exp = `b`
+                                        act = ls_result-value ).
+    cl_abap_unit_assert=>assert_equals( exp = `a.txt`
+                                        act = lo_pop->mt_name[ 1 ]-name ).
+
+    " without i_multiple a second file replaces the first
+    DATA(lo_one) = z2ui5_cl_popup_file_ul=>factory( ).
+    lo_one->mv_value = `data:text/plain;base64,YQ==`.
+    lo_one->mv_path = `a.txt`.
+    roundtrip_event( io_app   = lo_one
+                     iv_event = `UPLOAD` ).
+    lo_one->mv_value = `data:text/plain;base64,Yg==`.
+    lo_one->mv_path = `b.txt`.
+    roundtrip_event( io_app   = lo_one
+                     iv_event = `UPLOAD` ).
+    cl_abap_unit_assert=>assert_equals( exp = 1
+                                        act = lines( lo_one->result( )-files ) ).
 
   ENDMETHOD.
 
