@@ -11,7 +11,7 @@ CLASS z2ui5_cl_demo_app_152 DEFINITION PUBLIC.
         descr   TYPE string,
       END OF ty_s_row.
 
-    DATA mt_tab TYPE STANDARD TABLE OF ty_s_row WITH EMPTY KEY.
+    DATA mt_tab TYPE STANDARD TABLE OF ty_s_row WITH DEFAULT KEY.
     DATA mv_multiselect TYPE abap_bool.
     DATA mv_preselect TYPE abap_bool.
 
@@ -29,32 +29,64 @@ ENDCLASS.
 CLASS z2ui5_cl_demo_app_152 IMPLEMENTATION.
 
   METHOD on_event.
+        DATA temp1 LIKE mt_tab.
+        DATA temp2 LIKE LINE OF temp1.
+        DATA temp3 TYPE string.
+        DATA lo_app TYPE REF TO z2ui5_cl_pop_to_select.
+        DATA temp4 TYPE abap_bool.
 
     CASE client->get( )-event.
 
       WHEN `POPUP`.
 
-        mt_tab = VALUE #( descr = `this is a description`
-             ( zzselkz = mv_preselect title = `title_01`  value = `value_01` )
-             ( zzselkz = mv_preselect title = `title_02`  value = `value_02` )
-             ( zzselkz = mv_preselect title = `title_03`  value = `value_03` )
-             ( zzselkz = mv_preselect title = `title_04`  value = `value_04` )
-             ( zzselkz = mv_preselect title = `title_05`  value = `value_05` ) ).
 
-        DATA(lo_app) = z2ui5_cl_pop_to_select=>factory(
+        CLEAR temp1.
+
+        temp2-descr = `this is a description`.
+        temp2-zzselkz = mv_preselect.
+        temp2-title = `title_01`.
+        temp2-value = `value_01`.
+        INSERT temp2 INTO TABLE temp1.
+        temp2-zzselkz = mv_preselect.
+        temp2-title = `title_02`.
+        temp2-value = `value_02`.
+        INSERT temp2 INTO TABLE temp1.
+        temp2-zzselkz = mv_preselect.
+        temp2-title = `title_03`.
+        temp2-value = `value_03`.
+        INSERT temp2 INTO TABLE temp1.
+        temp2-zzselkz = mv_preselect.
+        temp2-title = `title_04`.
+        temp2-value = `value_04`.
+        INSERT temp2 INTO TABLE temp1.
+        temp2-zzselkz = mv_preselect.
+        temp2-title = `title_05`.
+        temp2-value = `value_05`.
+        INSERT temp2 INTO TABLE temp1.
+        mt_tab = temp1.
+
+
+        IF mv_multiselect = abap_true.
+          temp3 = `Multi select`.
+        ELSE.
+          temp3 = `Single select`.
+        ENDIF.
+
+        lo_app = z2ui5_cl_pop_to_select=>factory(
                            i_tab         = mt_tab
                            i_multiselect = mv_multiselect
-                           i_title       = COND #(
-                                             WHEN mv_multiselect = abap_true
-                                             THEN `Multi select`
-                                             ELSE `Single select` ) ).
+                           i_title       = temp3 ).
         client->nav_app_call( lo_app ).
 
       WHEN `MULTISELECT_TOGGLE`.
 
-        mv_preselect = COND #( WHEN mv_multiselect = abap_false
-                               THEN abap_false
-                               ELSE mv_preselect ).
+
+        IF mv_multiselect = abap_false.
+          temp4 = abap_false.
+        ELSE.
+          temp4 = mv_preselect.
+        ENDIF.
+        mv_preselect = temp4.
 
         client->view_model_update( ).
     ENDCASE.
@@ -64,7 +96,8 @@ CLASS z2ui5_cl_demo_app_152 IMPLEMENTATION.
 
   METHOD view_display.
 
-    DATA(view) = z2ui5_cl_xml_view=>factory( ).
+    DATA view TYPE REF TO z2ui5_cl_xml_view.
+    view = z2ui5_cl_xml_view=>factory( ).
     view->shell(
         )->page(
                 title          = `abap2UI5 - Popup To Select`
@@ -97,7 +130,7 @@ CLASS z2ui5_cl_demo_app_152 IMPLEMENTATION.
 
     IF client->get( )-check_on_navigated = abap_true.
 
-      IF client->check_on_init( ).
+      IF client->check_on_init( ) IS NOT INITIAL.
         view_display( ).
 
       ELSE.
@@ -114,10 +147,18 @@ CLASS z2ui5_cl_demo_app_152 IMPLEMENTATION.
   METHOD on_navigation.
 
     FIELD-SYMBOLS <row> TYPE ty_s_row.
+        DATA lo_prev TYPE REF TO z2ui5_if_app.
+        DATA temp5 TYPE REF TO z2ui5_cl_pop_to_select.
+        DATA ls_result TYPE z2ui5_cl_pop_to_select=>ty_s_result.
+          FIELD-SYMBOLS <table> TYPE data.
 
     TRY.
-        DATA(lo_prev) = client->get_app( client->get( )-s_draft-id_prev_app ).
-        DATA(ls_result) = CAST z2ui5_cl_pop_to_select( lo_prev )->result( ).
+
+        lo_prev = client->get_app( client->get( )-s_draft-id_prev_app ).
+
+        temp5 ?= lo_prev.
+
+        ls_result = temp5->result( ).
 
         IF ls_result-check_confirmed = abap_false.
 
@@ -132,7 +173,8 @@ CLASS z2ui5_cl_demo_app_152 IMPLEMENTATION.
 
         ELSE.
 
-          ASSIGN ls_result-table->* TO FIELD-SYMBOL(<table>).
+
+          ASSIGN ls_result-table->* TO <table>.
           client->nav_app_call( z2ui5_cl_pop_table=>factory(
                                     i_tab   = <table>
                                     i_title = `Selected rows` ) ).

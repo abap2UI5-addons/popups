@@ -17,11 +17,13 @@ ENDCLASS.
 CLASS z2ui5_cl_demo_app_151 IMPLEMENTATION.
 
   METHOD on_event.
+        DATA lo_app TYPE REF TO z2ui5_cl_pop_to_inform.
 
     CASE client->get( )-event.
 
       WHEN `POPUP`.
-        DATA(lo_app) = z2ui5_cl_pop_to_inform=>factory( `this is a question` ).
+
+        lo_app = z2ui5_cl_pop_to_inform=>factory( `this is a question` ).
         client->nav_app_call( lo_app ).
     ENDCASE.
 
@@ -30,7 +32,8 @@ CLASS z2ui5_cl_demo_app_151 IMPLEMENTATION.
 
   METHOD view_display.
 
-    DATA(view) = z2ui5_cl_xml_view=>factory( ).
+    DATA view TYPE REF TO z2ui5_cl_xml_view.
+    view = z2ui5_cl_xml_view=>factory( ).
     view->shell(
         )->page(
                 title          = `abap2UI5 - Popup To Inform`
@@ -62,10 +65,17 @@ CLASS z2ui5_cl_demo_app_151 IMPLEMENTATION.
 
 
   METHOD on_navigation.
+        DATA lo_prev TYPE REF TO z2ui5_if_app.
+        DATA temp1 TYPE REF TO z2ui5_cl_pop_to_inform.
+        DATA lo_dummy LIKE temp1.
 
     TRY.
-        DATA(lo_prev) = client->get_app( client->get( )-s_draft-id_prev_app ).
-        DATA(lo_dummy) = CAST z2ui5_cl_pop_to_inform( lo_prev ).
+
+        lo_prev = client->get_app( client->get( )-s_draft-id_prev_app ).
+
+        temp1 ?= lo_prev.
+
+        lo_dummy = temp1.
         client->message_box_display( `callback after popup to inform` ).
       CATCH cx_root.
     ENDTRY.

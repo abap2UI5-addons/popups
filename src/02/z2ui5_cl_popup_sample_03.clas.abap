@@ -19,11 +19,13 @@ ENDCLASS.
 CLASS z2ui5_cl_popup_sample_03 IMPLEMENTATION.
 
   METHOD on_event.
+        DATA lo_app TYPE REF TO z2ui5_cl_popup_image_edit.
 
     CASE client->get( )-event.
 
       WHEN `POPUP`.
-        DATA(lo_app) = z2ui5_cl_popup_image_edit=>factory( mv_image ).
+
+        lo_app = z2ui5_cl_popup_image_edit=>factory( mv_image ).
         client->nav_app_call( lo_app ).
     ENDCASE.
 
@@ -31,12 +33,14 @@ CLASS z2ui5_cl_popup_sample_03 IMPLEMENTATION.
 
 
   METHOD view_display.
+    DATA view TYPE REF TO z2ui5_cl_ui5_view_builder.
 
     IF mv_image IS INITIAL.
       mv_image = `https://raw.githubusercontent.com/abap2UI5/abap2UI5/main/docs/images/logo.png`.
     ENDIF.
 
-    DATA(view) = z2ui5_cl_ui5_view_builder=>factory(
+
+    view = z2ui5_cl_ui5_view_builder=>factory(
                      )->ele( n = `View` ns = `mvc`
                      )->a( n = `xmlns` v = `sap.m`
                      )->a( n = `xmlns:mvc` v = `sap.ui.core.mvc`
@@ -76,10 +80,17 @@ CLASS z2ui5_cl_popup_sample_03 IMPLEMENTATION.
 
 
   METHOD on_navigation.
+        DATA lo_prev TYPE REF TO z2ui5_if_app.
+        DATA temp1 TYPE REF TO z2ui5_cl_popup_image_edit.
+        DATA ls_result TYPE z2ui5_cl_popup_image_edit=>t_result.
 
     TRY.
-        DATA(lo_prev) = client->get_app( client->get( )-s_draft-id_prev_app ).
-        DATA(ls_result) = CAST z2ui5_cl_popup_image_edit( lo_prev )->result( ).
+
+        lo_prev = client->get_app( client->get( )-s_draft-id_prev_app ).
+
+        temp1 ?= lo_prev.
+
+        ls_result = temp1->result( ).
         IF ls_result-check_confirmed = abap_true AND ls_result-image IS NOT INITIAL.
           mv_image = ls_result-image.
           client->message_toast_display( `image saved` ).

@@ -12,7 +12,7 @@ CLASS z2ui5_cl_demo_app_164 DEFINITION PUBLIC.
         storage_location TYPE string,
         quantity         TYPE i,
       END OF ty_s_tab.
-    DATA mt_table TYPE STANDARD TABLE OF ty_s_tab WITH EMPTY KEY.
+    DATA mt_table TYPE STANDARD TABLE OF ty_s_tab WITH DEFAULT KEY.
 
   PROTECTED SECTION.
     DATA client TYPE REF TO z2ui5_if_client.
@@ -29,7 +29,7 @@ CLASS z2ui5_cl_demo_app_164 IMPLEMENTATION.
 
   METHOD on_event.
 
-    IF client->check_on_event( `BUTTON_START` ).
+    IF client->check_on_event( `BUTTON_START` ) IS NOT INITIAL.
       client->nav_app_call( z2ui5_cl_pop_table=>factory( mt_table ) ).
     ENDIF.
 
@@ -39,29 +39,70 @@ CLASS z2ui5_cl_demo_app_164 IMPLEMENTATION.
   METHOD set_data.
 
     "replace this with a db select here...
-    mt_table = VALUE #(
-        ( product = `table`    create_date = `01.01.2023` create_by = `Peter` storage_location = `AREA_001` quantity = 400 )
-        ( product = `chair`    create_date = `01.01.2023` create_by = `Peter` storage_location = `AREA_001` quantity = 400 )
-        ( product = `sofa`     create_date = `01.01.2023` create_by = `Peter` storage_location = `AREA_001` quantity = 400 )
-        ( product = `computer` create_date = `01.01.2023` create_by = `Peter` storage_location = `AREA_001` quantity = 400 )
-        ( product = `oven`     create_date = `01.01.2023` create_by = `Peter` storage_location = `AREA_001` quantity = 400 )
-        ( product = `table2`   create_date = `01.01.2023` create_by = `Peter` storage_location = `AREA_001` quantity = 400 ) ).
+    DATA temp1 LIKE mt_table.
+    DATA temp2 LIKE LINE OF temp1.
+    CLEAR temp1.
+
+    temp2-product = `table`.
+    temp2-create_date = `01.01.2023`.
+    temp2-create_by = `Peter`.
+    temp2-storage_location = `AREA_001`.
+    temp2-quantity = 400.
+    INSERT temp2 INTO TABLE temp1.
+    temp2-product = `chair`.
+    temp2-create_date = `01.01.2023`.
+    temp2-create_by = `Peter`.
+    temp2-storage_location = `AREA_001`.
+    temp2-quantity = 400.
+    INSERT temp2 INTO TABLE temp1.
+    temp2-product = `sofa`.
+    temp2-create_date = `01.01.2023`.
+    temp2-create_by = `Peter`.
+    temp2-storage_location = `AREA_001`.
+    temp2-quantity = 400.
+    INSERT temp2 INTO TABLE temp1.
+    temp2-product = `computer`.
+    temp2-create_date = `01.01.2023`.
+    temp2-create_by = `Peter`.
+    temp2-storage_location = `AREA_001`.
+    temp2-quantity = 400.
+    INSERT temp2 INTO TABLE temp1.
+    temp2-product = `oven`.
+    temp2-create_date = `01.01.2023`.
+    temp2-create_by = `Peter`.
+    temp2-storage_location = `AREA_001`.
+    temp2-quantity = 400.
+    INSERT temp2 INTO TABLE temp1.
+    temp2-product = `table2`.
+    temp2-create_date = `01.01.2023`.
+    temp2-create_by = `Peter`.
+    temp2-storage_location = `AREA_001`.
+    temp2-quantity = 400.
+    INSERT temp2 INTO TABLE temp1.
+    mt_table = temp1.
 
   ENDMETHOD.
 
 
   METHOD view_display.
 
-    DATA(view) = z2ui5_cl_xml_view=>factory( ).
+    DATA view TYPE REF TO z2ui5_cl_xml_view.
+    DATA vbox TYPE REF TO z2ui5_cl_xml_view.
+    DATA tab TYPE REF TO z2ui5_cl_xml_view.
+    DATA lo_columns TYPE REF TO z2ui5_cl_xml_view.
+    DATA lo_cells TYPE REF TO z2ui5_cl_xml_view.
+    view = z2ui5_cl_xml_view=>factory( ).
 
     view           = view->shell( )->page( id = `page_main`
     title          = `abap2UI5 - Popup Display Table`
     navbuttonpress = client->_event_nav_app_leave( )
     shownavbutton  = client->check_app_prev_stack( ) ).
 
-    DATA(vbox) = view->vbox( ).
 
-    DATA(tab) = vbox->table(
+    vbox = view->vbox( ).
+
+
+    tab = vbox->table(
         client->_bind( val = mt_table )
            )->header_toolbar(
              )->overflow_toolbar(
@@ -72,14 +113,16 @@ CLASS z2ui5_cl_demo_app_164 IMPLEMENTATION.
                       type  = `Emphasized`
             )->get_parent( )->get_parent( ).
 
-    DATA(lo_columns) = tab->columns( ).
+
+    lo_columns = tab->columns( ).
     lo_columns->column( )->text( `Product` ).
     lo_columns->column( )->text( `Date` ).
     lo_columns->column( )->text( `Name` ).
     lo_columns->column( )->text( `Location` ).
     lo_columns->column( )->text( `Quantity` ).
 
-    DATA(lo_cells) = tab->items( )->column_list_item( ).
+
+    lo_cells = tab->items( )->column_list_item( ).
     lo_cells->text( `{PRODUCT}` ).
     lo_cells->text( `{CREATE_DATE}` ).
     lo_cells->text( `{CREATE_BY}` ).
@@ -92,10 +135,12 @@ CLASS z2ui5_cl_demo_app_164 IMPLEMENTATION.
 
 
   METHOD z2ui5_if_app~main.
+          DATA temp3 TYPE REF TO z2ui5_cl_pop_table.
+          DATA lo_popup_table LIKE temp3.
 
     me->client = client.
 
-    IF client->check_on_init( ).
+    IF client->check_on_init( ) IS NOT INITIAL.
 
       set_data( ).
       view_display( ).
@@ -104,7 +149,10 @@ CLASS z2ui5_cl_demo_app_164 IMPLEMENTATION.
 
     IF client->get( )-check_on_navigated = abap_true.
       TRY.
-          DATA(lo_popup_table) = CAST z2ui5_cl_pop_table( client->get_app( client->get( )-s_draft-id_prev_app ) ).
+
+          temp3 ?= client->get_app( client->get( )-s_draft-id_prev_app ).
+
+          lo_popup_table = temp3.
           set_data( ).
           client->view_model_update( ).
         CATCH cx_root.
