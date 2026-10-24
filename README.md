@@ -118,7 +118,8 @@ ENDIF.
 ## Features
 
 * Confirm, Inform & Select popups (`z2ui5_cl_popup_to_confirm`, `z2ui5_cl_popup_to_inform`, `z2ui5_cl_popup_to_select`)
-* File Download & Upload (`z2ui5_cl_popup_file_dl`, `z2ui5_cl_popup_file_ul`)
+* Decide and Get Values - the classic POPUP_TO_DECIDE (a button per option) and POPUP_GET_VALUES (inputs, dates, checkboxes, listboxes, required fields) (`z2ui5_cl_popup_to_decide`, `z2ui5_cl_popup_get_values`)
+* File Download & Upload (`z2ui5_cl_popup_file_dl`, `z2ui5_cl_popup_file_ul` - the upload hands over the file's name and bytes, binary files too, several files with `i_multiple` and limited to types with `i_file_type`)
 * Table, Data & Demo Output (`z2ui5_cl_popup_table`, `z2ui5_cl_popup_data`, `z2ui5_cl_popup_demo_output`)
 * Text Editor, HTML & PDF display (`z2ui5_cl_popup_textedit`, `z2ui5_cl_popup_html`, `z2ui5_cl_popup_pdf`)
 * Messages, Error & Input Validation (`z2ui5_cl_popup_messages`, `z2ui5_cl_popup_error`, `z2ui5_cl_popup_input_val`)
