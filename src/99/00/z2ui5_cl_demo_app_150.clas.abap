@@ -10,10 +10,13 @@ ENDCLASS.
 CLASS z2ui5_cl_demo_app_150 IMPLEMENTATION.
 
   METHOD z2ui5_if_app~main.
+      DATA view TYPE REF TO z2ui5_cl_xml_view.
+      DATA lo_app TYPE REF TO z2ui5_cl_pop_to_confirm.
 
-    IF client->check_on_init( ).
+    IF client->check_on_init( ) IS NOT INITIAL.
 
-      DATA(view) = z2ui5_cl_xml_view=>factory( ).
+
+      view = z2ui5_cl_xml_view=>factory( ).
       view->shell(
           )->page( title          = `abap2UI5 - Popup To Confirm`
                    navbuttonpress = client->_event_nav_app_leave( )
@@ -22,17 +25,18 @@ CLASS z2ui5_cl_demo_app_150 IMPLEMENTATION.
                      press = client->_event( `POPUP` ) ).
       client->view_display( view->stringify( ) ).
 
-    ELSEIF client->check_on_event( `POPUP` ).
+    ELSEIF client->check_on_event( `POPUP` ) IS NOT INITIAL.
 
-      DATA(lo_app) = z2ui5_cl_pop_to_confirm=>factory( i_question_text = `this is a question`
+
+      lo_app = z2ui5_cl_pop_to_confirm=>factory( i_question_text = `this is a question`
                                                        i_event_confirm = `POPUP_TRUE`
                                                        i_event_cancel  = `POPUP_FALSE` ).
       client->nav_app_call( lo_app ).
 
-    ELSEIF client->check_on_event( `POPUP_TRUE` ).
+    ELSEIF client->check_on_event( `POPUP_TRUE` ) IS NOT INITIAL.
       client->message_box_display( `the result is SUCCESS` ).
 
-    ELSEIF client->check_on_event( `POPUP_FALSE` ).
+    ELSEIF client->check_on_event( `POPUP_FALSE` ) IS NOT INITIAL.
       client->message_box_display( `the result is CANCEL` ).
 
     ENDIF.

@@ -22,7 +22,7 @@ CLASS z2ui5_cl_popup_file_ul DEFINITION PUBLIC.
         name    TYPE string,
         content TYPE xstring,
       END OF ty_s_file.
-    TYPES ty_t_file TYPE STANDARD TABLE OF ty_s_file WITH EMPTY KEY.
+    TYPES ty_t_file TYPE STANDARD TABLE OF ty_s_file WITH DEFAULT KEY.
 
     TYPES:
       "! value is the last file as UTF-8 text (empty when it is no text),
@@ -41,7 +41,7 @@ CLASS z2ui5_cl_popup_file_ul DEFINITION PUBLIC.
       BEGIN OF ty_s_name,
         name TYPE string,
       END OF ty_s_name.
-    TYPES ty_t_name TYPE STANDARD TABLE OF ty_s_name WITH EMPTY KEY.
+    TYPES ty_t_name TYPE STANDARD TABLE OF ty_s_name WITH DEFAULT KEY.
 
     DATA ms_result             TYPE ty_s_result.
     DATA mv_path               TYPE string.
@@ -76,7 +76,7 @@ CLASS z2ui5_cl_popup_file_ul IMPLEMENTATION.
 
   METHOD factory.
 
-    r_result = NEW #( ).
+    CREATE OBJECT r_result.
     r_result->title               = i_title.
 
     r_result->question_text       = i_text.
@@ -96,7 +96,8 @@ CLASS z2ui5_cl_popup_file_ul IMPLEMENTATION.
 
   METHOD view_display.
 
-    DATA(popup) = z2ui5_cl_ui5_view_builder=>factory(
+    DATA popup TYPE REF TO z2ui5_cl_ui5_view_builder.
+    popup = z2ui5_cl_ui5_view_builder=>factory(
                       )->ele( n = `FragmentDefinition` ns = `core`
                       )->a( n = `xmlns` v = `sap.m`
                       )->a( n = `xmlns:core` v = `sap.ui.core`
@@ -145,12 +146,15 @@ CLASS z2ui5_cl_popup_file_ul IMPLEMENTATION.
   METHOD on_upload.
 
     DATA ls_file TYPE ty_s_file.
+    DATA lv_slash TYPE i.
+    DATA temp5 TYPE z2ui5_cl_popup_file_ul=>ty_s_name.
 
     ls_file-content = z2ui5_cl_popup_context=>conv_get_xstring_by_data_uri( mv_value ).
     " the name without the folder - the browser hands C:\fakepath\name over
     ls_file-name = mv_path.
     REPLACE ALL OCCURRENCES OF `\` IN ls_file-name WITH `/`.
-    DATA(lv_slash) = find( val = ls_file-name sub = `/` occ = -1 ).
+
+    lv_slash = find( val = ls_file-name sub = `/` occ = -1 ).
     IF lv_slash >= 0.
       ls_file-name = substring( val = ls_file-name off = lv_slash + 1 ).
     ENDIF.
@@ -169,7 +173,10 @@ CLASS z2ui5_cl_popup_file_ul IMPLEMENTATION.
     DELETE ms_result-files WHERE name = ls_file-name.
     DELETE mt_name WHERE name = ls_file-name.
     INSERT ls_file INTO TABLE ms_result-files.
-    INSERT VALUE #( name = ls_file-name ) INTO TABLE mt_name.
+
+    CLEAR temp5.
+    temp5-name = ls_file-name.
+    INSERT temp5 INTO TABLE mt_name.
     check_confirm_enabled = abap_true.
 
     CLEAR mv_value.
@@ -178,22 +185,27 @@ CLASS z2ui5_cl_popup_file_ul IMPLEMENTATION.
   ENDMETHOD.
 
   METHOD z2ui5_if_app~main.
+    DATA lv_event TYPE z2ui5_if_client=>ty_s_get-event.
+        DATA temp1 TYPE xsdboolean.
 
     me->client = client.
 
-    IF client->check_on_init( ).
+    IF client->check_on_init( ) IS NOT INITIAL.
       view_display( ).
       RETURN.
     ENDIF.
 
-    DATA(lv_event) = client->get( )-event.
+
+    lv_event = client->get( )-event.
     CASE lv_event.
 
       WHEN `UPLOAD`.
         on_upload( ).
 
       WHEN `BUTTON_CONFIRM` OR `BUTTON_CANCEL`.
-        ms_result-check_confirmed = xsdbool( lv_event = `BUTTON_CONFIRM` ).
+
+        temp1 = boolc( lv_event = `BUTTON_CONFIRM` ).
+        ms_result-check_confirmed = temp1.
         client->popup_destroy( ).
         client->nav_app_leave( ).
     ENDCASE.
