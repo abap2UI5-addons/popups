@@ -15,7 +15,7 @@ Ready-to-use popup and dialog apps for [abap2UI5](https://github.com/abap2UI5/ab
 | Package | Content |
 |---|---|
 | `src/` | Popup classes (`z2ui5_cl_popup_*`) |
-| `src/00/` | Context/utility class `z2ui5_cl_popup_context` — **vendored copy from abap-util, see below** |
+| `src/00/` | Context/utility class `z2ui5_cl_popup_context` and its exception `z2ui5_cx_popup_error` — **vendored copies from abap-util, see below** |
 | `src/02/` | Samples (`z2ui5_cl_popup_sample_*`) |
 | `src/03/` | Popups with layout-management dependency (Value-Help, Search-Help) |
 | `src/99/` | Obsolete: the original classes of this repository, kept for compatibility — do not extend |
@@ -26,10 +26,11 @@ Ready-to-use popup and dialog apps for [abap2UI5](https://github.com/abap2UI5/ab
 
 **How the copy is maintained:**
 
-1. **Method-level trimming:** the copy carries only the methods the popup apps use, including the private helpers those methods need. (Method-level trimming applies to the context class only — any other class vendored from abap-util is copied as-is.)
-2. **New methods are added locally.** When a popup needs a utility method the copy doesn't have yet, write it directly into `z2ui5_cl_popup_context`. If the method already exists in abap-util, copy it from there (with its private helpers) instead of re-implementing it. Do not add a dependency on another project's copy.
-3. **Periodic AI sync-back:** every few weeks an AI compares abap-util with all consumers and merges methods that were added locally back into abap-util, so the master catalog stays the superset of all methods and other projects can reuse them.
-4. **Popup-specific logic does not belong in the context class.** Keep it in the popup class; only generic, reusable utilities live in the vendored copy (they will be harvested into abap-util by the sync).
+1. **Nothing from the core's frozen `src/99/01`.** `z2ui5_cl_util*` and `z2ui5_cx_util_error` are kept in abap2UI5 for compatibility only; every utility call goes through `z2ui5_cl_popup_context`, every utility exception is `z2ui5_cx_popup_error` (a renamed copy of `zabaputil_cx_util_error`, copied as-is).
+2. **Method-level trimming:** the copy carries only the methods the popup apps use, including the private helpers those methods need. (Method-level trimming applies to the context class only — any other class vendored from abap-util is copied as-is.)
+3. **New methods are added locally.** When a popup needs a utility method the copy doesn't have yet, write it directly into `z2ui5_cl_popup_context`. If the method already exists in abap-util, copy it from there (with its private helpers) instead of re-implementing it. Do not add a dependency on another project's copy.
+4. **Periodic AI sync-back:** every few weeks an AI compares abap-util with all consumers and merges methods that were added locally back into abap-util, so the master catalog stays the superset of all methods and other projects can reuse them.
+5. **Popup-specific logic does not belong in the context class.** Keep it in the popup class; only generic, reusable utilities live in the vendored copy (they will be harvested into abap-util by the sync).
 
 ## Dependencies
 
