@@ -688,7 +688,6 @@ CLASS z2ui5_cl_popup_context DEFINITION
     " abap_true when one component of a row holds the search text - the
     " per-field half of itab_filter_by_val. A component that is not printable
     " (a table of children, a reference) holds no text and answers false
-    " FROZEN-ONLY: no caller in src/00 - src/02, kept for src/99
     CLASS-METHODS itab_filter_check_field
       IMPORTING
         field         TYPE any

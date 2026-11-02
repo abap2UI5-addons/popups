@@ -170,11 +170,14 @@ ENDIF.
 | `src/00/` | Context/utility class `z2ui5_cl_popup_context` — a vendored copy from [abap-util](https://github.com/abap-util/abap-util), see below |
 | `src/02/` | Samples (`z2ui5_cl_popup_sample_*`) |
 | `src/03/` | Popups with layout-management dependency (Value-Help, Search-Help) |
-| `src/99/` | Obsolete: the original classes of this repository, kept for compatibility |
 
 The classes in `src/` were moved here from the abap2UI5 core framework
-(formerly the built-in popups in its obsolete package); the previous content
-of this repository lives in `src/99/` (obsolete).
+(formerly the built-in popups in its obsolete package). The previous content
+of this repository, `z2ui5_cl_pop_value_help`, `z2ui5_cl_pop_search_help` and
+`z2ui5_cl_pop_show_tr` with two samples, is gone: `z2ui5_cl_popup_value_help`,
+`z2ui5_cl_popup_search_help` and `z2ui5_cl_popup_show_tr` have the same public
+interface. After the pull abapGit lists the old classes as deleted in the
+repository - delete them.
 
 ### Utility class - vendored copy from abap-util
 

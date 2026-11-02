@@ -48,8 +48,8 @@
     "omit_parameter_name": true,
     "prefix_is_current_class": true,
     // the rest of abap2UI5's rule set (abaplint.jsonc of abap2UI5/abap2UI5),
-    // with its settings; where a rule excludes /src/99/ (the obsolete package)
-    // or /src/00/ (the vendored abap-util copy), its findings sit only there
+    // with its settings; where a rule excludes /src/00/ (the vendored
+    // abap-util copy), its findings sit only there
     "7bit_ascii": true,
     "add_test_attributes": true,
     "aff_and_xml": true,
@@ -101,8 +101,7 @@
       "when": false,
       "catch": true,
       "exclude": [
-        "/src/00/",
-        "/src/99/"
+        "/src/00/"
       ]
     },
     "exit_or_check": true,
@@ -284,9 +283,7 @@
     "unused_macros": true,
     "unused_methods": true,
     "unused_types": {
-      "exclude": [
-        "/src/99/"
-      ],
+      "exclude": [],
       "severity": "Error",
       "skipNames": []
     },
@@ -300,8 +297,7 @@
         "<dummy>"
       ],
       "exclude": [
-        "/src/00/",
-        "/src/99/"
+        "/src/00/"
       ]
     },
     "use_class_based_exceptions": true,
