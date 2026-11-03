@@ -18,7 +18,7 @@ CLASS ltcl_test IMPLEMENTATION.
       ( name = `CARRID` t_range = VALUE #( ( sign = `I` option = `EQ` low = `AA` ) ) )
       ( name = `CONNID` ) ).
 
-    DATA(lo_pop) = z2ui5_cl_popup_get_range_m=>factory( lt_filter ).
+    DATA(lo_pop) = z2ui5_cl_popup_get_ranges=>factory( lt_filter ).
     cl_abap_unit_assert=>assert_bound( lo_pop ).
 
   ENDMETHOD.
@@ -28,7 +28,7 @@ CLASS ltcl_test IMPLEMENTATION.
     DATA(lt_filter) = VALUE z2ui5_cl_popup_context=>ty_t_filter_multi(
       ( name = `FIELD1` ) ).
 
-    DATA(lo_pop) = z2ui5_cl_popup_get_range_m=>factory( lt_filter ).
+    DATA(lo_pop) = z2ui5_cl_popup_get_ranges=>factory( lt_filter ).
     DATA(ls_result) = lo_pop->result( ).
     cl_abap_unit_assert=>assert_false( ls_result-check_confirmed ).
     cl_abap_unit_assert=>assert_equals( exp = 1
@@ -56,7 +56,7 @@ CLASS ltcl_test_roundtrip DEFINITION FINAL
 
     METHODS popup_create
       RETURNING
-        VALUE(ro_pop) TYPE REF TO z2ui5_cl_popup_get_range_m.
+        VALUE(ro_pop) TYPE REF TO z2ui5_cl_popup_get_ranges.
 
     METHODS test_init_displays_popup FOR TESTING RAISING cx_static_check.
     METHODS test_confirm             FOR TESTING RAISING cx_static_check.
@@ -70,7 +70,7 @@ CLASS ltcl_test_roundtrip IMPLEMENTATION.
 
   METHOD popup_create.
 
-    ro_pop = z2ui5_cl_popup_get_range_m=>factory( VALUE #(
+    ro_pop = z2ui5_cl_popup_get_ranges=>factory( VALUE #(
         ( name    = `MATNR`
           t_range = VALUE #( ( sign = `I` option = `EQ` low = `100` ) ) ) ) ).
     mo_action = NEW #( NEW z2ui5_cl_ui5_handler( `` ) ).

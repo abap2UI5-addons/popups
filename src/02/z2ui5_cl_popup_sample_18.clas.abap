@@ -92,7 +92,7 @@ CLASS z2ui5_cl_popup_sample_18 IMPLEMENTATION.
       EXPORTING
         xml = xml.
 
-    client->nav_app_call( z2ui5_cl_popup_demo_output=>factory(
+    client->nav_app_call( z2ui5_cl_popup_demo_out=>factory(
         i_output  = output
         i_as_page = as_page ) ).
 

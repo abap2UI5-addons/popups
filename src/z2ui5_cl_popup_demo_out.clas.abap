@@ -1,4 +1,4 @@
-CLASS z2ui5_cl_popup_demo_output DEFINITION PUBLIC FINAL CREATE PUBLIC.
+CLASS z2ui5_cl_popup_demo_out DEFINITION PUBLIC FINAL CREATE PUBLIC.
 
   PUBLIC SECTION.
     INTERFACES z2ui5_if_app.
@@ -12,7 +12,7 @@ CLASS z2ui5_cl_popup_demo_output DEFINITION PUBLIC FINAL CREATE PUBLIC.
         i_stretch       TYPE abap_bool DEFAULT abap_false
         i_as_page       TYPE abap_bool DEFAULT abap_false
       RETURNING
-        VALUE(r_result) TYPE REF TO z2ui5_cl_popup_demo_output.
+        VALUE(r_result) TYPE REF TO z2ui5_cl_popup_demo_out.
 
   PROTECTED SECTION.
     DATA client              TYPE REF TO z2ui5_if_client.
@@ -37,7 +37,7 @@ CLASS z2ui5_cl_popup_demo_output DEFINITION PUBLIC FINAL CREATE PUBLIC.
 ENDCLASS.
 
 
-CLASS z2ui5_cl_popup_demo_output IMPLEMENTATION.
+CLASS z2ui5_cl_popup_demo_out IMPLEMENTATION.
 
   METHOD factory.
 

@@ -1,4 +1,4 @@
-CLASS z2ui5_cl_popup_search_help DEFINITION
+CLASS z2ui5_cl_popup_shlp DEFINITION
   PUBLIC FINAL
   CREATE PUBLIC.
 
@@ -28,7 +28,7 @@ CLASS z2ui5_cl_popup_search_help DEFINITION
         i_value       TYPE string
         i_data        TYPE REF TO data OPTIONAL
       RETURNING
-        VALUE(result) TYPE REF TO z2ui5_cl_popup_search_help.
+        VALUE(result) TYPE REF TO z2ui5_cl_popup_shlp.
     " abap2ui5lint-enable unbound-public-attribute
 
   PROTECTED SECTION.
@@ -44,7 +44,7 @@ CLASS z2ui5_cl_popup_search_help DEFINITION
 ENDCLASS.
 
 
-CLASS z2ui5_cl_popup_search_help IMPLEMENTATION.
+CLASS z2ui5_cl_popup_shlp IMPLEMENTATION.
 
   METHOD z2ui5_if_app~main.
 
