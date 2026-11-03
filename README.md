@@ -20,7 +20,7 @@ help: each popup is an abap2UI5 app of its own that you call with
 `client->nav_app_call( )` and that hands its result back to your app. The
 classes were moved here from the abap2UI5 core framework.
 
-> Part of [abap2UI5-addons](https://github.com/abap2UI5-addons) - addons and apps for [abap2UI5](https://github.com/abap2UI5/abap2UI5), installed with [abapGit](https://abapgit.org).
+> Part of [abap2UI5-addons](https://github.com/abap2UI5-addons) - addons and apps for [abap2UI5](https://github.com/abap2UI5/abap2UI5), installed with [abapGit](https://abapgit.org). Documentation: [abap2ui5-addons.github.io/popups](https://abap2ui5-addons.github.io/popups/).
 
 ## Why
 
@@ -177,7 +177,7 @@ ENDIF.
 | Package | Content |
 |---|---|
 | `src/` | Popup classes (`z2ui5_cl_popup_*`) |
-| `src/00/` | Context/utility class `z2ui5_cl_popup_context` — a vendored copy from [abap-util](https://github.com/abap-util/abap-util), see below |
+| `src/00/` | Context/utility class `z2ui5_cl_popup_context` and its exception `z2ui5_cx_popup_error` — vendored copies from [abap-util](https://github.com/abap-util/abap-util), see below |
 | `src/02/` | Samples (`z2ui5_cl_popup_sample_*`) |
 | `src/03/` | Popups with layout-management dependency (Value-Help, Search-Help) |
 
@@ -224,7 +224,10 @@ npm run lint            # abaplint, Standard ABAP (v750)
 npm run check:cloud     # abaplint, ABAP Cloud
 npm run check:abap2ui5  # abap2UI5-linter over apps and views
 npm run rename          # namespace rename check
+npm run unit            # ABAP Unit tests on abap2UI5's transpiled Node runtime
 npm run downport        # downport the source to 7.02 syntax
+npm run site            # the GitHub Pages site (VitePress) into build/site
+npm run site:dev        # the same with the VitePress dev server
 ```
 
 ## Contributing

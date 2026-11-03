@@ -136,7 +136,7 @@ CLASS z2ui5_cl_popup_value_help IMPLEMENTATION.
           WHERE (where).
 
         IF sy-subrc <> 0.
-          client->message_toast_display( 'No Entries found.' ).
+          client->message_toast_display( 'No entries found.' ).
         ENDIF.
 
         set_row_id( ).
@@ -227,12 +227,6 @@ CLASS z2ui5_cl_popup_value_help IMPLEMENTATION.
           )->a( n = `visible` v = client->_bind( val       = layout->visible
                                                         tab       = mo_layout->ms_layout-t_layout
                                                         tab_index = lv_index )
-*                       halign          = client->_bind( val       = layout->halign
-*                       tab             = mo_layout->ms_layout-t_layout
-*                       tab_index       = lv_index )
-*                       importance      = client->_bind( val       = layout->importance
-*                       tab             = mo_layout->ms_layout-t_layout
-*                       tab_index       = lv_index )
           )->a( n = `mergeDuplicates` v = client->_bind( val       = layout->merge
                                                         tab       = mo_layout->ms_layout-t_layout
                                                         tab_index = lv_index )
@@ -283,6 +277,11 @@ CLASS z2ui5_cl_popup_value_help IMPLEMENTATION.
         ASSIGN mt_data->* TO <tab>.
 
         ASSIGN <tab>[ lt_arg[ 1 ] ] TO FIELD-SYMBOL(<row>).
+        " the index comes from the client - a row that is not there must not
+        " reach ASSIGN COMPONENT on an unassigned field symbol
+        IF <row> IS NOT ASSIGNED.
+          RETURN.
+        ENDIF.
 
         ASSIGN COMPONENT mv_check_tab_field OF STRUCTURE <row> TO FIELD-SYMBOL(<value>).
         IF sy-subrc <> 0.

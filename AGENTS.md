@@ -1,8 +1,7 @@
 # AGENTS.md — AI Assistant Guide for abap2UI5 popups
 
 > This file follows the cross-tool AGENTS.md convention and is the single
-> agent instruction file of this repository — there is no separate
-> `CLAUDE.md`; Claude Code reads `AGENTS.md` natively.
+> agent instruction file of this repository — `CLAUDE.md` only points here.
 
 ## Project Overview
 
@@ -58,13 +57,14 @@ Installed alongside via abapGit; declared in the abaplint configs:
 
 The value-help and search-help popups read the DDIC check table the user
 selects, without an authorization check of their own. The dynamic WHERE clause
-doubles single quotes to prevent SQL injection, but before using these popups
-beyond a development system add your own authorization checks and restrict which
+doubles single quotes to prevent SQL injection and escapes `%`, `_` and the
+escape character `#`, so a typed wildcard only matches itself; but before using
+these popups beyond a development system add your own authorization checks and restrict which
 tables may be browsed.
 
 ## Coding Style
 
-This project follows the conventions of the abap2UI5 core framework (see its [AGENTS.md](https://github.com/abap2UI5/abap2UI5/blob/main/AGENTS.md)): Clean ABAP with Hungarian prefixes, `FINAL` classes with all three section blocks, backtick string literals, `xsdbool()`, `NEW #()`, no `boolc()`.
+This project follows the conventions of the abap2UI5 core framework (see its [AGENTS.md](https://github.com/abap2UI5/abap2UI5/blob/main/AGENTS.md)): Clean ABAP with Hungarian prefixes, all three section blocks in every class (the popup classes are not `FINAL` - an app may subclass one; only `z2ui5_cl_popup_show_tr`, `z2ui5_cl_popup_demo_out` and the two in `src/03/` still are), backtick string literals, `xsdbool()`, `NEW #()`, no `boolc()`.
 
 ## Validation
 
