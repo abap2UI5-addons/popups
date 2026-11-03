@@ -20,7 +20,7 @@ help: each popup is an abap2UI5 app of its own that you call with
 `client->nav_app_call( )` and that hands its result back to your app. The
 classes were moved here from the abap2UI5 core framework.
 
-> Part of [abap2UI5-addons](https://github.com/abap2UI5-addons) - addons and apps for [abap2UI5](https://github.com/abap2UI5/abap2UI5), installed with [abapGit](https://abapgit.org).
+> Part of [abap2UI5-addons](https://github.com/abap2UI5-addons) - addons and apps for [abap2UI5](https://github.com/abap2UI5/abap2UI5), installed with [abapGit](https://abapgit.org). Documentation: [abap2ui5-addons.github.io/popups](https://abap2ui5-addons.github.io/popups/).
 
 ## Why
 
