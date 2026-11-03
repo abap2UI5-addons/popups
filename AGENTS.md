@@ -43,8 +43,9 @@ Installed alongside via abapGit; declared in the abaplint configs:
   downported `<tag>-702` form in `.github/abaplint/abap_702.jsonc`; the
   namespace rename clones the core at the pin of `abaplint.jsonc`); read and
   move them only with
-  `scripts/core-pin.mjs` (`get` fails when they disagree). `bump-core.yaml`
-  moves the pin weekly to the newest release after abaplint passed on it, and
+  `scripts/core-pin.mjs` (`get` fails when they disagree). `bump-deps.yaml`
+  moves the pin monthly to the newest release, in its one pull request whose
+  checks lint against it (`bump-core.yaml` does it alone, by hand), and
   the scheduled runs of `abap-standard` / `abap-cloud` lint once against the
   core's `main` as the canary (`core-pin.mjs set main`, never committed). Do
   not drop the key: abaplint then clones `main` silently.
