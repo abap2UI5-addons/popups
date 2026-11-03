@@ -105,11 +105,10 @@ CLASS z2ui5_cl_popup_js_loader IMPLEMENTATION.
       RETURN.
     ENDIF.
 
-    CASE client->get( )-event.
-      WHEN `TIMER_FINISHED`.
-        client->popup_destroy( ).
-        client->nav_app_leave( ).
-    ENDCASE.
+    IF client->get( )-event = `TIMER_FINISHED`.
+      client->popup_destroy( ).
+      client->nav_app_leave( ).
+    ENDIF.
 
   ENDMETHOD.
 

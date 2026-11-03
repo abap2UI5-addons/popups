@@ -212,8 +212,9 @@ CLASS z2ui5_cl_popup_to_select IMPLEMENTATION.
       CREATE DATA lr_row LIKE LINE OF <tab_out>.
       ASSIGN lr_row->* TO <row2>.
       IF check_table_line = abap_true.
+        UNASSIGN <field>.
         ASSIGN lr_row->(`TAB_LINE`) TO <field>.
-        ASSERT sy-subrc = 0.
+        ASSERT <field> IS ASSIGNED.
         <field> = <row>.
       ELSE.
         MOVE-CORRESPONDING <row> TO <row2>.

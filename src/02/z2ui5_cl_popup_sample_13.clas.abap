@@ -96,13 +96,11 @@ CLASS z2ui5_cl_popup_sample_13 IMPLEMENTATION.
 
   METHOD on_event.
 
-    CASE client->get( )-event.
-
-      WHEN `POPUP`.
-        DATA(lv_pdf) = get_example_pdf( ).
-        DATA(lo_app) = z2ui5_cl_popup_pdf=>factory( lv_pdf ).
-        client->nav_app_call( lo_app ).
-    ENDCASE.
+    IF client->get( )-event = `POPUP`.
+      DATA(lv_pdf) = get_example_pdf( ).
+      DATA(lo_app) = z2ui5_cl_popup_pdf=>factory( lv_pdf ).
+      client->nav_app_call( lo_app ).
+    ENDIF.
 
   ENDMETHOD.
 

@@ -362,6 +362,46 @@
     "redundant_cast": true,
     "slow_parameter_passing": true,
     "smim_consistency": true,
-    "sort_empty_key": true
+    "sort_empty_key": true,
+    // added 2026-11 with their findings fixed (abap2UI5 settings). Exception:
+    // subrc_after_assign, ambiguous_statement, else_after_all_returns,
+    // fully_type_itabs and unnecessary_chaining exclude z2ui5_cl_popup_context,
+    // the vendored copy of abap-util (src/00/): it is not edited here, abap-util
+    // is the place to fix it; strict_sql excludes z2ui5_cl_popup_value_help:
+    // its dynamic SELECT ... UP TO n ROWS with INTO last is left half
+    // rewritten by the 702 downport (the 702 lint fails), and the ORDER BY that
+    // keeps it downportable would change which rows come back
+    "short_case": true,
+    "strict_sql": {
+      "exclude": [
+        "/src/03/z2ui5_cl_popup_value_help"
+      ]
+    },
+    "subrc_after_assign": {
+      "exclude": [
+        "/src/00/z2ui5_cl_popup_context"
+      ]
+    },
+    "use_bool_expression": true,
+    "ambiguous_statement": {
+      "exclude": [
+        "/src/00/z2ui5_cl_popup_context"
+      ]
+    },
+    "else_after_all_returns": {
+      "exclude": [
+        "/src/00/z2ui5_cl_popup_context"
+      ]
+    },
+    "fully_type_itabs": {
+      "exclude": [
+        "/src/00/z2ui5_cl_popup_context"
+      ]
+    },
+    "unnecessary_chaining": {
+      "exclude": [
+        "/src/00/z2ui5_cl_popup_context"
+      ]
+    }
   }
 }
