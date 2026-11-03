@@ -136,7 +136,7 @@ CLASS z2ui5_cl_popup_value_help IMPLEMENTATION.
           WHERE (where).
 
         IF sy-subrc <> 0.
-          client->message_toast_display( 'No Entries found.' ).
+          client->message_toast_display( 'No entries found.' ).
         ENDIF.
 
         set_row_id( ).
@@ -227,12 +227,6 @@ CLASS z2ui5_cl_popup_value_help IMPLEMENTATION.
           )->a( n = `visible` v = client->_bind( val       = layout->visible
                                                         tab       = mo_layout->ms_layout-t_layout
                                                         tab_index = lv_index )
-*                       halign          = client->_bind( val       = layout->halign
-*                       tab             = mo_layout->ms_layout-t_layout
-*                       tab_index       = lv_index )
-*                       importance      = client->_bind( val       = layout->importance
-*                       tab             = mo_layout->ms_layout-t_layout
-*                       tab_index       = lv_index )
           )->a( n = `mergeDuplicates` v = client->_bind( val       = layout->merge
                                                         tab       = mo_layout->ms_layout-t_layout
                                                         tab_index = lv_index )

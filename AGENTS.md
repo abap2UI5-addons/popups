@@ -64,7 +64,7 @@ tables may be browsed.
 
 ## Coding Style
 
-This project follows the conventions of the abap2UI5 core framework (see its [AGENTS.md](https://github.com/abap2UI5/abap2UI5/blob/main/AGENTS.md)): Clean ABAP with Hungarian prefixes, all three section blocks in every class (the popup classes are not `FINAL` - an app may subclass one), backtick string literals, `xsdbool()`, `NEW #()`, no `boolc()`.
+This project follows the conventions of the abap2UI5 core framework (see its [AGENTS.md](https://github.com/abap2UI5/abap2UI5/blob/main/AGENTS.md)): Clean ABAP with Hungarian prefixes, all three section blocks in every class (the popup classes are not `FINAL` - an app may subclass one; only `z2ui5_cl_popup_show_tr`, `z2ui5_cl_popup_demo_out` and the two in `src/03/` still are), backtick string literals, `xsdbool()`, `NEW #()`, no `boolc()`.
 
 ## Validation
 

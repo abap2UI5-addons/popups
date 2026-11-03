@@ -157,12 +157,6 @@ CLASS z2ui5_cl_popup_shlp IMPLEMENTATION.
           )->a( n = `visible` v = client->_bind( val       = layout->visible
                                                         tab       = mo_layout->ms_layout-t_layout
                                                         tab_index = lv_index )
-*                       halign          = client->_bind( val       = layout->halign
-*                       tab             = mo_layout->ms_layout-t_layout
-*                       tab_index       = lv_index )
-*                       importance      = client->_bind( val       = layout->importance
-*                       tab             = mo_layout->ms_layout-t_layout
-*                       tab_index       = lv_index )
           )->a( n = `mergeDuplicates` v = client->_bind( val       = layout->merge
                                                         tab       = mo_layout->ms_layout-t_layout
                                                         tab_index = lv_index )

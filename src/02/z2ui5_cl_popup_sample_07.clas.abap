@@ -46,8 +46,8 @@ CLASS z2ui5_cl_popup_sample_07 IMPLEMENTATION.
                            i_multiselect = mv_multiselect
                            i_title       = COND #(
                                              WHEN mv_multiselect = abap_true
-                                             THEN `Multi select`
-                                             ELSE `Single select` ) ).
+                                             THEN `Multi Select`
+                                             ELSE `Single Select` ) ).
         client->nav_app_call( lo_app ).
 
       WHEN `MULTISELECT_TOGGLE`.
