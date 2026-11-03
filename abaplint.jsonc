@@ -402,6 +402,13 @@
       "exclude": [
         "/src/00/z2ui5_cl_popup_context"
       ]
+    },
+    // added 2026-11. z2ui5_cl_popup_context is the vendored abap-util copy:
+    // its ten findings belong upstream, the rest of the repository has none
+    "is_assigned_in_loop": {
+      "exclude": [
+        "z2ui5_cl_popup_context\\."
+      ]
     }
   }
 }
