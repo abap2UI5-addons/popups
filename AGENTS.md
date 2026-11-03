@@ -57,8 +57,9 @@ Installed alongside via abapGit; declared in the abaplint configs:
 
 The value-help and search-help popups read the DDIC check table the user
 selects, without an authorization check of their own. The dynamic WHERE clause
-doubles single quotes to prevent SQL injection, but before using these popups
-beyond a development system add your own authorization checks and restrict which
+doubles single quotes to prevent SQL injection and escapes `%`, `_` and the
+escape character `#`, so a typed wildcard only matches itself; but before using
+these popups beyond a development system add your own authorization checks and restrict which
 tables may be browsed.
 
 ## Coding Style

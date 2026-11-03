@@ -144,7 +144,12 @@ CLASS z2ui5_cl_popup_get_ranges IMPLEMENTATION.
     CASE ls_get-event.
 
       WHEN `LIST_DELETE`.
+        UNASSIGN <tab>.
         ASSIGN ms_result-t_filter[ name = client->get_event_arg( ) ] TO <tab>.
+        " the name comes from the client - an unknown one is ignored
+        IF <tab> IS NOT ASSIGNED.
+          RETURN.
+        ENDIF.
         CLEAR <tab>-t_token.
         CLEAR <tab>-t_range.
 

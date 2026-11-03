@@ -1593,7 +1593,7 @@ CLASS z2ui5_cl_popup_context IMPLEMENTATION.
         IF sy-subrc <> 0.
           RAISE EXCEPTION TYPE z2ui5_cx_popup_error
             EXPORTING
-              val = |TABLE_NOT_FOUD_NAME___{ table_name }|.
+              val = |TABLE_NOT_FOUND_NAME___{ table_name }|.
         ENDIF.
         DATA(lo_struct) = CAST cl_abap_structdescr( lo_obj ).
 
@@ -1608,7 +1608,7 @@ CLASS z2ui5_cl_popup_context IMPLEMENTATION.
             IF sy-subrc <> 0.
               RAISE EXCEPTION TYPE z2ui5_cx_popup_error
                 EXPORTING
-                  val = |TABLE_NOT_FOUD_NAME___{ table_name }|.
+                  val = |TABLE_NOT_FOUND_NAME___{ table_name }|.
             ENDIF.
 
             DATA(lo_tab) = CAST cl_abap_tabledescr( lo_obj ).
@@ -3503,19 +3503,17 @@ CLASS z2ui5_cl_popup_context IMPLEMENTATION.
         DATA(and) = ` AND `.
       ENDIF.
 
-      IF <value> CA `_`.
-        DATA(escape) = `ESCAPE '#'`.
-      ELSE.
-        CLEAR escape.
-      ENDIF.
-
       val = <value>.
 
-      IF val CA `_`.
-        REPLACE ALL OCCURRENCES OF `_` IN val WITH `#_`.
-      ENDIF.
+      " the value goes into a literal of a dynamic WHERE: the escape character
+      " first, then the LIKE wildcards, so that they match only themselves,
+      " and a quote is doubled so that it cannot end the literal
+      REPLACE ALL OCCURRENCES OF `#` IN val WITH `##`.
+      REPLACE ALL OCCURRENCES OF `%` IN val WITH `#%`.
+      REPLACE ALL OCCURRENCES OF `_` IN val WITH `#_`.
+      REPLACE ALL OCCURRENCES OF `'` IN val WITH `''`.
 
-      result = |{ result }{ and } ( { dfies->fieldname } LIKE '%{ val }%' { escape } )|.
+      result = |{ result }{ and } ( { dfies->fieldname } LIKE '%{ val }%' ESCAPE '#' )|.
 
     ENDLOOP.
 
