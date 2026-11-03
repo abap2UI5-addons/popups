@@ -1,8 +1,7 @@
 # AGENTS.md — AI Assistant Guide for abap2UI5 popups
 
 > This file follows the cross-tool AGENTS.md convention and is the single
-> agent instruction file of this repository — there is no separate
-> `CLAUDE.md`; Claude Code reads `AGENTS.md` natively.
+> agent instruction file of this repository — `CLAUDE.md` only points here.
 
 ## Project Overview
 
@@ -64,7 +63,7 @@ tables may be browsed.
 
 ## Coding Style
 
-This project follows the conventions of the abap2UI5 core framework (see its [AGENTS.md](https://github.com/abap2UI5/abap2UI5/blob/main/AGENTS.md)): Clean ABAP with Hungarian prefixes, `FINAL` classes with all three section blocks, backtick string literals, `xsdbool()`, `NEW #()`, no `boolc()`.
+This project follows the conventions of the abap2UI5 core framework (see its [AGENTS.md](https://github.com/abap2UI5/abap2UI5/blob/main/AGENTS.md)): Clean ABAP with Hungarian prefixes, all three section blocks in every class (the popup classes are not `FINAL` - an app may subclass one), backtick string literals, `xsdbool()`, `NEW #()`, no `boolc()`.
 
 ## Validation
 
