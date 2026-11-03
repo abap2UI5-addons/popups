@@ -688,7 +688,6 @@ CLASS z2ui5_cl_popup_context DEFINITION
     " abap_true when one component of a row holds the search text - the
     " per-field half of itab_filter_by_val. A component that is not printable
     " (a table of children, a reference) holds no text and answers false
-    " FROZEN-ONLY: no caller in src/00 - src/02, kept for src/99
     CLASS-METHODS itab_filter_check_field
       IMPORTING
         field         TYPE any
@@ -2911,11 +2910,13 @@ CLASS z2ui5_cl_popup_context IMPLEMENTATION.
 
           LOOP AT comps INTO comp.
 
+            UNASSIGN <value>.
             ASSIGN COMPONENT comp-name OF STRUCTURE <line> TO <value>.
             IF <value> IS NOT ASSIGNED.
               CONTINUE.
             ENDIF.
 
+            UNASSIGN <value_dest>.
             ASSIGN COMPONENT comp-name OF STRUCTURE s_dfies TO <value_dest>.
             IF <value_dest> IS NOT ASSIGNED.
               CONTINUE.
@@ -3466,7 +3467,9 @@ CLASS z2ui5_cl_popup_context IMPLEMENTATION.
 
     LOOP AT <tab> ASSIGNING <line>.
 
-      ASSIGN COMPONENT 'ROW_ID' OF STRUCTURE <line> TO FIELD-SYMBOL(<row>).
+      FIELD-SYMBOLS <row> TYPE any.
+      UNASSIGN <row>.
+      ASSIGN COMPONENT 'ROW_ID' OF STRUCTURE <line> TO <row>.
       IF <row> IS ASSIGNED.
         <row> = sy-tabix.
       ENDIF.
@@ -3486,7 +3489,9 @@ CLASS z2ui5_cl_popup_context IMPLEMENTATION.
 
       ASSIGN ms_data_row->* TO FIELD-SYMBOL(<row>).
 
-      ASSIGN COMPONENT dfies->fieldname OF STRUCTURE <row> TO FIELD-SYMBOL(<value>).
+      FIELD-SYMBOLS <value> TYPE any.
+      UNASSIGN <value>.
+      ASSIGN COMPONENT dfies->fieldname OF STRUCTURE <row> TO <value>.
       IF <value> IS NOT ASSIGNED.
         CONTINUE.
       ENDIF.
@@ -3526,7 +3531,9 @@ CLASS z2ui5_cl_popup_context IMPLEMENTATION.
 
     LOOP AT dfies INTO DATA(s_dfies) WHERE keyflag = abap_true.
 
-      ASSIGN COMPONENT s_dfies-fieldname OF STRUCTURE line TO FIELD-SYMBOL(<value>).
+      FIELD-SYMBOLS <value> TYPE any.
+      UNASSIGN <value>.
+      ASSIGN COMPONENT s_dfies-fieldname OF STRUCTURE line TO <value>.
       IF <value> IS NOT ASSIGNED.
         CONTINUE.
       ENDIF.
@@ -3704,6 +3711,7 @@ CLASS z2ui5_cl_popup_context IMPLEMENTATION.
 
     LOOP AT <tab> ASSIGNING <line>.
 
+      UNASSIGN <value>.
       ASSIGN COMPONENT 'TABKEY' OF STRUCTURE <s_e071k> TO <value>.
       IF <value> IS NOT ASSIGNED.
         RETURN.
@@ -3838,6 +3846,7 @@ CLASS z2ui5_cl_popup_context IMPLEMENTATION.
 
     LOOP AT <table> INTO <line>.
 
+      UNASSIGN <value>.
       ASSIGN COMPONENT 'TRKORR' OF STRUCTURE <line> TO <value>.
       IF <value> IS NOT ASSIGNED.
         CONTINUE.
@@ -3954,6 +3963,7 @@ CLASS z2ui5_cl_popup_context IMPLEMENTATION.
 
       LOOP AT <table> INTO <line>.
 
+        UNASSIGN <value>.
         ASSIGN COMPONENT 'TRKORR' OF STRUCTURE <line> TO <value>.
         IF <value> IS NOT ASSIGNED.
           CONTINUE.
@@ -3962,6 +3972,7 @@ CLASS z2ui5_cl_popup_context IMPLEMENTATION.
           READ TABLE mt_data REFERENCE INTO DATA(data) WITH KEY task = <value>.
           IF sy-subrc = 0.
 
+            UNASSIGN <value>.
             ASSIGN COMPONENT 'AS4TEXT' OF STRUCTURE <line> TO <value>.
             IF <value> IS NOT ASSIGNED.
               CONTINUE.
@@ -3990,7 +4001,9 @@ CLASS z2ui5_cl_popup_context IMPLEMENTATION.
 
     LOOP AT <tab> ASSIGNING <line>.
 
-      ASSIGN COMPONENT `MANDT` OF STRUCTURE <line> TO FIELD-SYMBOL(<row>).
+      FIELD-SYMBOLS <row> TYPE any.
+      UNASSIGN <row>.
+      ASSIGN COMPONENT `MANDT` OF STRUCTURE <line> TO <row>.
       IF <row> IS ASSIGNED.
 
         TRY.

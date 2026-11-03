@@ -73,6 +73,16 @@ On NetWeaver 7.02 pull layout-management from its `702` branch as well.
 `?app_start=z2ui5_cl_popup_sample_05` for the confirm popup. All samples are
 listed under [Samples](#samples).
 
+### Parallel installation (namespace rename)
+
+To run a second copy next to the original in the same system, rename it the
+way abap2UI5 itself is renamed: run the workflow **build-rename** (Actions →
+build-rename → Run workflow) with the name your abap2UI5 installation was
+renamed to - e.g. `ZMYUI5` or `/CA2UI5/`. It pushes the branch `rename_<name>`, in
+which every object and every reference to abap2UI5 and to the addons this one
+needs carries that name; pull it with abapGit. Rename abap2UI5 and every addon
+of the installation with the same name.
+
 ## Usage
 
 Call a popup with `nav_app_call( )` and react to the event it raises when it
@@ -120,12 +130,12 @@ ENDIF.
 * Confirm, Inform & Select popups (`z2ui5_cl_popup_to_confirm`, `z2ui5_cl_popup_to_inform`, `z2ui5_cl_popup_to_select`)
 * Decide and Get Values - the classic POPUP_TO_DECIDE (a button per option) and POPUP_GET_VALUES (inputs, dates, checkboxes, listboxes, required fields) (`z2ui5_cl_popup_to_decide`, `z2ui5_cl_popup_get_values`)
 * File Download & Upload (`z2ui5_cl_popup_file_dl`, `z2ui5_cl_popup_file_ul` - the upload hands over the file's name and bytes, binary files too, several files with `i_multiple` and limited to types with `i_file_type`)
-* Table, Data & Demo Output (`z2ui5_cl_popup_table`, `z2ui5_cl_popup_data`, `z2ui5_cl_popup_demo_output`)
+* Table, Data & Demo Output (`z2ui5_cl_popup_table`, `z2ui5_cl_popup_data`, `z2ui5_cl_popup_demo_out`)
 * Text Editor, HTML & PDF display (`z2ui5_cl_popup_textedit`, `z2ui5_cl_popup_html`, `z2ui5_cl_popup_pdf`)
 * Messages, Error & Input Validation (`z2ui5_cl_popup_messages`, `z2ui5_cl_popup_error`, `z2ui5_cl_popup_input_val`)
-* Range Selection (`z2ui5_cl_popup_get_range`, `z2ui5_cl_popup_get_range_m`)
+* Range Selection (`z2ui5_cl_popup_get_range`, `z2ui5_cl_popup_get_ranges`)
 * Image Editor & JS Loader (`z2ui5_cl_popup_image_edit`, `z2ui5_cl_popup_js_loader`)
-* Value-Help & Search-Help (`z2ui5_cl_popup_value_help`, `z2ui5_cl_popup_search_help`)
+* Value-Help & Search-Help (`z2ui5_cl_popup_value_help`, `z2ui5_cl_popup_shlp`)
 * Transport Requests (`z2ui5_cl_popup_show_tr`)
 * Samples for all popups (`src/02/`, `z2ui5_cl_popup_sample_*`)
 
@@ -134,7 +144,7 @@ ENDIF.
 | Sample | Popup |
 |---|---|
 | `z2ui5_cl_popup_sample_01` | Value-Help (`z2ui5_cl_popup_value_help`) |
-| `z2ui5_cl_popup_sample_02` | Search-Help (`z2ui5_cl_popup_search_help`) |
+| `z2ui5_cl_popup_sample_02` | Search-Help (`z2ui5_cl_popup_shlp`) |
 | `z2ui5_cl_popup_sample_03` | Image editor (`z2ui5_cl_popup_image_edit`) |
 | `z2ui5_cl_popup_sample_04` | HTML (`z2ui5_cl_popup_html`) |
 | `z2ui5_cl_popup_sample_05` | Confirm (`z2ui5_cl_popup_to_confirm`) |
@@ -145,10 +155,10 @@ ENDIF.
 | `z2ui5_cl_popup_sample_10` | Input value (`z2ui5_cl_popup_input_val`) |
 | `z2ui5_cl_popup_sample_11` | File upload (`z2ui5_cl_popup_file_ul`) |
 | `z2ui5_cl_popup_sample_12`, `_13` | PDF (`z2ui5_cl_popup_pdf`) |
-| `z2ui5_cl_popup_sample_14` | Select-options over several fields (`z2ui5_cl_popup_get_range_m`) |
+| `z2ui5_cl_popup_sample_14` | Select-options over several fields (`z2ui5_cl_popup_get_ranges`) |
 | `z2ui5_cl_popup_sample_15` | Table (`z2ui5_cl_popup_table`) |
 | `z2ui5_cl_popup_sample_16` | File download (`z2ui5_cl_popup_file_dl`) |
-| `z2ui5_cl_popup_sample_18` | `CL_DEMO_OUTPUT` (`z2ui5_cl_popup_demo_output`) |
+| `z2ui5_cl_popup_sample_18` | `CL_DEMO_OUTPUT` (`z2ui5_cl_popup_demo_out`) |
 | `z2ui5_cl_popup_sample_19` | Range of one field (`z2ui5_cl_popup_get_range`) |
 
 ## Demo
@@ -170,11 +180,22 @@ ENDIF.
 | `src/00/` | Context/utility class `z2ui5_cl_popup_context` — a vendored copy from [abap-util](https://github.com/abap-util/abap-util), see below |
 | `src/02/` | Samples (`z2ui5_cl_popup_sample_*`) |
 | `src/03/` | Popups with layout-management dependency (Value-Help, Search-Help) |
-| `src/99/` | Obsolete: the original classes of this repository, kept for compatibility |
 
 The classes in `src/` were moved here from the abap2UI5 core framework
-(formerly the built-in popups in its obsolete package); the previous content
-of this repository lives in `src/99/` (obsolete).
+(formerly the built-in popups in its obsolete package). The previous content
+of this repository, `z2ui5_cl_pop_value_help`, `z2ui5_cl_pop_search_help` and
+`z2ui5_cl_pop_show_tr` with two samples, is gone: `z2ui5_cl_popup_value_help`,
+`z2ui5_cl_popup_shlp` and `z2ui5_cl_popup_show_tr` have the same public
+interface. After the pull abapGit lists the old classes as deleted in the
+repository - delete them.
+
+Three classes were shortened to 25 characters, so that a namespace rename
+(`npm run rename`, workflow `build-rename`) of up to 10 characters still fits
+the 30-character limit: `z2ui5_cl_popup_search_help` is now
+`z2ui5_cl_popup_shlp`, `z2ui5_cl_popup_get_range_m` is
+`z2ui5_cl_popup_get_ranges` and `z2ui5_cl_popup_demo_output` is
+`z2ui5_cl_popup_demo_out`, with the same public interface. Delete the old
+ones after the pull as well.
 
 ### Utility class - vendored copy from abap-util
 

@@ -18,7 +18,6 @@ Ready-to-use popup and dialog apps for [abap2UI5](https://github.com/abap2UI5/ab
 | `src/00/` | Context/utility class `z2ui5_cl_popup_context` and its exception `z2ui5_cx_popup_error` — **vendored copies from abap-util, see below** |
 | `src/02/` | Samples (`z2ui5_cl_popup_sample_*`) |
 | `src/03/` | Popups with layout-management dependency (Value-Help, Search-Help) |
-| `src/99/` | Obsolete: the original classes of this repository, kept for compatibility — do not extend |
 
 ## The Utility Copy Principle (`src/00/`)
 
@@ -39,12 +38,14 @@ Installed alongside via abapGit; declared in the abaplint configs:
 * [abap2UI5](https://github.com/abap2UI5/abap2UI5) — **pinned to a release
   tag** (the `"branch"` key of the core dependency, abap2UI5 CONVENTIONS §9):
   users install a release next to this addon, so the checks run against that
-  release and not against the framework's `main`. Four abaplint configs carry
-  the pin (`abaplint.jsonc`, `.github/abaplint/abap_cloud.jsonc`,
-  `.github/abaplint/rename.json`, and the downported `<tag>-702` form in
-  `.github/abaplint/abap_702.jsonc`); read and move them only with
-  `scripts/core-pin.mjs` (`get` fails when they disagree). `bump-core.yaml`
-  moves the pin weekly to the newest release after abaplint passed on it, and
+  release and not against the framework's `main`. Three abaplint configs carry
+  the pin (`abaplint.jsonc`, `.github/abaplint/abap_cloud.jsonc` and the
+  downported `<tag>-702` form in `.github/abaplint/abap_702.jsonc`; the
+  namespace rename clones the core at the pin of `abaplint.jsonc`); read and
+  move them only with
+  `scripts/core-pin.mjs` (`get` fails when they disagree). `bump-deps.yaml`
+  moves the pin monthly to the newest release, in its one pull request whose
+  checks lint against it (`bump-core.yaml` does it alone, by hand), and
   the scheduled runs of `abap-standard` / `abap-cloud` lint once against the
   core's `main` as the canary (`core-pin.mjs set main`, never committed). Do
   not drop the key: abaplint then clones `main` silently.
@@ -81,9 +82,29 @@ CI:
 * `publish-702` / `abap-702` — `publish-702` writes the downported `702`
   branch on every push to `main` (`npm run auto_downport`: `abaplint --fix`
   against `.github/abaplint/abap_702.jsonc`), and `abap-702` lints it
-* `check-rename` — namespace-rename check (`.github/abaplint/rename.json`)
+* `abap-unit` — the ABAP Unit tests on abap2UI5's transpiled Node runtime, the way abap2UI5 tests itself: `npm run unit` (`.github/scripts/unit.mjs`) copies the packages into a checkout of abap2UI5's `main` (abap2UI5-ext and layout-management beside it), downports, transpiles and runs the tests of this repository's classes
+* `check-rename` — namespace-rename check (`npm run rename`, `.github/scripts/rename.mjs`)
 * `build-rename` — manual workflow that pushes a namespace-renamed branch
   `rename_<name>` for a parallel install
 * `bump-core` — moves the abap2UI5 release pin, see Dependencies
 
 All `.abap`/`.xml`/config files are LF-only (`.gitattributes` enforces it).
+
+## Namespace rename
+
+`npm run rename` (CI: `check-rename`) and the manual `build-rename` workflow
+are abap2UI5's namespace rename for this addon - `.github/scripts/rename.mjs`,
+the same file in every addon that has one. Every `z2ui5_` object becomes
+`<name>_...`, for a customer name such as `ZMYUI5` or a registered namespace
+such as `/CA2UI5/` (at most 10 characters), and so does every reference to
+abap2UI5 and to the addons this one builds on: the branch `rename_<name>` runs
+on an abap2UI5 renamed with the same name by its own `build-rename`. What
+follows from it:
+
+- Every object name has at most 25 characters (a transparent table
+  11, an ICF node 10) - 30 minus what the longest new name adds.
+- No literal names a `z2ui5_` object: the rename rewrites references, never a
+  literal. Derive the name - from a typed reference, or behind the prefix of
+  the class's own name.
+- A change that spans several repositories: `RENAME_DEPS_FROM=<dir> npm run
+  rename` takes the dependencies from the clones in `<dir>`.

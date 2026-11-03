@@ -18,12 +18,10 @@ CLASS z2ui5_cl_popup_sample_06 IMPLEMENTATION.
 
   METHOD on_event.
 
-    CASE client->get( )-event.
-
-      WHEN `POPUP`.
-        DATA(lo_app) = z2ui5_cl_popup_to_inform=>factory( `this is a question` ).
-        client->nav_app_call( lo_app ).
-    ENDCASE.
+    IF client->get( )-event = `POPUP`.
+      DATA(lo_app) = z2ui5_cl_popup_to_inform=>factory( `this is a question` ).
+      client->nav_app_call( lo_app ).
+    ENDIF.
 
   ENDMETHOD.
 

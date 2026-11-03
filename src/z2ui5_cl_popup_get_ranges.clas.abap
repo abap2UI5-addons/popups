@@ -1,4 +1,4 @@
-CLASS z2ui5_cl_popup_get_range_m DEFINITION PUBLIC.
+CLASS z2ui5_cl_popup_get_ranges DEFINITION PUBLIC.
 
   PUBLIC SECTION.
     INTERFACES z2ui5_if_app.
@@ -7,7 +7,7 @@ CLASS z2ui5_cl_popup_get_range_m DEFINITION PUBLIC.
       IMPORTING
         val             TYPE z2ui5_cl_popup_context=>ty_t_filter_multi
       RETURNING
-        VALUE(r_result) TYPE REF TO z2ui5_cl_popup_get_range_m.
+        VALUE(r_result) TYPE REF TO z2ui5_cl_popup_get_ranges.
 
     TYPES:
       BEGIN OF ty_s_result,
@@ -33,7 +33,7 @@ CLASS z2ui5_cl_popup_get_range_m DEFINITION PUBLIC.
 ENDCLASS.
 
 
-CLASS z2ui5_cl_popup_get_range_m IMPLEMENTATION.
+CLASS z2ui5_cl_popup_get_ranges IMPLEMENTATION.
 
   METHOD factory.
 

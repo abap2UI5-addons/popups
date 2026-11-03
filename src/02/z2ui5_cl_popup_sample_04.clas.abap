@@ -52,15 +52,13 @@ CLASS z2ui5_cl_popup_sample_04 IMPLEMENTATION.
 
   METHOD on_event.
 
-    CASE client->get( )-event.
-
-      WHEN `POPUP`.
-        DATA(lo_app) = z2ui5_cl_popup_html=>factory( `<h2>HTML Links</h2>` && |\n| &&
-                                                     `<p>HTML links are defined with the a tag:</p>` && |\n| &&
-                                                     |\n| &&
-                                                     `<a href="https://www.w3schools.com" target="_blank">This is a link</a>` ).
-        client->nav_app_call( lo_app ).
-    ENDCASE.
+    IF client->get( )-event = `POPUP`.
+      DATA(lo_app) = z2ui5_cl_popup_html=>factory( `<h2>HTML Links</h2>` && |\n| &&
+                                                   `<p>HTML links are defined with the a tag:</p>` && |\n| &&
+                                                   |\n| &&
+                                                   `<a href="https://www.w3schools.com" target="_blank">This is a link</a>` ).
+      client->nav_app_call( lo_app ).
+    ENDIF.
 
   ENDMETHOD.
 

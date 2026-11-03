@@ -27,11 +27,11 @@ import { execFileSync } from 'node:child_process';
 
 const CORE = 'https://github.com/abap2UI5/abap2UI5';
 // every abaplint config that resolves the core, and whether it takes the
-// downported (-702) form of the tag
+// downported (-702) form of the tag. The namespace rename has none of its own:
+// .github/scripts/rename.mjs clones the core at the pin of abaplint.jsonc
 const FILES = [
   { file: 'abaplint.jsonc', downport: false },
   { file: '.github/abaplint/abap_cloud.jsonc', downport: false },
-  { file: '.github/abaplint/rename.json', downport: false },
   { file: '.github/abaplint/abap_702.jsonc', downport: true },
 ];
 // the one line the pin lives on - kept on its own line next to the core URL

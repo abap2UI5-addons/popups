@@ -48,8 +48,8 @@
     "omit_parameter_name": true,
     "prefix_is_current_class": true,
     // the rest of abap2UI5's rule set (abaplint.jsonc of abap2UI5/abap2UI5),
-    // with its settings; where a rule excludes /src/99/ (the obsolete package)
-    // or /src/00/ (the vendored abap-util copy), its findings sit only there
+    // with its settings; where a rule excludes /src/00/ (the vendored
+    // abap-util copy), its findings sit only there
     "7bit_ascii": true,
     "add_test_attributes": true,
     "aff_and_xml": true,
@@ -101,8 +101,7 @@
       "when": false,
       "catch": true,
       "exclude": [
-        "/src/00/",
-        "/src/99/"
+        "/src/00/"
       ]
     },
     "exit_or_check": true,
@@ -284,9 +283,7 @@
     "unused_macros": true,
     "unused_methods": true,
     "unused_types": {
-      "exclude": [
-        "/src/99/"
-      ],
+      "exclude": [],
       "severity": "Error",
       "skipNames": []
     },
@@ -300,8 +297,7 @@
         "<dummy>"
       ],
       "exclude": [
-        "/src/00/",
-        "/src/99/"
+        "/src/00/"
       ]
     },
     "use_class_based_exceptions": true,
@@ -310,6 +306,115 @@
     "use_new": true,
     "when_others_last": true,
     "wrong_abapdoc_position": true,
-    "xml_bom": true
+    "xml_bom": true,
+    // added 2026-11: the rules of abap2UI5's abaplint.jsonc this repository
+    // passes without a finding, with its settings, and allowed_object_types
+    // with the object types this repository ships
+    "abapdoc_html_tag": true,
+    "abapdoc_leading_at": true,
+    "abapdoc_parameter_names": true,
+    "abapdoc_shorttext_length": true,
+    "allowed_object_types": {
+      "allowed": [
+        "CLAS",
+        "DEVC"
+      ]
+    },
+    "bound_check_after_create": true,
+    "cds_comment_style": true,
+    "cds_legacy_view": true,
+    "changing_sorted_line": true,
+    "clear_after_declaration": true,
+    "clear_before_overwrite": true,
+    "constant_condition": true,
+    "copy_of_initial_variable": true,
+    "delete_index_in_loop": true,
+    "final_newline": true,
+    // an allow list matching no object: the default, empty, allows every one
+    "forbidden_kernel_write": {
+      "allow": [
+        "^$"
+      ]
+    },
+    "identical_descriptions": true,
+    "inline_packed_computation": true,
+    "no_mandt_in_database_operations": true,
+    "object_naming": {
+      "severity": "Error",
+      "patternKind": "required",
+      "ignoreNames": [],
+      "ignorePatterns": [],
+      "clas": "^Z2UI5_C(L|X)",
+      "intf": "^Z2UI5_IF",
+      "prog": "^Z",
+      "fugr": "^Z",
+      "tabl": "^Z",
+      "ttyp": "^Z",
+      "dtel": "^Z",
+      "doma": "^Z",
+      "msag": "^Z",
+      "tran": "^Z",
+      "enqu": "^EZ",
+      "auth": "^Z",
+      "pinf": "^Z",
+      "idoc": "^Z",
+      "xslt": "^Z",
+      "ssfo": "^Z",
+      "ssst": "^Z",
+      "shlp": "^Z"
+    },
+    "range_row_values": true,
+    "redundant_cast": true,
+    "slow_parameter_passing": true,
+    "smim_consistency": true,
+    "sort_empty_key": true,
+    // added 2026-11 with their findings fixed (abap2UI5 settings). Exception:
+    // subrc_after_assign, ambiguous_statement, else_after_all_returns,
+    // fully_type_itabs and unnecessary_chaining exclude z2ui5_cl_popup_context,
+    // the vendored copy of abap-util (src/00/): it is not edited here, abap-util
+    // is the place to fix it; strict_sql excludes z2ui5_cl_popup_value_help:
+    // its dynamic SELECT ... UP TO n ROWS with INTO last is left half
+    // rewritten by the 702 downport (the 702 lint fails), and the ORDER BY that
+    // keeps it downportable would change which rows come back
+    "short_case": true,
+    "strict_sql": {
+      "exclude": [
+        "/src/03/z2ui5_cl_popup_value_help"
+      ]
+    },
+    "subrc_after_assign": {
+      "exclude": [
+        "/src/00/z2ui5_cl_popup_context"
+      ]
+    },
+    "use_bool_expression": true,
+    "ambiguous_statement": {
+      "exclude": [
+        "/src/00/z2ui5_cl_popup_context"
+      ]
+    },
+    "else_after_all_returns": {
+      "exclude": [
+        "/src/00/z2ui5_cl_popup_context"
+      ]
+    },
+    "fully_type_itabs": {
+      "exclude": [
+        "/src/00/z2ui5_cl_popup_context"
+      ]
+    },
+    "unnecessary_chaining": {
+      "exclude": [
+        "/src/00/z2ui5_cl_popup_context"
+      ]
+    },
+    // added 2026-11 with its findings fixed: UNASSIGN before an ASSIGN in a loop.
+    // The ten in the vendored z2ui5_cl_popup_context were fixed in abap-util
+    // (zabaputil_cl_util_context) and copied from there
+    "is_assigned_in_loop": true,
+    // added 2026-11: newer abaplint rules that report nothing here
+    "abapdoc_short_link": true,
+    "boolean_flag_via_if": true,
+    "cast_via_generic_reference": true
   }
 }

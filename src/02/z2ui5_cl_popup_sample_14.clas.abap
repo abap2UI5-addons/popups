@@ -38,7 +38,7 @@ CLASS z2ui5_cl_popup_sample_14 IMPLEMENTATION.
         set_data( ).
 
       WHEN `PREVIEW_FILTER`.
-        client->nav_app_call( z2ui5_cl_popup_get_range_m=>factory( mt_filter ) ).
+        client->nav_app_call( z2ui5_cl_popup_get_ranges=>factory( mt_filter ) ).
     ENDCASE.
 
   ENDMETHOD.
@@ -146,7 +146,7 @@ CLASS z2ui5_cl_popup_sample_14 IMPLEMENTATION.
 
     IF client->get( )-check_on_navigated = abap_true.
       TRY.
-          DATA(lo_value_help) = CAST z2ui5_cl_popup_get_range_m( client->get_app( client->get( )-s_draft-id_prev_app ) ).
+          DATA(lo_value_help) = CAST z2ui5_cl_popup_get_ranges( client->get_app( client->get( )-s_draft-id_prev_app ) ).
 
           IF lo_value_help->result( )-check_confirmed = abap_true.
 

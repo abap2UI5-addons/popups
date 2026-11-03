@@ -97,7 +97,7 @@ CLASS z2ui5_cl_popup_sample_02 IMPLEMENTATION.
     DATA(search_field) = VALUE string( lt_arg[ 1 ] ).
     DATA(search_table) = VALUE string( lt_arg[ 2 ] ).
 
-    client->nav_app_call( z2ui5_cl_popup_search_help=>factory( i_table = search_table
+    client->nav_app_call( z2ui5_cl_popup_shlp=>factory( i_table = search_table
                                                              i_fname = search_field
                                                              i_value = CONV #( ms_usr01-spld )
                                                              i_data  = REF #( ms_usr01 ) ) ).
@@ -111,7 +111,7 @@ CLASS z2ui5_cl_popup_sample_02 IMPLEMENTATION.
     ENDIF.
 
     TRY.
-        DATA(app) = CAST z2ui5_cl_popup_search_help( client->get_app( client->get( )-s_draft-id_prev_app ) ).
+        DATA(app) = CAST z2ui5_cl_popup_shlp( client->get_app( client->get( )-s_draft-id_prev_app ) ).
 
         IF app->mv_return_value IS NOT INITIAL.
 

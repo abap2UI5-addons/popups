@@ -38,14 +38,14 @@ CLASS ltcl_test IMPLEMENTATION.
 
   METHOD test_factory.
 
-    DATA(lo_pop) = z2ui5_cl_popup_demo_output=>factory( NEW ltcl_output_stub( ) ).
+    DATA(lo_pop) = z2ui5_cl_popup_demo_out=>factory( NEW ltcl_output_stub( ) ).
     cl_abap_unit_assert=>assert_bound( lo_pop ).
 
   ENDMETHOD.
 
   METHOD test_factory_custom.
 
-    DATA(lo_pop) = z2ui5_cl_popup_demo_output=>factory(
+    DATA(lo_pop) = z2ui5_cl_popup_demo_out=>factory(
       i_output      = NEW ltcl_output_stub( )
       i_title       = `My Output`
       i_icon        = `sap-icon://hint`
@@ -58,7 +58,7 @@ CLASS ltcl_test IMPLEMENTATION.
 
   METHOD test_factory_as_page.
 
-    DATA(lo_pop) = z2ui5_cl_popup_demo_output=>factory(
+    DATA(lo_pop) = z2ui5_cl_popup_demo_out=>factory(
       i_output  = NEW ltcl_output_stub( )
       i_as_page = abap_true ).
 
@@ -125,7 +125,7 @@ CLASS ltcl_test_roundtrip IMPLEMENTATION.
   METHOD test_init_displays_popup.
 
     " any object without a GET method works - the HTML extraction is guarded
-    DATA(lo_pop) = z2ui5_cl_popup_demo_output=>factory( i_output = NEW z2ui5_cx_popup_error( `x` )
+    DATA(lo_pop) = z2ui5_cl_popup_demo_out=>factory( i_output = NEW z2ui5_cx_popup_error( `x` )
                                                       i_title  = `Demo Title` ).
     client_create( lo_pop ).
 
@@ -137,7 +137,7 @@ CLASS ltcl_test_roundtrip IMPLEMENTATION.
 
   METHOD test_toggle_fullscreen.
 
-    DATA(lo_pop) = z2ui5_cl_popup_demo_output=>factory( NEW z2ui5_cx_popup_error( `x` ) ).
+    DATA(lo_pop) = z2ui5_cl_popup_demo_out=>factory( NEW z2ui5_cx_popup_error( `x` ) ).
     roundtrip_event( io_app   = lo_pop
                      iv_event = `TOGGLE_FULLSCREEN` ).
 
@@ -149,7 +149,7 @@ CLASS ltcl_test_roundtrip IMPLEMENTATION.
 
   METHOD test_confirm_closes.
 
-    DATA(lo_pop) = z2ui5_cl_popup_demo_output=>factory( NEW z2ui5_cx_popup_error( `x` ) ).
+    DATA(lo_pop) = z2ui5_cl_popup_demo_out=>factory( NEW z2ui5_cx_popup_error( `x` ) ).
     roundtrip_event( io_app   = lo_pop
                      iv_event = `BUTTON_CONFIRM` ).
 
