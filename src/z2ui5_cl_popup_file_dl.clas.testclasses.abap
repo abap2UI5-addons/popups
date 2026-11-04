@@ -14,7 +14,8 @@ CLASS ltcl_test IMPLEMENTATION.
 
   METHOD test_factory.
 
-    DATA(lo_pop) = z2ui5_cl_popup_file_dl=>factory( i_file = `test_content`
+    DATA lo_pop TYPE REF TO z2ui5_cl_popup_file_dl.
+    lo_pop = z2ui5_cl_popup_file_dl=>factory( i_file = `test_content`
                                                   i_name = `test.csv` ).
     cl_abap_unit_assert=>assert_bound( lo_pop ).
     cl_abap_unit_assert=>assert_equals( exp = `test_content`
@@ -31,7 +32,8 @@ CLASS ltcl_test IMPLEMENTATION.
 
   METHOD test_result_initial.
 
-    DATA(lo_pop) = z2ui5_cl_popup_file_dl=>factory( `abc` ).
+    DATA lo_pop TYPE REF TO z2ui5_cl_popup_file_dl.
+    lo_pop = z2ui5_cl_popup_file_dl=>factory( `abc` ).
     cl_abap_unit_assert=>assert_false( lo_pop->result( ) ).
 
   ENDMETHOD.
@@ -81,9 +83,11 @@ CLASS ltcl_test_roundtrip IMPLEMENTATION.
 
   METHOD client_create.
 
-    mo_action = NEW #( NEW z2ui5_cl_ui5_handler( `` ) ).
+    DATA temp1 TYPE REF TO z2ui5_cl_ui5_handler.
+    CREATE OBJECT temp1 TYPE z2ui5_cl_ui5_handler EXPORTING VAL = ``.
+    CREATE OBJECT mo_action EXPORTING VAL = temp1.
     mo_action->mo_app->mo_app = io_app.
-    mi_client = NEW z2ui5_cl_ui5_client( mo_action ).
+    CREATE OBJECT mi_client TYPE z2ui5_cl_ui5_client EXPORTING ACTION = mo_action.
 
   ENDMETHOD.
 
@@ -98,36 +102,68 @@ CLASS ltcl_test_roundtrip IMPLEMENTATION.
 
   METHOD test_init_displays_popup.
 
-    DATA(lo_pop) = z2ui5_cl_popup_file_dl=>factory( i_file  = `col1;col2`
+    DATA lo_pop TYPE REF TO z2ui5_cl_popup_file_dl.
+    DATA lv_xml TYPE string.
+    DATA temp1 TYPE xsdboolean.
+    DATA temp2 TYPE xsdboolean.
+    lo_pop = z2ui5_cl_popup_file_dl=>factory( i_file  = `col1;col2`
                                                   i_title = `Download Title` ).
     client_create( lo_pop ).
 
     lo_pop->z2ui5_if_app~main( mi_client ).
 
-    DATA(lv_xml) = popup_xml( ).
-    cl_abap_unit_assert=>assert_true( xsdbool( lv_xml CS `Download Title` ) ).
-    cl_abap_unit_assert=>assert_false( xsdbool( lv_xml CS `iframe` ) ).
+
+    lv_xml = popup_xml( ).
+
+    temp1 = boolc( lv_xml CS `Download Title` ).
+    cl_abap_unit_assert=>assert_true( temp1 ).
+
+    temp2 = boolc( lv_xml CS `iframe` ).
+    cl_abap_unit_assert=>assert_false( temp2 ).
     cl_abap_unit_assert=>assert_initial( follow_up_actions( ) ).
 
   ENDMETHOD.
 
   METHOD test_confirm_starts_dl.
 
-    DATA(lo_pop) = z2ui5_cl_popup_file_dl=>factory( i_file = `col1;col2`
+    DATA lo_pop TYPE REF TO z2ui5_cl_popup_file_dl.
+    DATA lt_action TYPE string_table.
+    FIELD-SYMBOLS <temp1> LIKE LINE OF lt_action.
+    DATA temp2 LIKE sy-tabix.
+    FIELD-SYMBOLS <temp3> LIKE LINE OF lt_action.
+    DATA temp4 LIKE sy-tabix.
+    lo_pop = z2ui5_cl_popup_file_dl=>factory( i_file = `col1;col2`
                                                   i_name = `data.csv` ).
     roundtrip_event( io_app   = lo_pop
                      iv_event = `BUTTON_CONFIRM` ).
 
     " confirm hands the file to the browser and arms the timer that closes
     " the popup - the popup itself stays as it is for this response
-    DATA(lt_action) = follow_up_actions( ).
+
+    lt_action = follow_up_actions( ).
     cl_abap_unit_assert=>assert_equals( exp = 2
                                         act = lines( lt_action ) ).
+
+
+    temp2 = sy-tabix.
+    READ TABLE lt_action INDEX 1 ASSIGNING <temp1>.
+    sy-tabix = temp2.
+    IF sy-subrc <> 0.
+      ASSERT 1 = 0.
+    ENDIF.
     cl_abap_unit_assert=>assert_equals(
         exp = `["DOWNLOAD_B64_FILE","data:text/csv;base64,Y29sMTtjb2wy","data.csv"]`
-        act = lt_action[ 1 ] ).
+        act = <temp1> ).
+
+
+    temp4 = sy-tabix.
+    READ TABLE lt_action INDEX 2 ASSIGNING <temp3>.
+    sy-tabix = temp4.
+    IF sy-subrc <> 0.
+      ASSERT 1 = 0.
+    ENDIF.
     cl_abap_unit_assert=>assert_equals( exp = `["START_TIMER","CALLBACK_DOWNLOAD","0"]`
-                                        act = lt_action[ 2 ] ).
+                                        act = <temp3> ).
     cl_abap_unit_assert=>assert_true( lo_pop->mv_check_download ).
     cl_abap_unit_assert=>assert_initial( popup_xml( ) ).
     cl_abap_unit_assert=>assert_false( popup_destroyed( ) ).
@@ -137,7 +173,8 @@ CLASS ltcl_test_roundtrip IMPLEMENTATION.
 
   METHOD test_callback_closes.
 
-    DATA(lo_pop) = z2ui5_cl_popup_file_dl=>factory( `col1;col2` ).
+    DATA lo_pop TYPE REF TO z2ui5_cl_popup_file_dl.
+    lo_pop = z2ui5_cl_popup_file_dl=>factory( `col1;col2` ).
     roundtrip_event( io_app   = lo_pop
                      iv_event = `CALLBACK_DOWNLOAD` ).
 
@@ -149,7 +186,8 @@ CLASS ltcl_test_roundtrip IMPLEMENTATION.
 
   METHOD test_cancel_closes.
 
-    DATA(lo_pop) = z2ui5_cl_popup_file_dl=>factory( `col1;col2` ).
+    DATA lo_pop TYPE REF TO z2ui5_cl_popup_file_dl.
+    lo_pop = z2ui5_cl_popup_file_dl=>factory( `col1;col2` ).
     roundtrip_event( io_app   = lo_pop
                      iv_event = `BUTTON_CANCEL` ).
 
@@ -161,7 +199,8 @@ CLASS ltcl_test_roundtrip IMPLEMENTATION.
 
   METHOD popup_xml.
 
-    LOOP AT mo_action->ms_next-t_action_front INTO DATA(ls_action)
+    DATA ls_action LIKE LINE OF mo_action->ms_next-t_action_front.
+    LOOP AT mo_action->ms_next-t_action_front INTO ls_action
          WHERE slot = z2ui5_if_client=>cs_view-popup AND method = `display`.
       result = ls_action-xml.
     ENDLOOP.
@@ -170,7 +209,8 @@ CLASS ltcl_test_roundtrip IMPLEMENTATION.
 
   METHOD follow_up_actions.
 
-    LOOP AT mo_action->ms_next-s_action-t_custom INTO DATA(ls_action).
+    DATA ls_action LIKE LINE OF mo_action->ms_next-s_action-t_custom.
+    LOOP AT mo_action->ms_next-s_action-t_custom INTO ls_action.
       INSERT ls_action-o_json->stringify( ) INTO TABLE result.
     ENDLOOP.
 
@@ -178,8 +218,13 @@ CLASS ltcl_test_roundtrip IMPLEMENTATION.
 
   METHOD popup_destroyed.
 
-    result = xsdbool( line_exists( mo_action->ms_next-t_action_front[ slot   = z2ui5_if_client=>cs_view-popup
-                                                                      method = `destroy` ] ) ).
+    DATA temp5 LIKE sy-subrc.
+    DATA temp3 TYPE xsdboolean.
+    READ TABLE mo_action->ms_next-t_action_front WITH KEY slot = z2ui5_if_client=>cs_view-popup method = `destroy` TRANSPORTING NO FIELDS.
+    temp5 = sy-subrc.
+
+    temp3 = boolc( temp5 = 0 ).
+    result = temp3.
 
   ENDMETHOD.
 
