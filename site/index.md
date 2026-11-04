@@ -5,8 +5,8 @@ hero:
   name: "Popups"
   text: "Ready-to-use popups and dialogs, one factory( ) call each."
   image:
-    src: /favicon.png
-    alt: abap2UI5
+    src: /logo.svg
+    alt: abap2UI5 addons
   actions:
     - theme: brand
       text: Get started
