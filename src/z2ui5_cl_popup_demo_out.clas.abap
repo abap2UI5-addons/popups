@@ -58,19 +58,12 @@ CLASS z2ui5_cl_popup_demo_out IMPLEMENTATION.
       CATCH cx_root ##NO_HANDLER.
     ENDTRY.
 
-    " CL_DEMO_OUTPUT emits a full HTML document including a <style> block.
-    " UI5 interprets `{` / `}` inside the core:HTML `content` attribute as
-    " data-binding expressions, so the CSS braces break the binding parser.
-    " Escape them with a leading backslash - UI5's documented way to mark a
-    " brace as a literal character, rendered without the backslash.
-    r_result->html = replace( val  = r_result->html
-                              sub  = `{`
-                              with = `\{`
-                              occ  = 0 ).
-    r_result->html = replace( val  = r_result->html
-                              sub  = `}`
-                              with = `\}`
-                              occ  = 0 ).
+    " CL_DEMO_OUTPUT emits a full HTML document including a <style> block,
+    " whose braces UI5 would read as a binding in the core:HTML `content`
+    " attribute. That is escaped where it is rendered - `t = html` - and only
+    " there: escaping here as well left a visible backslash in front of every
+    " brace (`\{` became `\\\{`, which UI5 unescapes to `\{`), so the CSS of
+    " the output did not parse
 
   ENDMETHOD.
 

@@ -22,6 +22,31 @@ CLASS ltcl_output_stub IMPLEMENTATION.
 ENDCLASS.
 
 
+CLASS ltcl_output_css DEFINITION FINAL CREATE PUBLIC.
+
+  PUBLIC SECTION.
+    " named like CL_DEMO_OUTPUT=>GET's returning parameter, which the popup
+    " receives dynamically by that name
+    METHODS get
+      RETURNING
+        VALUE(output) TYPE string.
+
+  PROTECTED SECTION.
+  PRIVATE SECTION.
+ENDCLASS.
+
+
+CLASS ltcl_output_css IMPLEMENTATION.
+
+  METHOD get.
+
+    output = `<style>body { color: red; }</style>`.
+
+  ENDMETHOD.
+
+ENDCLASS.
+
+
 CLASS ltcl_test DEFINITION FINAL
   FOR TESTING RISK LEVEL HARMLESS DURATION SHORT.
 
@@ -99,6 +124,7 @@ CLASS ltcl_test_roundtrip DEFINITION FINAL
     METHODS test_init_displays_popup FOR TESTING RAISING cx_static_check.
     METHODS test_toggle_fullscreen   FOR TESTING RAISING cx_static_check.
     METHODS test_confirm_closes      FOR TESTING RAISING cx_static_check.
+    METHODS test_braces_escaped_once FOR TESTING RAISING cx_static_check.
 
 ENDCLASS.
 
@@ -155,6 +181,20 @@ CLASS ltcl_test_roundtrip IMPLEMENTATION.
 
     cl_abap_unit_assert=>assert_true( popup_destroyed( ) ).
     cl_abap_unit_assert=>assert_bound( mo_action->ms_next-o_app_leave ).
+
+  ENDMETHOD.
+
+  METHOD test_braces_escaped_once.
+
+    " UI5 unescapes `\{` to a brace; `\\\{` would leave a backslash in the CSS
+    DATA(lo_pop) = z2ui5_cl_popup_demo_out=>factory( NEW ltcl_output_css( ) ).
+    client_create( lo_pop ).
+
+    lo_pop->z2ui5_if_app~main( mi_client ).
+
+    DATA(lv_xml) = popup_xml( ).
+    cl_abap_unit_assert=>assert_true( xsdbool( lv_xml CS `body \{ color: red; \}` ) ).
+    cl_abap_unit_assert=>assert_false( xsdbool( lv_xml CS `\\` ) ).
 
   ENDMETHOD.
 
