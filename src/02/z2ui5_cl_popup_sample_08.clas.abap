@@ -39,32 +39,68 @@ CLASS z2ui5_cl_popup_sample_08 IMPLEMENTATION.
     TYPES params    TYPE c LENGTH 255.
     TYPES msg_txt   TYPE string.
     TYPES END OF ty_s_log_entry.
-    DATA lt_bal TYPE STANDARD TABLE OF ty_s_log_entry WITH EMPTY KEY.
+    DATA lt_bal TYPE STANDARD TABLE OF ty_s_log_entry WITH DEFAULT KEY.
+        DATA temp1 TYPE bapirettab.
+        DATA temp2 LIKE LINE OF temp1.
+        DATA lt_msg LIKE temp1.
+        DATA temp3 LIKE lt_bal.
+        DATA temp4 LIKE LINE OF temp3.
+            DATA lv_dummy TYPE i.
+            DATA lx TYPE REF TO cx_root.
+        DATA lo_app TYPE REF TO z2ui5_cl_popup_error.
 
     CASE client->get( )-event.
 
       WHEN `POPUP_BAPIRET`.
 
-        DATA(lt_msg) = VALUE bapirettab(
-            ( type = `E` id = `MSG1` number = `001` message = `An empty Report field causes an empty XML Message to be sent` )
-            ( type = `I` id = `MSG2` number = `002` message = `Product already in use` ) ).
+
+        CLEAR temp1.
+
+        temp2-type = `E`.
+        temp2-id = `MSG1`.
+        temp2-number = `001`.
+        temp2-message = `An empty Report field causes an empty XML Message to be sent`.
+        INSERT temp2 INTO TABLE temp1.
+        temp2-type = `I`.
+        temp2-id = `MSG2`.
+        temp2-number = `002`.
+        temp2-message = `Product already in use`.
+        INSERT temp2 INTO TABLE temp1.
+
+        lt_msg = temp1.
 
         client->nav_app_call( z2ui5_cl_popup_messages=>factory( lt_msg ) ).
 
       WHEN `POPUP_BALLOG`.
 
-        lt_bal = VALUE #(
-          ( msgid = `MSG1` msgno = `001` msgty = `S` time_stmp = z2ui5_cl_popup_context=>time_get_timestampl( ) msgnumber = `01` )
-          ( msgid = `MSG2` msgno = `002` msgty = `S` time_stmp = z2ui5_cl_popup_context=>time_get_timestampl( ) msgnumber = `02` ) ).
+
+        CLEAR temp3.
+
+        temp4-msgid = `MSG1`.
+        temp4-msgno = `001`.
+        temp4-msgty = `S`.
+        temp4-time_stmp = z2ui5_cl_popup_context=>time_get_timestampl( ).
+        temp4-msgnumber = `01`.
+        INSERT temp4 INTO TABLE temp3.
+        temp4-msgid = `MSG2`.
+        temp4-msgno = `002`.
+        temp4-msgty = `S`.
+        temp4-time_stmp = z2ui5_cl_popup_context=>time_get_timestampl( ).
+        temp4-msgnumber = `02`.
+        INSERT temp4 INTO TABLE temp3.
+        lt_bal = temp3.
 
         client->nav_app_call( z2ui5_cl_popup_messages=>factory( lt_bal ) ).
 
       WHEN `POPUP_EXCEPTION`.
         TRY.
-            DATA(lv_dummy) = 1 / 0.
-          CATCH cx_root INTO DATA(lx) ##NO_HANDLER.
+
+            lv_dummy = 1 / 0.
+
+          CATCH cx_root INTO lx.
         ENDTRY.
-        DATA(lo_app) = z2ui5_cl_popup_error=>factory( lx ).
+
+        lo_app = z2ui5_cl_popup_error=>factory( lx ).
         client->nav_app_call( lo_app ).
     ENDCASE.
 
@@ -73,7 +109,8 @@ CLASS z2ui5_cl_popup_sample_08 IMPLEMENTATION.
 
   METHOD view_display.
 
-    DATA(view) = z2ui5_cl_ui5_view_builder=>factory(
+    DATA view TYPE REF TO z2ui5_cl_ui5_view_builder.
+    view = z2ui5_cl_ui5_view_builder=>factory(
                      )->ele( n = `View` ns = `mvc`
                      )->a( n = `xmlns` v = `sap.m`
                      )->a( n = `xmlns:mvc` v = `sap.ui.core.mvc`
@@ -102,7 +139,7 @@ CLASS z2ui5_cl_popup_sample_08 IMPLEMENTATION.
   METHOD z2ui5_if_app~main.
 
     me->client = client.
-    IF client->check_on_navigated( ).
+    IF client->check_on_navigated( ) IS NOT INITIAL.
       view_display( ).
     ELSE.
       on_event( ).

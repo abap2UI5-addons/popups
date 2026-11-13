@@ -20,14 +20,16 @@ CLASS ltcl_test IMPLEMENTATION.
 
   METHOD test_factory.
 
-    DATA(lo_pop) = z2ui5_cl_popup_to_confirm=>factory( `Are you sure?` ).
+    DATA lo_pop TYPE REF TO z2ui5_cl_popup_to_confirm.
+    lo_pop = z2ui5_cl_popup_to_confirm=>factory( `Are you sure?` ).
     cl_abap_unit_assert=>assert_bound( lo_pop ).
 
   ENDMETHOD.
 
   METHOD test_factory_defaults.
 
-    DATA(lo_pop) = z2ui5_cl_popup_to_confirm=>factory( `Delete?` ).
+    DATA lo_pop TYPE REF TO z2ui5_cl_popup_to_confirm.
+    lo_pop = z2ui5_cl_popup_to_confirm=>factory( `Delete?` ).
 
     cl_abap_unit_assert=>assert_false( lo_pop->result( ) ).
     cl_abap_unit_assert=>assert_equals( exp = `Popup To Confirm`
@@ -47,7 +49,8 @@ CLASS ltcl_test IMPLEMENTATION.
 
   METHOD test_factory_custom.
 
-    DATA(lo_pop) = z2ui5_cl_popup_to_confirm=>factory(
+    DATA lo_pop TYPE REF TO z2ui5_cl_popup_to_confirm.
+    lo_pop = z2ui5_cl_popup_to_confirm=>factory(
       i_question_text       = `Proceed?`
       i_title               = `Custom Title`
       i_icon                = `sap-icon://warning`
@@ -69,7 +72,8 @@ CLASS ltcl_test IMPLEMENTATION.
 
   METHOD test_result_initial.
 
-    DATA(lo_pop) = z2ui5_cl_popup_to_confirm=>factory( `Test?` ).
+    DATA lo_pop TYPE REF TO z2ui5_cl_popup_to_confirm.
+    lo_pop = z2ui5_cl_popup_to_confirm=>factory( `Test?` ).
     cl_abap_unit_assert=>assert_false( lo_pop->result( ) ).
 
   ENDMETHOD.
@@ -105,7 +109,8 @@ CLASS ltcl_test_events IMPLEMENTATION.
 
   METHOD test_custom_events.
 
-    DATA(lo_pop) = z2ui5_cl_popup_to_confirm=>factory(
+    DATA lo_pop TYPE REF TO z2ui5_cl_popup_to_confirm.
+    lo_pop = z2ui5_cl_popup_to_confirm=>factory(
       i_question_text = `Sure?`
       i_event_confirm = `MY_CONFIRM`
       i_event_cancel  = `MY_CANCEL` ).
@@ -157,9 +162,11 @@ CLASS ltcl_test_roundtrip IMPLEMENTATION.
 
   METHOD client_create.
 
-    mo_action = NEW #( NEW z2ui5_cl_ui5_handler( `` ) ).
+    DATA temp1 TYPE REF TO z2ui5_cl_ui5_handler.
+    CREATE OBJECT temp1 TYPE z2ui5_cl_ui5_handler EXPORTING VAL = ``.
+    CREATE OBJECT mo_action EXPORTING VAL = temp1.
     mo_action->mo_app->mo_app = io_app.
-    mi_client = NEW z2ui5_cl_ui5_client( mo_action ).
+    CREATE OBJECT mi_client TYPE z2ui5_cl_ui5_client EXPORTING ACTION = mo_action.
 
   ENDMETHOD.
 
@@ -174,22 +181,32 @@ CLASS ltcl_test_roundtrip IMPLEMENTATION.
 
   METHOD test_init_displays_popup.
 
-    DATA(lo_pop) = z2ui5_cl_popup_to_confirm=>factory( i_question_text = `Are you sure?`
+    DATA lo_pop TYPE REF TO z2ui5_cl_popup_to_confirm.
+    DATA lv_xml TYPE string.
+    DATA temp1 TYPE xsdboolean.
+    DATA temp2 TYPE xsdboolean.
+    lo_pop = z2ui5_cl_popup_to_confirm=>factory( i_question_text = `Are you sure?`
                                                      i_title         = `My Title` ).
     client_create( lo_pop ).
 
     lo_pop->z2ui5_if_app~main( mi_client ).
 
-    DATA(lv_xml) = popup_xml( ).
-    cl_abap_unit_assert=>assert_true( xsdbool( lv_xml CS `Are you sure?` ) ).
-    cl_abap_unit_assert=>assert_true( xsdbool( lv_xml CS `My Title` ) ).
+
+    lv_xml = popup_xml( ).
+
+    temp1 = boolc( lv_xml CS `Are you sure?` ).
+    cl_abap_unit_assert=>assert_true( temp1 ).
+
+    temp2 = boolc( lv_xml CS `My Title` ).
+    cl_abap_unit_assert=>assert_true( temp2 ).
     cl_abap_unit_assert=>assert_false( popup_destroyed( ) ).
 
   ENDMETHOD.
 
   METHOD test_confirm.
 
-    DATA(lo_pop) = z2ui5_cl_popup_to_confirm=>factory( `Sure?` ).
+    DATA lo_pop TYPE REF TO z2ui5_cl_popup_to_confirm.
+    lo_pop = z2ui5_cl_popup_to_confirm=>factory( `Sure?` ).
     roundtrip_event( io_app   = lo_pop
                      iv_event = `BUTTON_CONFIRM` ).
 
@@ -203,7 +220,8 @@ CLASS ltcl_test_roundtrip IMPLEMENTATION.
 
   METHOD test_cancel.
 
-    DATA(lo_pop) = z2ui5_cl_popup_to_confirm=>factory( `Sure?` ).
+    DATA lo_pop TYPE REF TO z2ui5_cl_popup_to_confirm.
+    lo_pop = z2ui5_cl_popup_to_confirm=>factory( `Sure?` ).
     roundtrip_event( io_app   = lo_pop
                      iv_event = `BUTTON_CANCEL` ).
 
@@ -216,7 +234,8 @@ CLASS ltcl_test_roundtrip IMPLEMENTATION.
 
   METHOD test_custom_event_confirm.
 
-    DATA(lo_pop) = z2ui5_cl_popup_to_confirm=>factory( i_question_text = `Sure?`
+    DATA lo_pop TYPE REF TO z2ui5_cl_popup_to_confirm.
+    lo_pop = z2ui5_cl_popup_to_confirm=>factory( i_question_text = `Sure?`
                                                      i_event_confirm = `MY_CONFIRM` ).
     roundtrip_event( io_app   = lo_pop
                      iv_event = `BUTTON_CONFIRM` ).
@@ -229,7 +248,8 @@ CLASS ltcl_test_roundtrip IMPLEMENTATION.
 
   METHOD popup_xml.
 
-    LOOP AT mo_action->ms_next-t_action_front INTO DATA(ls_action)
+    DATA ls_action LIKE LINE OF mo_action->ms_next-t_action_front.
+    LOOP AT mo_action->ms_next-t_action_front INTO ls_action
          WHERE slot = z2ui5_if_client=>cs_view-popup AND method = `display`.
       result = ls_action-xml.
     ENDLOOP.
@@ -238,8 +258,13 @@ CLASS ltcl_test_roundtrip IMPLEMENTATION.
 
   METHOD popup_destroyed.
 
-    result = xsdbool( line_exists( mo_action->ms_next-t_action_front[ slot   = z2ui5_if_client=>cs_view-popup
-                                                                      method = `destroy` ] ) ).
+    DATA temp1 LIKE sy-subrc.
+    DATA temp3 TYPE xsdboolean.
+    READ TABLE mo_action->ms_next-t_action_front WITH KEY slot = z2ui5_if_client=>cs_view-popup method = `destroy` TRANSPORTING NO FIELDS.
+    temp1 = sy-subrc.
+
+    temp3 = boolc( temp1 = 0 ).
+    result = temp3.
 
   ENDMETHOD.
 

@@ -10,28 +10,32 @@ ENDCLASS.
 CLASS z2ui5_cl_popup_sample_05 IMPLEMENTATION.
 
   METHOD z2ui5_if_app~main.
+      DATA lo_app TYPE REF TO z2ui5_cl_popup_to_confirm.
+      DATA view TYPE REF TO z2ui5_cl_ui5_view_builder.
 
     " the popup hands control back with its event AND check_on_navigated( )
     " at once, so the event arms come first and the navigated arm - which
     " also covers the first start - comes last
-    IF client->check_on_event( `POPUP` ).
+    IF client->check_on_event( `POPUP` ) IS NOT INITIAL.
 
-      DATA(lo_app) = z2ui5_cl_popup_to_confirm=>factory( i_question_text = `this is a question`
+
+      lo_app = z2ui5_cl_popup_to_confirm=>factory( i_question_text = `this is a question`
                                                        i_event_confirm = `POPUP_TRUE`
                                                        i_event_cancel  = `POPUP_FALSE` ).
       client->nav_app_call( lo_app ).
 
     " abap2ui5lint-disable-next-line handler-without-event -- raised by z2ui5_cl_popup_to_confirm, named in i_event_confirm above
-    ELSEIF client->check_on_event( `POPUP_TRUE` ).
+    ELSEIF client->check_on_event( `POPUP_TRUE` ) IS NOT INITIAL.
       client->message_box_display( `the result is SUCCESS` ).
 
     " abap2ui5lint-disable-next-line handler-without-event -- raised by z2ui5_cl_popup_to_confirm, named in i_event_cancel above
-    ELSEIF client->check_on_event( `POPUP_FALSE` ).
+    ELSEIF client->check_on_event( `POPUP_FALSE` ) IS NOT INITIAL.
       client->message_box_display( `the result is CANCEL` ).
 
-    ELSEIF client->check_on_navigated( ).
+    ELSEIF client->check_on_navigated( ) IS NOT INITIAL.
 
-      DATA(view) = z2ui5_cl_ui5_view_builder=>factory(
+
+      view = z2ui5_cl_ui5_view_builder=>factory(
                        )->ele( n = `View` ns = `mvc`
                        )->a( n = `xmlns` v = `sap.m`
                        )->a( n = `xmlns:mvc` v = `sap.ui.core.mvc`
