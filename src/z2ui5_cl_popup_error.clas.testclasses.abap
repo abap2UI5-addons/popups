@@ -72,6 +72,7 @@ CLASS ltcl_test_roundtrip DEFINITION FINAL
 
     METHODS test_init_displays_error FOR TESTING RAISING cx_static_check.
     METHODS test_confirm_closes      FOR TESTING RAISING cx_static_check.
+    METHODS test_text_is_literal     FOR TESTING RAISING cx_static_check.
 
 ENDCLASS.
 
@@ -116,6 +117,19 @@ CLASS ltcl_test_roundtrip IMPLEMENTATION.
 
     cl_abap_unit_assert=>assert_true( popup_destroyed( ) ).
     cl_abap_unit_assert=>assert_bound( mo_action->ms_next-o_app_leave ).
+
+  ENDMETHOD.
+
+  METHOD test_text_is_literal.
+
+    " an exception text is data: a brace in it must be shown, not parsed as
+    " the start of a binding
+    DATA(lo_pop) = z2ui5_cl_popup_error=>factory( NEW z2ui5_cx_popup_error( `field {NAME} is unknown` ) ).
+    client_create( lo_pop ).
+
+    lo_pop->z2ui5_if_app~main( mi_client ).
+
+    cl_abap_unit_assert=>assert_true( xsdbool( popup_xml( ) CS `field \{NAME\} is unknown` ) ).
 
   ENDMETHOD.
 

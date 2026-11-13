@@ -44,7 +44,7 @@ CLASS z2ui5_cl_popup_error IMPLEMENTATION.
                       )->ele( `VBox`
                       )->a( n = `class` v = `sapUiMediumMargin`
                       )->tag( `Text`
-                      )->a( n = `text` v = error->get_text( )
+                      )->a( n = `text` t = error->get_text( )
                       )->end(
                       )->end(
                       )->ele( `buttons`

@@ -117,7 +117,14 @@ CLASS z2ui5_cl_popup_shlp IMPLEMENTATION.
       DATA(enabled) = xsdbool(
           VALUE #( ms_shlp-interface[ shlpfield = dfies->fieldname ]-value OPTIONAL ) IS INITIAL ).
 
+      " the row carries the list fields of the search help only, the record
+      " description every field - without the check the input of a field
+      " that is not listed was bound to the previous field, or the first
+      " one to an unassigned field symbol
       ASSIGN COMPONENT dfies->fieldname OF STRUCTURE <data_row> TO FIELD-SYMBOL(<val>).
+      IF sy-subrc <> 0.
+        CONTINUE.
+      ENDIF.
 
       simple_form->tag( `Label`
           )->a( n = `text` v = z2ui5_cl_popup_context=>rtti_get_data_element_text_l( dfies->rollname ) ).
