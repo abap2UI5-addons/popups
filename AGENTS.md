@@ -45,10 +45,15 @@ Installed alongside via abapGit; declared in the abaplint configs:
   `scripts/core-pin.mjs` (`get` fails when they disagree). `bump-deps.yaml`
   moves the pin monthly to the newest release, in its one pull request whose
   checks lint against it (`bump-core.yaml` does it alone, by hand), and
-  the scheduled runs of `abap-standard` / `abap-cloud` lint once against the
+  the scheduled run of `ci` lints once against the
   core's `main` as the canary (`core-pin.mjs set main`, never committed). Do
   not drop the key: abaplint then clones `main` silently.
-* [layout-management](https://github.com/abap2UI5-addons/layout-management) — used by the Value-Help/Search-Help popups in `src/03/`; resolved from its `main` branch (it has no release tags to pin). A system that pulls this repository but not layout-management
+* [layout-management](https://github.com/abap2UI5-addons/layout-management) — used by the Value-Help/Search-Help popups in `src/03/`; pinned by commit in `.github/deps.json` (it has no release tags to pin): CI
+  (abaplint, rename) and `npm run unit` resolve it there, the monthly
+  `bump-deps` moves the pin, and the weekly `ci` run checks its `main` tip. A
+  local `npm run check` clones its `main`. The 702 config gives its `702`
+  branch a folder of its own (`/abap2UI5-layout-702`), beside the one the CI
+  template fills with the pinned commit. A system that pulls this repository but not layout-management
   fails activation of `src/03/` with `"HEADER" is not type-compatible with formal
   parameter "XML"` (the old `render_layout_function` takes `z2ui5_cl_xml_view`);
   CI cannot see that skew — the fix is pulling layout-management
@@ -70,20 +75,26 @@ This project follows the conventions of the abap2UI5 core framework (see its [AG
 
 Run `npm run check` before considering changes complete: it runs the same
 abaplint, abap2UI5-linter and rename steps as CI, and all of them must pass.
-CI:
+CI comes from the shared CI template of abap2UI5-addons (reusable workflows in
+[rap-ext](https://github.com/abap2UI5-addons/rap-ext/blob/main/.github/ci/README.md),
+pinned by commit in the `uses:` lines and moved by `bump-deps`):
 
-* `abap-standard` / `abap-cloud` — lint against Standard ABAP
+* `ci` - one job per check: abaplint against Standard ABAP
   (`abaplint.jsonc`) and ABAP Cloud (`.github/abaplint/abap_cloud.jsonc`)
   (`uncaught_exception` is on: a checked exception that is neither caught nor
-  declared is only a warning in SE80/ADT, so abaplint is where it is caught);
-  their scheduled runs lint once against the core's `main` (the canary above)
-* `check-abap2ui5` — the abap2UI5-linter over the app classes and their
-  views (`abap2ui5lint.jsonc`)
-* `publish-702` / `abap-702` — `publish-702` writes the downported `702`
-  branch on every push to `main` (`npm run auto_downport`: `abaplint --fix`
-  against `.github/abaplint/abap_702.jsonc`), and `abap-702` lints it
-* `abap-unit` — the ABAP Unit tests on abap2UI5's transpiled Node runtime, the way abap2UI5 tests itself: `npm run unit` (`.github/scripts/unit.mjs`) copies the packages into a checkout of abap2UI5's `main` (abap2UI5-ext and layout-management beside it), downports, transpiles and runs the tests of this repository's classes
-* `check-rename` — namespace-rename check (`npm run rename`, `.github/scripts/rename.mjs`)
+  declared is only a warning in SE80/ADT, so abaplint is where it is caught),
+  whose scheduled run lints once against the core's `main` (the canary
+  above); `abap2ui5lint` - the abap2UI5-linter over the app classes and their
+  views (`abap2ui5lint.jsonc`); `unit` - the ABAP Unit tests on abap2UI5's
+  transpiled Node runtime, the way abap2UI5 tests itself: `npm run unit`
+  (`.github/scripts/unit.mjs`) copies the packages into a checkout of
+  abap2UI5's `main` (abap2UI5-ext and layout-management beside it),
+  downports, transpiles and runs the tests of this repository's classes;
+  `rename` - the namespace-rename check (`npm run rename`,
+  `.github/scripts/rename.mjs`)
+* `ci-702` — writes the downported `702` branch on every push to `main`
+  (`npm run auto_downport`: `abaplint --fix` against
+  `.github/abaplint/abap_702.jsonc`) and lints it
 * `build-rename` — manual workflow that pushes a namespace-renamed branch
   `rename_<name>` for a parallel install
 * `bump-core` — moves the abap2UI5 release pin, see Dependencies
@@ -92,7 +103,7 @@ All `.abap`/`.xml`/config files are LF-only (`.gitattributes` enforces it).
 
 ## Namespace rename
 
-`npm run rename` (CI: `check-rename`) and the manual `build-rename` workflow
+`npm run rename` (CI: the `rename` job of `ci`) and the manual `build-rename` workflow
 are abap2UI5's namespace rename for this addon - `.github/scripts/rename.mjs`,
 the same file in every addon that has one. Every `z2ui5_` object becomes
 `<name>_...`, for a customer name such as `ZMYUI5` or a registered namespace
