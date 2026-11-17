@@ -17,9 +17,11 @@
       "files": "/src/**/*.*"
     },
     {
+      // a folder of its own: the CI template fills /abap2UI5-layout beside it
+      // with the commit .github/deps.json pins
       "url": "https://github.com/abap2UI5-addons/layout-management",
       "branch": "702",
-      "folder": "/abap2UI5-layout",
+      "folder": "/abap2UI5-layout-702",
       "files": "/src/**/*.*"
     }
   ],
