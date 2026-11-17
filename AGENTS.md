@@ -88,7 +88,7 @@ pinned by commit in the `uses:` lines and moved by `bump-deps`):
   views (`abap2ui5lint.jsonc`); `unit` - the ABAP Unit tests on abap2UI5's
   transpiled Node runtime, the way abap2UI5 tests itself: `npm run unit`
   (`.github/scripts/unit.mjs`) copies the packages into a checkout of
-  abap2UI5's `main` (abap2UI5-ext and layout-management beside it),
+  abap2UI5's `main` (layout-management beside it),
   downports, transpiles and runs the tests of this repository's classes;
   `rename` - the namespace-rename check (`npm run rename`,
   `.github/scripts/rename.mjs`)
