@@ -47,10 +47,20 @@ CLASS z2ui5_cl_popup_table IMPLEMENTATION.
   METHOD display.
 
     FIELD-SYMBOLS <tab_out> TYPE STANDARD TABLE.
+    DATA popup TYPE REF TO z2ui5_cl_ui5_view_builder.
+    DATA tab TYPE REF TO z2ui5_cl_ui5_view_builder.
+    DATA lt_comp TYPE abap_component_tab.
+    DATA list TYPE REF TO z2ui5_cl_ui5_view_builder.
+    DATA cells TYPE REF TO z2ui5_cl_ui5_view_builder.
+    DATA ls_comp LIKE LINE OF lt_comp.
+    DATA columns TYPE REF TO z2ui5_cl_ui5_view_builder.
+        DATA lv_name TYPE string.
+        DATA lv_ddic_field_label TYPE string.
 
     ASSIGN mr_tab->* TO <tab_out>.
 
-    DATA(popup) = z2ui5_cl_ui5_view_builder=>factory(
+
+    popup = z2ui5_cl_ui5_view_builder=>factory(
                       )->ele( n = `FragmentDefinition` ns = `core`
                       )->a( n = `xmlns` v = `sap.m`
                       )->a( n = `xmlns:core` v = `sap.ui.core`
@@ -60,30 +70,38 @@ CLASS z2ui5_cl_popup_table IMPLEMENTATION.
                       )->a( n = `title` t = title
                       )->ele( `content` ).
 
-    DATA(tab) = popup->ele( `Table`
+
+    tab = popup->ele( `Table`
                     )->a( n = `items` v = client->_bind( <tab_out> )
                     )->a( n = `growing` b = growing
                     )->a( n = `growingThreshold` v = growingthreshold ).
 
-    DATA(lt_comp) = z2ui5_cl_popup_context=>rtti_get_t_attri_by_any( <tab_out> ).
 
-    DATA(list) = tab->ele( `ColumnListItem`
+    lt_comp = z2ui5_cl_popup_context=>rtti_get_t_attri_by_any( <tab_out> ).
+
+
+    list = tab->ele( `ColumnListItem`
                      )->a( n = `vAlign` v = `Top` ).
-    DATA(cells) = list->ele( `cells` ).
 
-    LOOP AT lt_comp INTO DATA(ls_comp).
+    cells = list->ele( `cells` ).
+
+
+    LOOP AT lt_comp INTO ls_comp.
       cells->tag( `Text`
           )->a( n = `text` v = |\{{ ls_comp-name }\}| ).
     ENDLOOP.
 
-    DATA(columns) = tab->ele( `columns` ).
+
+    columns = tab->ele( `columns` ).
 
     LOOP AT lt_comp INTO ls_comp.
       IF ls_comp-type IS BOUND AND
           ls_comp-type->is_ddic_type( ) = abap_true.
 
-        DATA(lv_name) = z2ui5_cl_popup_context=>rtti_get_ddic_type_name( ls_comp-type ).
-        DATA(lv_ddic_field_label) = z2ui5_cl_popup_context=>rtti_get_data_element_text_l( lv_name ).
+
+        lv_name = z2ui5_cl_popup_context=>rtti_get_ddic_type_name( ls_comp-type ).
+
+        lv_ddic_field_label = z2ui5_cl_popup_context=>rtti_get_data_element_text_l( lv_name ).
 
         IF lv_ddic_field_label IS NOT INITIAL.
           columns->ele( `Column`
@@ -115,7 +133,7 @@ CLASS z2ui5_cl_popup_table IMPLEMENTATION.
 
   METHOD factory.
 
-    r_result = NEW #( ).
+    CREATE OBJECT r_result.
     IF i_title IS NOT INITIAL.
       r_result->title = i_title.
     ENDIF.
@@ -160,7 +178,7 @@ CLASS z2ui5_cl_popup_table IMPLEMENTATION.
 
     me->client = client.
 
-    IF client->check_on_init( ).
+    IF client->check_on_init( ) IS NOT INITIAL.
       display( ).
       RETURN.
     ENDIF.

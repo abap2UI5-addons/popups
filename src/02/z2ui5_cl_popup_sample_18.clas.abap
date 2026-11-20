@@ -17,12 +17,14 @@ ENDCLASS.
 CLASS z2ui5_cl_popup_sample_18 IMPLEMENTATION.
 
   METHOD z2ui5_if_app~main.
+      DATA view TYPE REF TO z2ui5_cl_ui5_view_builder.
 
     me->client = client.
 
-    IF client->check_on_navigated( ).
+    IF client->check_on_navigated( ) IS NOT INITIAL.
 
-      DATA(view) = z2ui5_cl_ui5_view_builder=>factory(
+
+      view = z2ui5_cl_ui5_view_builder=>factory(
                        )->ele( n = `View` ns = `mvc`
                        )->a( n = `xmlns` v = `sap.m`
                        )->a( n = `xmlns:mvc` v = `sap.ui.core.mvc`
@@ -41,10 +43,10 @@ CLASS z2ui5_cl_popup_sample_18 IMPLEMENTATION.
           )->a( n = `press` v = client->_event( `FULLSCREEN` ) ).
       client->view_display( view->stringify( ) ).
 
-    ELSEIF client->check_on_event( `POPUP` ).
+    ELSEIF client->check_on_event( `POPUP` ) IS NOT INITIAL.
       nav_to_output( abap_false ).
 
-    ELSEIF client->check_on_event( `FULLSCREEN` ).
+    ELSEIF client->check_on_event( `FULLSCREEN` ) IS NOT INITIAL.
       nav_to_output( abap_true ).
 
     ENDIF.
@@ -59,13 +61,30 @@ CLASS z2ui5_cl_popup_sample_18 IMPLEMENTATION.
              name   TYPE string,
              url    TYPE string,
            END OF ty_s_carrier.
-    DATA t_carriers TYPE STANDARD TABLE OF ty_s_carrier WITH EMPTY KEY.
-    t_carriers = VALUE #(
-        ( carrid = `AA` name = `American Airlines`  url = `http://www.aa.com` )
-        ( carrid = `LH` name = `Lufthansa`          url = `http://www.lufthansa.com` )
-        ( carrid = `SQ` name = `Singapore Airlines` url = `http://www.singaporeair.com` ) ).
+    DATA t_carriers TYPE STANDARD TABLE OF ty_s_carrier WITH DEFAULT KEY.
+    DATA temp1 LIKE t_carriers.
+    DATA temp2 LIKE LINE OF temp1.
+    DATA xml TYPE string.
+    DATA output TYPE REF TO object.
+    DATA classname TYPE string.
+    CLEAR temp1.
 
-    DATA(xml) = `<?xml version="1.0" encoding="UTF-8"?>` &&
+    temp2-carrid = `AA`.
+    temp2-name = `American Airlines`.
+    temp2-url = `http://www.aa.com`.
+    INSERT temp2 INTO TABLE temp1.
+    temp2-carrid = `LH`.
+    temp2-name = `Lufthansa`.
+    temp2-url = `http://www.lufthansa.com`.
+    INSERT temp2 INTO TABLE temp1.
+    temp2-carrid = `SQ`.
+    temp2-name = `Singapore Airlines`.
+    temp2-url = `http://www.singaporeair.com`.
+    INSERT temp2 INTO TABLE temp1.
+    t_carriers = temp1.
+
+
+    xml = `<?xml version="1.0" encoding="UTF-8"?>` &&
                 `<flightplan>` &&
                 `<flight carrid="LH" connid="0400" cityfrom="FRANKFURT" cityto="NEW YORK"/>` &&
                 `<flight carrid="AA" connid="0017" cityfrom="NEW YORK" cityto="SAN FRANCISCO"/>` &&
@@ -74,9 +93,10 @@ CLASS z2ui5_cl_popup_sample_18 IMPLEMENTATION.
     " CL_DEMO_OUTPUT is a classic ABAP class (not released for ABAP Cloud),
     " so it is instantiated dynamically here to keep the sample portable.
     " The popup itself accepts the output generically (TYPE REF TO object).
-    DATA output TYPE REF TO object.
 
-    DATA(classname) = `CL_DEMO_OUTPUT`.
+
+
+    classname = `CL_DEMO_OUTPUT`.
     CALL METHOD (classname)=>(`NEW`)
       RECEIVING
         output = output.
