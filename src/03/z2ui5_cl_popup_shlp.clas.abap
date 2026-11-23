@@ -6,6 +6,18 @@ CLASS z2ui5_cl_popup_shlp DEFINITION
     " abap2ui5lint-disable unbound-public-attribute -- a popup's attributes are its interface to the app that called it, which reads them once the popup returns
     INTERFACES z2ui5_if_app.
 
+    " a prefilled selection field: name is the search-help parameter. value
+    " is written into its input field of the dialog and selects like a typed
+    " value, t_range adds exact conditions (sign, option, low, high)
+    TYPES:
+      BEGIN OF ty_s_init,
+        name    TYPE string,
+        value   TYPE string,
+        t_range TYPE z2ui5_cl_popup_context=>ty_t_range,
+      END OF ty_s_init.
+    TYPES ty_t_init TYPE STANDARD TABLE OF ty_s_init WITH EMPTY KEY.
+
+    DATA mv_searchhelp   TYPE string.
     DATA mv_table        TYPE string.
     DATA mv_fname        TYPE string.
     DATA mv_shlpfield    TYPE string.
@@ -27,12 +39,24 @@ CLASS z2ui5_cl_popup_shlp DEFINITION
         i_fname       TYPE string
         i_value       TYPE string
         i_data        TYPE REF TO data OPTIONAL
+        it_init       TYPE ty_t_init   OPTIONAL
+      RETURNING
+        VALUE(result) TYPE REF TO z2ui5_cl_popup_shlp.
+
+    " opens a search help by its name - i_fname is the search-help parameter
+    " whose value of the selected row is returned in mv_return_value
+    CLASS-METHODS factory_by_searchhelp
+      IMPORTING
+        i_searchhelp  TYPE string
+        i_fname       TYPE string
+        it_init       TYPE ty_t_init OPTIONAL
       RETURNING
         VALUE(result) TYPE REF TO z2ui5_cl_popup_shlp.
     " abap2ui5lint-enable unbound-public-attribute
 
   PROTECTED SECTION.
-    DATA client TYPE REF TO z2ui5_if_client.
+    DATA client  TYPE REF TO z2ui5_if_client.
+    DATA mt_init TYPE ty_t_init.
 
     METHODS on_init.
     METHODS render_view.
@@ -40,6 +64,19 @@ CLASS z2ui5_cl_popup_shlp DEFINITION
     METHODS on_after_layout.
     METHODS get_layout.
     METHODS set_selopt.
+
+  PRIVATE SECTION.
+    METHODS read_search_help.
+    METHODS shlp_get_by_name.
+    METHODS init_set_row.
+
+    METHODS init_get_selopt
+      RETURNING
+        VALUE(result) TYPE z2ui5_cl_popup_context=>ty_shlp_descr-selopt.
+
+    METHODS get_title
+      RETURNING
+        VALUE(result) TYPE string.
 
 ENDCLASS.
 
@@ -62,14 +99,19 @@ CLASS z2ui5_cl_popup_shlp IMPLEMENTATION.
 
   METHOD on_init.
 
-    z2ui5_cl_popup_context=>bus_search_help_read( CHANGING ms_shlp        = ms_shlp
-                                                      mv_fname       = mv_fname
-                                                      mv_table       = mv_table
-                                                      mr_data        = mr_data
-                                                      mt_result_desc = mt_result_desc
-                                                      mv_shlpfield   = mv_shlpfield
-                                                      mt_data        = mt_data
-                                                      ms_data_row    = ms_data_row ).
+    IF mv_searchhelp IS NOT INITIAL.
+      shlp_get_by_name( ).
+    ENDIF.
+
+    read_search_help( ).
+
+    " the first read builds the row of the selection fields - the prefill
+    " goes into it and the search runs again, as if the user had typed it
+    IF mt_init IS NOT INITIAL.
+      init_set_row( ).
+      set_selopt( ).
+      read_search_help( ).
+    ENDIF.
 
     get_layout( ).
 
@@ -86,7 +128,7 @@ CLASS z2ui5_cl_popup_shlp IMPLEMENTATION.
                                                 handle01 = class
                                                 handle02 = mv_shlpfield
                                                 handle03 = app
-                                                handle04 = ``  ).
+                                                handle04 = mv_searchhelp ).
 
   ENDMETHOD.
 
@@ -143,12 +185,12 @@ CLASS z2ui5_cl_popup_shlp IMPLEMENTATION.
                       )->a( n = `growing`    v = 'true'
                       )->a( n = `width`      v = 'auto'
                       )->a( n = `items`      v = client->_bind( <mt_data> )
-                      )->a( n = `headerText` v = z2ui5_cl_popup_context=>rtti_get_table_desrc( mv_table ) ).
+                      )->a( n = `headerText` v = get_title( ) ).
 
     DATA(header) = table->ele( `headerToolbar`
                        )->ele( `OverflowToolbar`
                        )->tag( `Title`
-                       )->a( n = `text` v = z2ui5_cl_popup_context=>rtti_get_table_desrc( mv_table )
+                       )->a( n = `text` v = get_title( )
                        )->tag( `ToolbarSpacer` ).
 
     header = z2ui5_cl_layo_pop=>render_layout_function( xml    = header
@@ -234,15 +276,7 @@ CLASS z2ui5_cl_popup_shlp IMPLEMENTATION.
       WHEN 'SHLP_INPUT_DONE'.
 
         set_selopt( ).
-
-        z2ui5_cl_popup_context=>bus_search_help_read( CHANGING ms_shlp        = ms_shlp
-                                                          mv_fname       = mv_fname
-                                                          mv_table       = mv_table
-                                                          mr_data        = mr_data
-                                                          mt_result_desc = mt_result_desc
-                                                          mv_shlpfield   = mv_shlpfield
-                                                          mt_data        = mt_data
-                                                          ms_data_row    = ms_data_row ).
+        read_search_help( ).
 
       WHEN OTHERS.
 
@@ -260,6 +294,7 @@ CLASS z2ui5_cl_popup_shlp IMPLEMENTATION.
     result->mv_table = i_table.
     result->mv_fname = i_fname.
     result->mv_value = i_value.
+    result->mt_init  = it_init.
 
     IF i_data IS SUPPLIED.
 
@@ -273,6 +308,17 @@ CLASS z2ui5_cl_popup_shlp IMPLEMENTATION.
       <mr_data> = <i_data>.
 
     ENDIF.
+
+  ENDMETHOD.
+
+  METHOD factory_by_searchhelp.
+
+    result = NEW #( ).
+
+    result->mv_searchhelp = to_upper( i_searchhelp ).
+    result->mv_fname      = to_upper( i_fname ).
+    result->mv_shlpfield  = result->mv_fname.
+    result->mt_init       = it_init.
 
   ENDMETHOD.
 
@@ -316,6 +362,157 @@ CLASS z2ui5_cl_popup_shlp IMPLEMENTATION.
                                   low       = |*{ <value> }*|  ) ).
 
     ENDLOOP.
+
+    " the prefill that has no input field in the dialog stays selected
+    INSERT LINES OF init_get_selopt( ) INTO TABLE ms_shlp-selopt.
+
+  ENDMETHOD.
+
+  METHOD read_search_help.
+
+    z2ui5_cl_popup_context=>bus_search_help_read( CHANGING ms_shlp        = ms_shlp
+                                                      mv_fname       = mv_fname
+                                                      mv_table       = mv_table
+                                                      mr_data        = mr_data
+                                                      mt_result_desc = mt_result_desc
+                                                      mv_shlpfield   = mv_shlpfield
+                                                      mt_data        = mt_data
+                                                      ms_data_row    = ms_data_row ).
+
+  ENDMETHOD.
+
+  METHOD shlp_get_by_name.
+
+    " the description is filled here, so that bus_search_help_read takes it
+    " as it is instead of determining one by table and field
+    DATA lr_shlp     TYPE REF TO data.
+    DATA lr_t_shlp   TYPE REF TO data.
+    DATA lv_shlpname TYPE c LENGTH 30.
+
+    FIELD-SYMBOLS <shlp>   TYPE any.
+    FIELD-SYMBOLS <t_shlp> TYPE STANDARD TABLE.
+
+    lv_shlpname = mv_searchhelp.
+
+    DATA(lv_type) = `SHLP_DESCR`.
+    CREATE DATA lr_shlp TYPE (lv_type).
+    ASSIGN lr_shlp->* TO <shlp>.
+
+    DATA(lv_fm) = `F4IF_GET_SHLP_DESCR`.
+    CALL FUNCTION lv_fm
+      EXPORTING
+        shlpname = lv_shlpname
+      IMPORTING
+        shlp     = <shlp>.
+
+    ms_shlp = CORRESPONDING #( <shlp> ).
+
+    IF ms_shlp-fieldprop IS INITIAL.
+      RAISE EXCEPTION TYPE z2ui5_cx_popup_error
+        EXPORTING
+          val = |Search help { lv_shlpname } not found|.
+    ENDIF.
+
+    IF ms_shlp-intdescr-issimple = abap_true.
+      RETURN.
+    ENDIF.
+
+    " a collective search help - its first elementary search help is used,
+    " the returned parameter follows the mapping of the collective one
+    DATA(lv_type_t) = `SHLP_DESCT`.
+    CREATE DATA lr_t_shlp TYPE (lv_type_t).
+    ASSIGN lr_t_shlp->* TO <t_shlp>.
+
+    lv_fm = `F4IF_EXPAND_SEARCHHELP`.
+    CALL FUNCTION lv_fm
+      EXPORTING
+        shlp_top = <shlp>
+      IMPORTING
+        shlp_tab = <t_shlp>.
+
+    READ TABLE <t_shlp> INDEX 1 ASSIGNING FIELD-SYMBOL(<elementary>).
+    IF sy-subrc <> 0.
+      RAISE EXCEPTION TYPE z2ui5_cx_popup_error
+        EXPORTING
+          val = |Search help { lv_shlpname } has no elementary search help|.
+    ENDIF.
+
+    ms_shlp = CORRESPONDING #( <elementary> ).
+
+    DATA(lv_shlpfield) = VALUE #( ms_shlp-interface[ topshlpfld = mv_fname ]-shlpfield OPTIONAL ).
+    IF lv_shlpfield IS NOT INITIAL.
+      mv_shlpfield = lv_shlpfield.
+    ENDIF.
+
+  ENDMETHOD.
+
+  METHOD init_set_row.
+
+    ASSIGN ms_data_row->* TO FIELD-SYMBOL(<data_row>).
+
+    LOOP AT mt_init INTO DATA(init) WHERE value IS NOT INITIAL.
+
+      ASSIGN COMPONENT to_upper( init-name ) OF STRUCTURE <data_row> TO FIELD-SYMBOL(<value>).
+      IF sy-subrc <> 0.
+        CONTINUE.
+      ENDIF.
+
+      <value> = init-value.
+
+    ENDLOOP.
+
+  ENDMETHOD.
+
+  METHOD init_get_selopt.
+
+    FIELD-SYMBOLS <value> TYPE any.
+
+    ASSIGN ms_data_row->* TO FIELD-SYMBOL(<data_row>).
+
+    LOOP AT mt_init INTO DATA(init).
+
+      DATA(lv_name) = to_upper( init-name ).
+
+      LOOP AT init-t_range INTO DATA(range).
+        result = VALUE #( BASE result
+                          ( shlpfield = lv_name
+                            sign      = range-sign
+                            option    = range-option
+                            low       = range-low
+                            high      = range-high ) ).
+      ENDLOOP.
+
+      IF init-value IS INITIAL.
+        CONTINUE.
+      ENDIF.
+
+      " a value with an input field is selected by set_selopt like typed input
+      UNASSIGN <value>.
+      ASSIGN COMPONENT lv_name OF STRUCTURE <data_row> TO <value>.
+      IF <value> IS ASSIGNED.
+        CONTINUE.
+      ENDIF.
+
+      result = VALUE #( BASE result
+                        ( shlpfield = lv_name
+                          sign      = `I`
+                          option    = COND #( WHEN init-value CA `*+` THEN `CP` ELSE `EQ` )
+                          low       = init-value ) ).
+
+    ENDLOOP.
+
+  ENDMETHOD.
+
+  METHOD get_title.
+
+    IF mv_table IS NOT INITIAL.
+      result = z2ui5_cl_popup_context=>rtti_get_table_desrc( mv_table ).
+      RETURN.
+    ENDIF.
+
+    result = COND #( WHEN ms_shlp-intdescr-ddtext IS NOT INITIAL
+                     THEN ms_shlp-intdescr-ddtext
+                     ELSE mv_searchhelp ).
 
   ENDMETHOD.
 
