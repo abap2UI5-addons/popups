@@ -134,11 +134,11 @@ ENDIF.
 * Range Selection (`z2ui5_cl_popup_get_range`, `z2ui5_cl_popup_get_ranges`)
 * Image Editor & JS Loader (`z2ui5_cl_popup_image_edit`, `z2ui5_cl_popup_js_loader`)
 * Value-Help & Search-Help - a search help opened by field or by name, with prefilled fields (`z2ui5_cl_popup_value_help`, `z2ui5_cl_popup_shlp`)
-* Select with Layout Variants - search, column layouts and sorting from layout-management (`z2ui5_cl_popup_sel_layout`)
 * Calculator built with CSS grid (`z2ui5_cl_popup_calculator`)
 * Developer text search - data elements (DD04T) and messages (T100) in two languages (`z2ui5_cl_popup_dtel_srch`, `z2ui5_cl_popup_msg_search`)
 * Transport Requests (`z2ui5_cl_popup_show_tr`)
 * Samples for all popups (`src/02/`, `z2ui5_cl_popup_sample_*`)
+* Selecting rows with layout variants (search, column layouts, multi select) is `z2ui5_cl_layo_pop_w_sel` in [layout-management](https://github.com/abap2UI5-addons/layout-management)
 
 ## Samples
 
@@ -162,7 +162,6 @@ ENDIF.
 | `z2ui5_cl_popup_sample_18` | `CL_DEMO_OUTPUT` (`z2ui5_cl_popup_demo_out`) |
 | `z2ui5_cl_popup_sample_19` | Range of one field (`z2ui5_cl_popup_get_range`) |
 | `z2ui5_cl_popup_sample_20` | Search-Help by name, prefilled (`z2ui5_cl_popup_shlp`) |
-| `z2ui5_cl_popup_sample_21` | Select with layout variants (`z2ui5_cl_popup_sel_layout`) |
 | `z2ui5_cl_popup_sample_22` | Calculator (`z2ui5_cl_popup_calculator`) |
 | `z2ui5_cl_popup_sample_23` | Data element search (`z2ui5_cl_popup_dtel_srch`) |
 | `z2ui5_cl_popup_sample_24` | Message search (`z2ui5_cl_popup_msg_search`) |

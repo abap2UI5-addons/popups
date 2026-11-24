@@ -24,7 +24,7 @@ features:
   - title: "Table, data and CL_DEMO_OUTPUT style output popups"
   - title: "Text editor, HTML and PDF display; messages, error and input validation"
   - title: "Range selection, value help and search help popups - search helps also by name, with prefilled fields"
-  - title: "Select with layout variants, a calculator, data element and message text search"
+  - title: "A calculator, data element and message text search"
   - title: "Transport request popup (on-premise only)"
   - title: "A sample app for every popup (z2ui5_cl_popup_sample_*)"
 ---
