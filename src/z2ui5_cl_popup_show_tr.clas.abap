@@ -9,11 +9,18 @@ CLASS z2ui5_cl_popup_show_tr DEFINITION
     DATA client       TYPE REF TO z2ui5_if_client.
     DATA ms_transport TYPE z2ui5_cl_popup_context=>ty_s_transport.
 
+    "! Record the keys of the rows in ir_data on the transport request of
+    "! is_transport (nothing for a local change, is_transport-locl).
+    "! @parameter iv_commit | abap_true (the default) commits the entries at
+    "!                       once; abap_false leaves the COMMIT WORK to the
+    "!                       caller - a caller that writes the rows itself
+    "!                       commits both together, or rolls both back
     CLASS-METHODS add_data_to_tranport
       IMPORTING
         ir_data      TYPE REF TO data
         iv_tabname   TYPE string
-        is_transport TYPE z2ui5_cl_popup_context=>ty_s_transport.
+        is_transport TYPE z2ui5_cl_popup_context=>ty_s_transport
+        iv_commit    TYPE abap_bool DEFAULT abap_true.
 
     DATA mt_data TYPE STANDARD TABLE OF z2ui5_cl_popup_context=>ty_s_transport WITH EMPTY KEY.
 
@@ -145,8 +152,9 @@ CLASS z2ui5_cl_popup_show_tr IMPLEMENTATION.
     ENDIF.
 
     z2ui5_cl_popup_context=>bus_tr_add( ir_data      = ir_data
-                                   iv_tabname   = iv_tabname
-                                   is_transport = is_transport ).
+                                        iv_tabname   = iv_tabname
+                                        is_transport = is_transport
+                                        iv_commit    = iv_commit ).
 
   ENDMETHOD.
 

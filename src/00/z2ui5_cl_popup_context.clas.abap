@@ -668,11 +668,17 @@ CLASS z2ui5_cl_popup_context DEFINITION
       RETURNING
         VALUE(mt_data) TYPE ty_t_data.
 
+    "! Record the keys of the rows in ir_data on the transport request.
+    "! @parameter iv_commit | abap_true (the default) ends with COMMIT WORK AND
+    "!                       WAIT; abap_false leaves the commit to the caller,
+    "!                       so the entries and the caller's own database
+    "!                       changes are one LUW that one ROLLBACK undoes
     CLASS-METHODS bus_tr_add
       IMPORTING
         ir_data      TYPE REF TO data
         iv_tabname   TYPE string
-        is_transport TYPE ty_s_transport.
+        is_transport TYPE ty_s_transport
+        iv_commit    TYPE abap_bool DEFAULT abap_true.
 
     CLASS-METHODS bus_search_help_read
       CHANGING
@@ -3654,7 +3660,7 @@ CLASS z2ui5_cl_popup_context IMPLEMENTATION.
           OTHERS        = 2.
       IF sy-subrc <> 0.
         RAISE EXCEPTION TYPE z2ui5_cx_popup_error.
-      ELSE.
+      ELSEIF iv_commit = abap_true.
         COMMIT WORK AND WAIT.
       ENDIF.
 
