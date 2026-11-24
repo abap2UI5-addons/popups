@@ -1,5 +1,5 @@
 
-CLASS ltcl_output_stub DEFINITION FINAL CREATE PUBLIC.
+CLASS lcl_output_stub DEFINITION FINAL CREATE PUBLIC.
 
   PUBLIC SECTION.
     METHODS get
@@ -11,7 +11,7 @@ CLASS ltcl_output_stub DEFINITION FINAL CREATE PUBLIC.
 ENDCLASS.
 
 
-CLASS ltcl_output_stub IMPLEMENTATION.
+CLASS lcl_output_stub IMPLEMENTATION.
 
   METHOD get.
 
@@ -22,7 +22,7 @@ CLASS ltcl_output_stub IMPLEMENTATION.
 ENDCLASS.
 
 
-CLASS ltcl_output_css DEFINITION FINAL CREATE PUBLIC.
+CLASS lcl_output_css DEFINITION FINAL CREATE PUBLIC.
 
   PUBLIC SECTION.
     " named like CL_DEMO_OUTPUT=>GET's returning parameter, which the popup
@@ -36,7 +36,7 @@ CLASS ltcl_output_css DEFINITION FINAL CREATE PUBLIC.
 ENDCLASS.
 
 
-CLASS ltcl_output_css IMPLEMENTATION.
+CLASS lcl_output_css IMPLEMENTATION.
 
   METHOD get.
 
@@ -63,7 +63,7 @@ CLASS ltcl_test IMPLEMENTATION.
 
   METHOD test_factory.
 
-    DATA(lo_pop) = z2ui5_cl_popup_demo_out=>factory( NEW ltcl_output_stub( ) ).
+    DATA(lo_pop) = z2ui5_cl_popup_demo_out=>factory( NEW lcl_output_stub( ) ).
     cl_abap_unit_assert=>assert_bound( lo_pop ).
 
   ENDMETHOD.
@@ -71,7 +71,7 @@ CLASS ltcl_test IMPLEMENTATION.
   METHOD test_factory_custom.
 
     DATA(lo_pop) = z2ui5_cl_popup_demo_out=>factory(
-      i_output      = NEW ltcl_output_stub( )
+      i_output      = NEW lcl_output_stub( )
       i_title       = `My Output`
       i_icon        = `sap-icon://hint`
       i_button_text = `Close`
@@ -84,7 +84,7 @@ CLASS ltcl_test IMPLEMENTATION.
   METHOD test_factory_as_page.
 
     DATA(lo_pop) = z2ui5_cl_popup_demo_out=>factory(
-      i_output  = NEW ltcl_output_stub( )
+      i_output  = NEW lcl_output_stub( )
       i_as_page = abap_true ).
 
     cl_abap_unit_assert=>assert_bound( lo_pop ).
@@ -187,7 +187,7 @@ CLASS ltcl_test_roundtrip IMPLEMENTATION.
   METHOD test_braces_escaped_once.
 
     " UI5 unescapes `\{` to a brace; `\\\{` would leave a backslash in the CSS
-    DATA(lo_pop) = z2ui5_cl_popup_demo_out=>factory( NEW ltcl_output_css( ) ).
+    DATA(lo_pop) = z2ui5_cl_popup_demo_out=>factory( NEW lcl_output_css( ) ).
     client_create( lo_pop ).
 
     lo_pop->z2ui5_if_app~main( mi_client ).

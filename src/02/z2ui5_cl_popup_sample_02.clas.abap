@@ -56,13 +56,13 @@ CLASS z2ui5_cl_popup_sample_02 IMPLEMENTATION.
                      )->a( n = `height` v = `100%` ).
     DATA(page) = view->ele( `Shell`
                      )->ele( `Page`
-                     )->a( n = `title` v = 'Search-Help'
+                     )->a( n = `title` v = `Search-Help`
                      )->a( n = `navButtonPress` v = client->_event( 'BACK' )
                      )->a( n = `showNavButton` b = xsdbool( client->get( )-s_draft-id_prev_app_stack IS NOT INITIAL )
-                     )->a( n = `class` v = 'sapUiContentPadding' ).
+                     )->a( n = `class` v = `sapUiContentPadding` ).
 
     page->ele( n = `SimpleForm` ns = `form`
-        )->a( n = `title` v = 'Search-Help'
+        )->a( n = `title` v = `Search-Help`
         )->a( n = `editable` b = abap_true
         )->ele( n = `content` ns = `form`
         )->tag( `Text`

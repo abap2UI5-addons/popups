@@ -61,11 +61,11 @@ CLASS z2ui5_cl_popup_show_tr IMPLEMENTATION.
                       )->a( n = `xmlns:core` v = `sap.ui.core` ).
 
     popup->ele( `Dialog`
-        )->a( n = `contentWidth` v = '40%'
+        )->a( n = `contentWidth` v = `40%`
         )->a( n = `afterClose` v = client->_event( 'CLOSE' )
         )->a( n = `title` v = z2ui5_cl_popup_context=>rtti_get_data_element_texts( `SRET_TRORD`  )-long
         )->ele( `Table`
-        )->a( n = `mode` v = 'SingleSelectLeft'
+        )->a( n = `mode` v = `SingleSelectLeft`
         )->a( n = `items` v = client->_bind( mt_data )
         )->ele( `columns`
         )->ele( `Column`
@@ -79,25 +79,25 @@ CLASS z2ui5_cl_popup_show_tr IMPLEMENTATION.
         )->end(
         )->ele( `items`
         )->ele( `ColumnListItem`
-        )->a( n = `selected` v = '{SELKZ}'
+        )->a( n = `selected` v = `{SELKZ}`
         )->ele( `cells`
         )->tag( `Text`
-        )->a( n = `text` v = '{TRANSPORT}'
+        )->a( n = `text` v = `{TRANSPORT}`
         )->tag( `Text`
-        )->a( n = `text` v = '{SHORT_DESCRIPTION}'
+        )->a( n = `text` v = `{SHORT_DESCRIPTION}`
         )->end(
         )->end(
         )->end(
         )->end(
         )->ele( `buttons`
         )->tag( `Button`
-        )->a( n = `text` v = 'No Transport'
+        )->a( n = `text` v = `No Transport`
         )->a( n = `press` v = client->_event( 'LOCL' )
-        )->a( n = `type` v = 'Default'
+        )->a( n = `type` v = `Default`
         )->tag( `Button`
-        )->a( n = `text` v = 'Select'
+        )->a( n = `text` v = `Select`
         )->a( n = `press` v = client->_event( 'SELECT' )
-        )->a( n = `type` v = 'Emphasized' ).
+        )->a( n = `type` v = `Emphasized` ).
 
     client->popup_display( popup->stringify( ) ).
 

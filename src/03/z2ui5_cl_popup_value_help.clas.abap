@@ -106,7 +106,7 @@ CLASS z2ui5_cl_popup_value_help IMPLEMENTATION.
                                ( name = 'ROW_ID'
                                  type = CAST #( cl_abap_datadescr=>describe_by_data( index ) ) ) ).
 
-        APPEND LINES OF z2ui5_cl_popup_context=>rtti_get_t_attri_by_table_name( mv_check_tab  ) TO comp.
+        INSERT LINES OF z2ui5_cl_popup_context=>rtti_get_t_attri_by_table_name( mv_check_tab  ) INTO TABLE comp.
 
         DATA(new_struct_desc) = cl_abap_structdescr=>create( comp ).
 
@@ -157,11 +157,11 @@ CLASS z2ui5_cl_popup_value_help IMPLEMENTATION.
 
     DATA(dialog) = popup->ele( `Dialog`
                           )->a( n = `title` v = z2ui5_cl_popup_context=>rtti_get_data_element_texts( `/IWFND/SU_GWC_RH_VH`  )-medium
-                          )->a( n = `contentWidth` v = '90%'
+                          )->a( n = `contentWidth` v = `90%`
                           )->a( n = `afterClose` v = client->_event( 'F4_CLOSE' ) ).
 
     DATA(simple_form) = dialog->ele( n = `SimpleForm` ns = `form`
-                                )->a( n = `layout` v = 'ResponsiveGridLayout'
+                                )->a( n = `layout` v = `ResponsiveGridLayout`
                                 )->a( n = `editable` b = abap_true
                                 )->ele( n = `content` ns = `form` ).
 
@@ -198,13 +198,13 @@ CLASS z2ui5_cl_popup_value_help IMPLEMENTATION.
         )->a( n = `value` v = client->_bind( mv_rows )
         )->a( n = `showValueHelp` b = abap_false
         )->a( n = `submit` v = client->_event( 'F4_INPUT_DONE' )
-        )->a( n = `maxLength` v = '3' ).
+        )->a( n = `maxLength` v = `3` ).
 
     ASSIGN mt_data->* TO FIELD-SYMBOL(<table>).
 
     DATA(table) = dialog->ele( `Table`
-                      )->a( n = `growing`    v = 'true'
-                      )->a( n = `width`      v = 'auto'
+                      )->a( n = `growing`    v = `true`
+                      )->a( n = `width`      v = `auto`
                       )->a( n = `items`      v = client->_bind( val = <table> )
                       )->a( n = `headerText` t = mv_check_tab ).
 
@@ -241,8 +241,8 @@ CLASS z2ui5_cl_popup_value_help IMPLEMENTATION.
     DATA(cells) = columns->end(
                       )->ele( `items`
                       )->ele( `ColumnListItem`
-                      )->a( n = `vAlign` v = 'Middle'
-                      )->a( n = `type` v = 'Navigation'
+                      )->a( n = `vAlign` v = `Middle`
+                      )->a( n = `type` v = `Navigation`
                       )->a( n = `press` v = client->_event( val   = 'F4_ROW_SELECT'
                                                                     arg   = `${ROW_ID}` )
                       )->ele( `cells` ).

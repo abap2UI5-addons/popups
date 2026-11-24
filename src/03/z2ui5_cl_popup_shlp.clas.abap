@@ -142,11 +142,11 @@ CLASS z2ui5_cl_popup_shlp IMPLEMENTATION.
 
     DATA(dialog) = popup->ele( `Dialog`
                           )->a( n = `title` v = z2ui5_cl_popup_context=>rtti_get_data_element_texts( `SCRFMTCH`  )-medium
-                          )->a( n = `contentWidth` v = '70%'
+                          )->a( n = `contentWidth` v = `70%`
                           )->a( n = `afterClose` v = client->_event( 'SHLP_CLOSE' ) ).
 
     DATA(simple_form) = dialog->ele( n = `SimpleForm` ns = `form`
-                                )->a( n = `layout` v = 'ResponsiveGridLayout'
+                                )->a( n = `layout` v = `ResponsiveGridLayout`
                                 )->a( n = `editable` b = abap_true
                                 )->ele( n = `content` ns = `form` ).
 
@@ -182,8 +182,8 @@ CLASS z2ui5_cl_popup_shlp IMPLEMENTATION.
     ASSIGN mt_data->* TO FIELD-SYMBOL(<mt_data>).
 
     DATA(table) = dialog->ele( `Table`
-                      )->a( n = `growing`    v = 'true'
-                      )->a( n = `width`      v = 'auto'
+                      )->a( n = `growing`    v = `true`
+                      )->a( n = `width`      v = `auto`
                       )->a( n = `items`      v = client->_bind( <mt_data> )
                       )->a( n = `headerText` v = get_title( ) ).
 
@@ -220,8 +220,8 @@ CLASS z2ui5_cl_popup_shlp IMPLEMENTATION.
     DATA(cells) = columns->end(
                       )->ele( `items`
                       )->ele( `ColumnListItem`
-                      )->a( n = `vAlign` v = 'Middle'
-                      )->a( n = `type` v = 'Navigation'
+                      )->a( n = `vAlign` v = `Middle`
+                      )->a( n = `type` v = `Navigation`
                       )->a( n = `press` v = client->_event( val   = 'SHLP_ROW_SELECT'
                                                                     arg   = `${ROW_ID}` )
                       )->ele( `cells` ).

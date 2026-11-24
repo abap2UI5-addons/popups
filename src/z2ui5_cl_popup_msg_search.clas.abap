@@ -225,6 +225,7 @@ CLASS z2ui5_cl_popup_msg_search IMPLEMENTATION.
         SELECT sprsl, sptxt
           FROM (lv_tabname)
           WHERE spras = @sy-langu
+          ORDER BY sprsl
           INTO CORRESPONDING FIELDS OF TABLE @lt_t002t.
       CATCH cx_root ##NO_HANDLER.
         " T002T not readable - the fallback list below is used
@@ -364,6 +365,7 @@ CLASS z2ui5_cl_popup_msg_search IMPLEMENTATION.
           WHERE sprsl = @lv_langu2
             AND arbgb IN @lt_r_arbgb
             AND msgnr IN @lt_r_msgnr
+          ORDER BY arbgb, msgnr
           INTO CORRESPONDING FIELDS OF TABLE @lt_text2.
 
         SELECT arbgb, msgnr, COUNT( * ) AS cnt
@@ -371,6 +373,7 @@ CLASS z2ui5_cl_popup_msg_search IMPLEMENTATION.
           WHERE arbgb IN @lt_r_arbgb
             AND msgnr IN @lt_r_msgnr
           GROUP BY arbgb, msgnr
+          ORDER BY arbgb, msgnr
           INTO CORRESPONDING FIELDS OF TABLE @lt_count.
       CATCH cx_root INTO DATA(lx).
         client->message_toast_display( |Details could not be read: { lx->get_text( ) }| ).

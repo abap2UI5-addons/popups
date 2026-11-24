@@ -243,6 +243,7 @@ CLASS z2ui5_cl_popup_dtel_srch IMPLEMENTATION.
         SELECT sprsl, sptxt
           FROM (lv_tabname)
           WHERE spras = @sy-langu
+          ORDER BY sprsl
           INTO CORRESPONDING FIELDS OF TABLE @lt_t002t.
       CATCH cx_root ##NO_HANDLER.
         " T002T not readable - the fallback list below is used
@@ -369,18 +370,21 @@ CLASS z2ui5_cl_popup_dtel_srch IMPLEMENTATION.
           WHERE rollname   IN @lt_r_rollname
             AND ddlanguage = @lv_langu2
             AND as4local   = 'A'
+          ORDER BY rollname, ddlanguage
           INTO CORRESPONDING FIELDS OF TABLE @lt_text2.
 
         SELECT rollname, ddlanguage
           FROM (lv_dd04t)
           WHERE rollname IN @lt_r_rollname
             AND as4local = 'A'
+          ORDER BY rollname, ddlanguage
           INTO CORRESPONDING FIELDS OF TABLE @lt_count.
 
         SELECT rollname, datatype, leng
           FROM (lv_dd04l)
           WHERE rollname IN @lt_r_rollname
             AND as4local = 'A'
+          ORDER BY rollname
           INTO CORRESPONDING FIELDS OF TABLE @lt_dd04l.
       CATCH cx_root INTO DATA(lx).
         client->message_toast_display( |Details could not be read: { lx->get_text( ) }| ).
