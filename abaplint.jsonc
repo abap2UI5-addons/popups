@@ -681,7 +681,7 @@
     // column of the ele( ) it closes - off in abap2UI5 and in the app rule set
     // as well
     "align_parameters": false,
-    "empty_line_in_statement": false,
+    "empty_line_in_statement": true, // 0 findings here - on, so none come back (off in the abap2UI5 core)
     "in_statement_indentation": false,
     "keep_single_parameter_on_one_line": false,
     "line_break_multiple_parameters": false,
