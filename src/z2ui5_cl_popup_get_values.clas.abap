@@ -13,6 +13,10 @@ CLASS z2ui5_cl_popup_get_values DEFINITION PUBLIC.
 
   PUBLIC SECTION.
     INTERFACES z2ui5_if_app.
+    " check_confirmed( ) - OK pressed; value( ) - REF TO ty_t_field, the
+    " fields with the values entered (ms_result-fields, or result_value( ) for
+    " one of them); value_string( ) - empty
+    INTERFACES z2ui5_if_popup_result.
 
     CONSTANTS:
       BEGIN OF cs_event,
@@ -320,6 +324,25 @@ CLASS z2ui5_cl_popup_get_values IMPLEMENTATION.
         client->nav_app_leave( app   = client->get_app_prev( )
                                event = event_canceled ).
     ENDCASE.
+
+  ENDMETHOD.
+
+  METHOD z2ui5_if_popup_result~check_confirmed.
+
+    result = ms_result-check_confirmed.
+
+  ENDMETHOD.
+
+  METHOD z2ui5_if_popup_result~value.
+
+    result = REF #( ms_result-fields ).
+
+  ENDMETHOD.
+
+  METHOD z2ui5_if_popup_result~value_string.
+
+    " no single value - empty
+    CLEAR result.
 
   ENDMETHOD.
 

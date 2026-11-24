@@ -2,6 +2,9 @@ CLASS z2ui5_cl_popup_calculator DEFINITION PUBLIC.
 
   PUBLIC SECTION.
     INTERFACES z2ui5_if_app.
+    " check_confirmed( ) - OK pressed; value( ) - REF TO decfloat34, the
+    " number (ms_result-value); value_string( ) - the number as text
+    INTERFACES z2ui5_if_popup_result.
 
     TYPES:
       BEGIN OF ty_s_result,
@@ -527,6 +530,24 @@ CLASS z2ui5_cl_popup_calculator IMPLEMENTATION.
       WHEN `DIV`.
         result = `/`.
     ENDCASE.
+
+  ENDMETHOD.
+
+  METHOD z2ui5_if_popup_result~check_confirmed.
+
+    result = ms_result-check_confirmed.
+
+  ENDMETHOD.
+
+  METHOD z2ui5_if_popup_result~value.
+
+    result = REF #( ms_result-value ).
+
+  ENDMETHOD.
+
+  METHOD z2ui5_if_popup_result~value_string.
+
+    result = |{ ms_result-value STYLE = SIMPLE }|.
 
   ENDMETHOD.
 

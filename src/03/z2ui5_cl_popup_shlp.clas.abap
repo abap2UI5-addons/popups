@@ -5,6 +5,10 @@ CLASS z2ui5_cl_popup_shlp DEFINITION
   PUBLIC SECTION.
     " abap2ui5lint-disable unbound-public-attribute -- a popup's attributes are its interface to the app that called it, which reads them once the popup returns
     INTERFACES z2ui5_if_app.
+    " check_confirmed( ) - a row chosen; value( ) - REF TO string, the value
+    " of the search-help parameter i_fname of the row (mv_return_value);
+    " value_string( ) - the same value
+    INTERFACES z2ui5_if_popup_result.
 
     " a prefilled selection field: name is the search-help parameter. value
     " is written into its input field of the dialog and selects like a typed
@@ -57,6 +61,7 @@ CLASS z2ui5_cl_popup_shlp DEFINITION
   PROTECTED SECTION.
     DATA client  TYPE REF TO z2ui5_if_client.
     DATA mt_init TYPE ty_t_init.
+    DATA mv_check_confirmed TYPE abap_bool.
 
     METHODS on_init.
     METHODS render_view.
@@ -268,6 +273,7 @@ CLASS z2ui5_cl_popup_shlp IMPLEMENTATION.
         ENDIF.
 
         mv_return_value = <value>.
+        mv_check_confirmed = abap_true.
 
         client->popup_destroy( ).
 
@@ -513,6 +519,24 @@ CLASS z2ui5_cl_popup_shlp IMPLEMENTATION.
     result = COND #( WHEN ms_shlp-intdescr-ddtext IS NOT INITIAL
                      THEN ms_shlp-intdescr-ddtext
                      ELSE mv_searchhelp ).
+
+  ENDMETHOD.
+
+  METHOD z2ui5_if_popup_result~check_confirmed.
+
+    result = mv_check_confirmed.
+
+  ENDMETHOD.
+
+  METHOD z2ui5_if_popup_result~value.
+
+    result = REF #( mv_return_value ).
+
+  ENDMETHOD.
+
+  METHOD z2ui5_if_popup_result~value_string.
+
+    result = mv_return_value.
 
   ENDMETHOD.
 

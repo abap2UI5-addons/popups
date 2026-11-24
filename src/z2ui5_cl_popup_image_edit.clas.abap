@@ -2,6 +2,9 @@ CLASS z2ui5_cl_popup_image_edit DEFINITION PUBLIC.
 
   PUBLIC SECTION.
     INTERFACES z2ui5_if_app.
+    " check_confirmed( ) - Save pressed; value( ) - REF TO string, the edited
+    " image as data URL; value_string( ) - the same data URL
+    INTERFACES z2ui5_if_popup_result.
 
     TYPES:
       BEGIN OF t_result,
@@ -145,6 +148,24 @@ CLASS z2ui5_cl_popup_image_edit IMPLEMENTATION.
 
     result-image           = mv_image.
     result-check_confirmed = mv_confirmed.
+
+  ENDMETHOD.
+
+  METHOD z2ui5_if_popup_result~check_confirmed.
+
+    result = mv_confirmed.
+
+  ENDMETHOD.
+
+  METHOD z2ui5_if_popup_result~value.
+
+    result = REF #( mv_image ).
+
+  ENDMETHOD.
+
+  METHOD z2ui5_if_popup_result~value_string.
+
+    result = mv_image.
 
   ENDMETHOD.
 

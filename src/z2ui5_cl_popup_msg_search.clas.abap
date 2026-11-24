@@ -10,6 +10,10 @@ CLASS z2ui5_cl_popup_msg_search DEFINITION PUBLIC.
   PUBLIC SECTION.
     " abap2ui5lint-disable unbound-public-attribute -- a popup's attributes are its interface to the app that called it, which reads them once the popup returns
     INTERFACES z2ui5_if_app.
+    " check_confirmed( ) - a message chosen; value( ) - REF TO ty_s_result,
+    " message class, number and text (ms_result); value_string( ) - empty,
+    " class and number are two values
+    INTERFACES z2ui5_if_popup_result.
 
     TYPES:
       BEGIN OF ty_s_result,
@@ -545,6 +549,25 @@ CLASS z2ui5_cl_popup_msg_search IMPLEMENTATION.
         )->a( n = `type` v = `Emphasized` ).
 
     client->popup_display( popup->stringify( ) ).
+
+  ENDMETHOD.
+
+  METHOD z2ui5_if_popup_result~check_confirmed.
+
+    result = ms_result-check_confirmed.
+
+  ENDMETHOD.
+
+  METHOD z2ui5_if_popup_result~value.
+
+    result = REF #( ms_result ).
+
+  ENDMETHOD.
+
+  METHOD z2ui5_if_popup_result~value_string.
+
+    " no single value - empty
+    CLEAR result.
 
   ENDMETHOD.
 

@@ -5,6 +5,12 @@ CLASS z2ui5_cl_popup_show_tr DEFINITION
   PUBLIC SECTION.
     " abap2ui5lint-disable unbound-public-attribute -- a popup's attributes are its interface to the app that called it, which reads them once the popup returns
     INTERFACES z2ui5_if_app.
+    " check_confirmed( ) - a transport request chosen, or No Transport
+    " (ms_transport-locl); abap_false when closed or Select without a row;
+    " value( ) - REF TO z2ui5_cl_popup_context=>ty_s_transport
+    " (ms_transport); value_string( ) - the transport request, empty for
+    " No Transport
+    INTERFACES z2ui5_if_popup_result.
 
     DATA client       TYPE REF TO z2ui5_if_client.
     DATA ms_transport TYPE z2ui5_cl_popup_context=>ty_s_transport.
@@ -155,6 +161,24 @@ CLASS z2ui5_cl_popup_show_tr IMPLEMENTATION.
                                         iv_tabname   = iv_tabname
                                         is_transport = is_transport
                                         iv_commit    = iv_commit ).
+
+  ENDMETHOD.
+
+  METHOD z2ui5_if_popup_result~check_confirmed.
+
+    result = xsdbool( ms_transport IS NOT INITIAL ).
+
+  ENDMETHOD.
+
+  METHOD z2ui5_if_popup_result~value.
+
+    result = REF #( ms_transport ).
+
+  ENDMETHOD.
+
+  METHOD z2ui5_if_popup_result~value_string.
+
+    result = ms_transport-transport.
 
   ENDMETHOD.
 

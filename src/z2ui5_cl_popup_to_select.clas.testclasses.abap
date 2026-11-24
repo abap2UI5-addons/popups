@@ -325,3 +325,151 @@ CLASS ltcl_test_roundtrip IMPLEMENTATION.
   ENDMETHOD.
 
 ENDCLASS.
+
+
+CLASS ltcl_popup_result DEFINITION FINAL
+  FOR TESTING RISK LEVEL HARMLESS DURATION SHORT.
+
+  PRIVATE SECTION.
+    TYPES:
+      BEGIN OF ty_s_row,
+        name  TYPE string,
+        count TYPE i,
+      END OF ty_s_row.
+    TYPES ty_t_tab TYPE STANDARD TABLE OF ty_s_row WITH EMPTY KEY.
+
+    " the first roundtrip, then row iv_index picked and Confirm pressed
+    METHODS select
+      IMPORTING
+        io_pop        TYPE REF TO z2ui5_cl_popup_to_select
+        iv_index      TYPE i
+      RETURNING
+        VALUE(result) TYPE REF TO z2ui5_cl_popup_to_select.
+
+    DATA mo_action TYPE REF TO z2ui5_cl_ui5_action.
+
+    METHODS roundtrip
+      IMPORTING
+        io_app   TYPE REF TO z2ui5_if_app
+        iv_event TYPE string
+        it_arg   TYPE string_table OPTIONAL.
+
+    METHODS test_initial_not_confirmed FOR TESTING RAISING cx_static_check.
+    METHODS test_confirmed_row         FOR TESTING RAISING cx_static_check.
+    METHODS test_confirmed_elementary  FOR TESTING RAISING cx_static_check.
+    METHODS test_confirmed_multiselect FOR TESTING RAISING cx_static_check.
+    METHODS test_cancelled             FOR TESTING RAISING cx_static_check.
+
+ENDCLASS.
+
+
+CLASS ltcl_popup_result IMPLEMENTATION.
+
+  METHOD select.
+
+    FIELD-SYMBOLS <tab>   TYPE STANDARD TABLE.
+    FIELD-SYMBOLS <row>   TYPE any.
+    FIELD-SYMBOLS <selkz> TYPE any.
+
+    result = io_pop.
+    mo_action = NEW #( NEW z2ui5_cl_ui5_handler( `` ) ).
+    mo_action->mo_app->mo_app = result.
+    DATA(li_client) = NEW z2ui5_cl_ui5_client( mo_action ).
+    result->z2ui5_if_app~main( li_client ).
+
+    ASSIGN result->mr_tab_popup->* TO <tab>.
+    READ TABLE <tab> ASSIGNING <row> INDEX iv_index.
+    IF sy-subrc <> 0.
+      cl_abap_unit_assert=>fail( `ROW_NOT_FOUND` ).
+    ENDIF.
+    ASSIGN COMPONENT `ZZSELKZ` OF STRUCTURE <row> TO <selkz>.
+    IF sy-subrc <> 0.
+      cl_abap_unit_assert=>fail( `ZZSELKZ_NOT_FOUND` ).
+    ENDIF.
+    <selkz> = abap_true.
+
+    mo_action->mo_app->mv_check_initialized = abap_true.
+    mo_action->ms_actual-event = `CONFIRM`.
+    result->z2ui5_if_app~main( li_client ).
+
+  ENDMETHOD.
+
+  METHOD roundtrip.
+
+    " a roundtrip with an event, after the first one - as the button press
+    " of the user
+    mo_action = NEW #( NEW z2ui5_cl_ui5_handler( `` ) ).
+    mo_action->mo_app->mo_app = io_app.
+    mo_action->mo_app->mv_check_initialized = abap_true.
+    mo_action->ms_actual-event = iv_event.
+    mo_action->ms_actual-t_event_arg = it_arg.
+    io_app->main( NEW z2ui5_cl_ui5_client( mo_action ) ).
+
+  ENDMETHOD.
+
+  METHOD test_initial_not_confirmed.
+
+    DATA(lo_pop) = z2ui5_cl_popup_to_select=>factory( VALUE ty_t_tab( ( name = `alpha` ) ) ).
+    DATA(li_result) = CAST z2ui5_if_popup_result( lo_pop ).
+
+    cl_abap_unit_assert=>assert_false( li_result->check_confirmed( ) ).
+    cl_abap_unit_assert=>assert_initial( li_result->value_string( ) ).
+
+  ENDMETHOD.
+
+  METHOD test_confirmed_row.
+
+    DATA(lo_pop) = select( io_pop   = z2ui5_cl_popup_to_select=>factory( VALUE ty_t_tab( ( name = `alpha` count = 1 )
+                                                                                ( name = `bravo` count = 2 ) ) )
+                           iv_index = 2 ).
+    DATA(li_result) = CAST z2ui5_if_popup_result( lo_pop ).
+
+    cl_abap_unit_assert=>assert_true( li_result->check_confirmed( ) ).
+    cl_abap_unit_assert=>assert_equals( exp = `bravo`
+                                        act = li_result->value_string( ) ).
+    DATA(lr_value) = CAST ty_s_row( li_result->value( ) ).
+    cl_abap_unit_assert=>assert_equals( exp = 2
+                                        act = lr_value->count ).
+
+  ENDMETHOD.
+
+  METHOD test_confirmed_elementary.
+
+    DATA(lo_pop) = select( io_pop   = z2ui5_cl_popup_to_select=>factory( VALUE string_table( ( `alpha` ) ( `bravo` ) ) )
+                           iv_index = 1 ).
+    DATA(li_result) = CAST z2ui5_if_popup_result( lo_pop ).
+
+    cl_abap_unit_assert=>assert_true( li_result->check_confirmed( ) ).
+    cl_abap_unit_assert=>assert_equals( exp = `alpha`
+                                        act = li_result->value_string( ) ).
+
+  ENDMETHOD.
+
+  METHOD test_confirmed_multiselect.
+
+    DATA(lo_pop) = select( io_pop   = z2ui5_cl_popup_to_select=>factory( i_tab         = VALUE ty_t_tab( ( name = `alpha` )
+                                                                                                    ( name = `bravo` ) )
+                                                                        i_multiselect = abap_true )
+                           iv_index = 2 ).
+    DATA(li_result) = CAST z2ui5_if_popup_result( lo_pop ).
+
+    cl_abap_unit_assert=>assert_true( li_result->check_confirmed( ) ).
+    DATA(lr_value) = CAST ty_t_tab( li_result->value( ) ).
+    cl_abap_unit_assert=>assert_equals( exp = 1
+                                        act = lines( lr_value->* ) ).
+    cl_abap_unit_assert=>assert_initial( li_result->value_string( ) ).
+
+  ENDMETHOD.
+
+  METHOD test_cancelled.
+
+    DATA(lo_pop) = z2ui5_cl_popup_to_select=>factory( VALUE ty_t_tab( ( name = `alpha` ) ) ).
+    roundtrip( io_app   = lo_pop
+               iv_event = `CANCEL` ).
+    DATA(li_result) = CAST z2ui5_if_popup_result( lo_pop ).
+
+    cl_abap_unit_assert=>assert_false( li_result->check_confirmed( ) ).
+
+  ENDMETHOD.
+
+ENDCLASS.

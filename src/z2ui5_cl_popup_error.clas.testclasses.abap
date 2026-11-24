@@ -150,3 +150,28 @@ CLASS ltcl_test_roundtrip IMPLEMENTATION.
   ENDMETHOD.
 
 ENDCLASS.
+
+
+CLASS ltcl_popup_result DEFINITION FINAL
+  FOR TESTING RISK LEVEL HARMLESS DURATION SHORT.
+
+  PRIVATE SECTION.
+    METHODS test_closed_is_confirmed FOR TESTING RAISING cx_static_check.
+
+ENDCLASS.
+
+
+CLASS ltcl_popup_result IMPLEMENTATION.
+
+  METHOD test_closed_is_confirmed.
+
+    DATA(lo_pop) = z2ui5_cl_popup_error=>factory( NEW cx_sy_zerodivide( ) ).
+    DATA(li_result) = CAST z2ui5_if_popup_result( lo_pop ).
+
+    cl_abap_unit_assert=>assert_true( li_result->check_confirmed( ) ).
+    cl_abap_unit_assert=>assert_not_bound( li_result->value( ) ).
+    cl_abap_unit_assert=>assert_initial( li_result->value_string( ) ).
+
+  ENDMETHOD.
+
+ENDCLASS.

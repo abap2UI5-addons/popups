@@ -2,6 +2,9 @@ CLASS z2ui5_cl_popup_data DEFINITION PUBLIC.
 
   PUBLIC SECTION.
     INTERFACES z2ui5_if_app.
+    " check_confirmed( ) - always abap_true, the popup only shows data;
+    " value( ) - the data shown (mr_data); value_string( ) - empty
+    INTERFACES z2ui5_if_popup_result.
 
     CLASS-METHODS factory
       IMPORTING
@@ -68,6 +71,26 @@ CLASS z2ui5_cl_popup_data IMPLEMENTATION.
       RETURN.
     ENDIF.
     client->nav_app_leave( ).
+
+  ENDMETHOD.
+
+  METHOD z2ui5_if_popup_result~check_confirmed.
+
+    " shows something only - nothing to decline
+    result = abap_true.
+
+  ENDMETHOD.
+
+  METHOD z2ui5_if_popup_result~value.
+
+    result = mr_data.
+
+  ENDMETHOD.
+
+  METHOD z2ui5_if_popup_result~value_string.
+
+    " no single value - empty
+    CLEAR result.
 
   ENDMETHOD.
 

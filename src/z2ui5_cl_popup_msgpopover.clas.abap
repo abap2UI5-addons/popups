@@ -13,6 +13,10 @@ CLASS z2ui5_cl_popup_msgpopover DEFINITION PUBLIC.
 
   PUBLIC SECTION.
     INTERFACES z2ui5_if_app.
+    " check_confirmed( ) - always abap_true, the popover only shows messages;
+    " value( ) - REF TO ty_t_msg, the messages shown (mt_msg);
+    " value_string( ) - empty
+    INTERFACES z2ui5_if_popup_result.
 
     TYPES:
       "! one item of the popover - the components the MessageItem binds
@@ -266,6 +270,26 @@ CLASS z2ui5_cl_popup_msgpopover IMPLEMENTATION.
                                event = event_close ).
       ENDIF.
     ENDIF.
+
+  ENDMETHOD.
+
+  METHOD z2ui5_if_popup_result~check_confirmed.
+
+    " shows something only - nothing to decline
+    result = abap_true.
+
+  ENDMETHOD.
+
+  METHOD z2ui5_if_popup_result~value.
+
+    result = REF #( mt_msg ).
+
+  ENDMETHOD.
+
+  METHOD z2ui5_if_popup_result~value_string.
+
+    " no single value - empty
+    CLEAR result.
 
   ENDMETHOD.
 

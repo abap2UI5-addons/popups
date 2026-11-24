@@ -5,6 +5,10 @@ CLASS z2ui5_cl_popup_value_help DEFINITION
   PUBLIC SECTION.
     " abap2ui5lint-disable unbound-public-attribute -- a popup's attributes are its interface to the app that called it, which reads them once the popup returns
     INTERFACES z2ui5_if_app.
+    " check_confirmed( ) - a row chosen; value( ) - REF TO string, the value
+    " of the field i_fname of the row (mv_return_value); value_string( ) -
+    " the same value
+    INTERFACES z2ui5_if_popup_result.
 
     DATA mt_data         TYPE REF TO data.
     DATA ms_data_row     TYPE REF TO data.
@@ -30,6 +34,7 @@ CLASS z2ui5_cl_popup_value_help DEFINITION
     DATA client             TYPE REF TO z2ui5_if_client.
     DATA mv_check_tab_field TYPE string.
     DATA mv_check_tab       TYPE string.
+    DATA mv_check_confirmed TYPE abap_bool.
 
     METHODS get_dfies.
 
@@ -289,6 +294,7 @@ CLASS z2ui5_cl_popup_value_help IMPLEMENTATION.
         ENDIF.
 
         mv_return_value = <value>.
+        mv_check_confirmed = abap_true.
 
         client->popup_destroy( ).
 
@@ -428,6 +434,24 @@ CLASS z2ui5_cl_popup_value_help IMPLEMENTATION.
                                                 handle01 = class
                                                 handle02 = mv_table
                                                 handle03 = 'F4'  ).
+
+  ENDMETHOD.
+
+  METHOD z2ui5_if_popup_result~check_confirmed.
+
+    result = mv_check_confirmed.
+
+  ENDMETHOD.
+
+  METHOD z2ui5_if_popup_result~value.
+
+    result = REF #( mv_return_value ).
+
+  ENDMETHOD.
+
+  METHOD z2ui5_if_popup_result~value_string.
+
+    result = mv_return_value.
 
   ENDMETHOD.
 

@@ -2,6 +2,9 @@ CLASS z2ui5_cl_popup_input_val DEFINITION PUBLIC.
 
   PUBLIC SECTION.
     INTERFACES z2ui5_if_app.
+    " check_confirmed( ) - OK pressed or Enter; value( ) - REF TO string, the
+    " value entered (ms_result-value); value_string( ) - the same value
+    INTERFACES z2ui5_if_popup_result.
 
     CLASS-METHODS factory
       IMPORTING
@@ -107,6 +110,24 @@ CLASS z2ui5_cl_popup_input_val IMPLEMENTATION.
         client->popup_destroy( ).
         client->nav_app_leave( ).
     ENDCASE.
+
+  ENDMETHOD.
+
+  METHOD z2ui5_if_popup_result~check_confirmed.
+
+    result = ms_result-check_confirmed.
+
+  ENDMETHOD.
+
+  METHOD z2ui5_if_popup_result~value.
+
+    result = REF #( ms_result-value ).
+
+  ENDMETHOD.
+
+  METHOD z2ui5_if_popup_result~value_string.
+
+    result = ms_result-value.
 
   ENDMETHOD.
 

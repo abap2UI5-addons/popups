@@ -3,6 +3,10 @@ CLASS z2ui5_cl_popup_table DEFINITION PUBLIC.
   PUBLIC SECTION.
     " abap2ui5lint-disable unbound-public-attribute -- a popup's attributes are its interface to the app that called it, which reads them once the popup returns
     INTERFACES z2ui5_if_app.
+    " check_confirmed( ) - OK pressed; value( ) - the row reference of
+    " result( ) (ms_result-row, LIKE LINE OF the table); value_string( ) -
+    " empty
+    INTERFACES z2ui5_if_popup_result.
 
     CLASS-METHODS factory
       IMPORTING
@@ -166,6 +170,25 @@ CLASS z2ui5_cl_popup_table IMPLEMENTATION.
     ENDIF.
 
     on_event( ).
+
+  ENDMETHOD.
+
+  METHOD z2ui5_if_popup_result~check_confirmed.
+
+    result = ms_result-check_confirmed.
+
+  ENDMETHOD.
+
+  METHOD z2ui5_if_popup_result~value.
+
+    result = ms_result-row.
+
+  ENDMETHOD.
+
+  METHOD z2ui5_if_popup_result~value_string.
+
+    " no single value - empty
+    CLEAR result.
 
   ENDMETHOD.
 

@@ -3,6 +3,12 @@ CLASS z2ui5_cl_popup_to_select DEFINITION PUBLIC.
   PUBLIC SECTION.
     " abap2ui5lint-disable unbound-public-attribute -- a popup's attributes are its interface to the app that called it, which reads them once the popup returns
     INTERFACES z2ui5_if_app.
+    " check_confirmed( ) - Confirm pressed; value( ) - the chosen row
+    " (ms_result-row, LIKE LINE OF the table), with i_multiselect the chosen
+    " rows (ms_result-table, LIKE the table); value_string( ) - without
+    " i_multiselect the chosen line of a table of elementary lines, else the
+    " first component of the chosen row; empty with i_multiselect
+    INTERFACES z2ui5_if_popup_result.
 
     TYPES:
       BEGIN OF ty_s_result,
@@ -285,6 +291,44 @@ CLASS z2ui5_cl_popup_to_select IMPLEMENTATION.
     z2ui5_cl_popup_context=>itab_filter_by_val( EXPORTING val = client->get_event_arg( )
                                                  ignore_case     = abap_true
                                        CHANGING  tab             = <tab_out> ).
+
+  ENDMETHOD.
+
+  METHOD z2ui5_if_popup_result~check_confirmed.
+
+    result = ms_result-check_confirmed.
+
+  ENDMETHOD.
+
+  METHOD z2ui5_if_popup_result~value.
+
+    IF multiselect = abap_true.
+      result = ms_result-table.
+    ELSE.
+      result = ms_result-row.
+    ENDIF.
+
+  ENDMETHOD.
+
+  METHOD z2ui5_if_popup_result~value_string.
+
+    FIELD-SYMBOLS <row>   TYPE any.
+    FIELD-SYMBOLS <value> TYPE any.
+
+    IF multiselect = abap_true OR ms_result-row IS NOT BOUND.
+      RETURN.
+    ENDIF.
+
+    ASSIGN ms_result-row->* TO <row>.
+    IF check_table_line = abap_true.
+      result = <row>.
+      RETURN.
+    ENDIF.
+
+    ASSIGN COMPONENT 1 OF STRUCTURE <row> TO <value>.
+    IF sy-subrc = 0.
+      result = <value>.
+    ENDIF.
 
   ENDMETHOD.
 

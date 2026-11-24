@@ -3,6 +3,9 @@ CLASS z2ui5_cl_popup_file_dl DEFINITION PUBLIC.
   PUBLIC SECTION.
     " abap2ui5lint-disable unbound-public-attribute -- a popup's attributes are its interface to the app that called it, which reads them once the popup returns
     INTERFACES z2ui5_if_app.
+    " check_confirmed( ) - the file was downloaded (as result( ));
+    " value( ) - unbound; value_string( ) - empty
+    INTERFACES z2ui5_if_popup_result.
 
     CLASS-METHODS factory
       IMPORTING
@@ -157,6 +160,26 @@ CLASS z2ui5_cl_popup_file_dl IMPLEMENTATION.
         client->popup_destroy( ).
         client->nav_app_leave( ).
     ENDCASE.
+
+  ENDMETHOD.
+
+  METHOD z2ui5_if_popup_result~check_confirmed.
+
+    result = check_confirmed.
+
+  ENDMETHOD.
+
+  METHOD z2ui5_if_popup_result~value.
+
+    " no value - the reference stays unbound
+    CLEAR result.
+
+  ENDMETHOD.
+
+  METHOD z2ui5_if_popup_result~value_string.
+
+    " no single value - empty
+    CLEAR result.
 
   ENDMETHOD.
 
