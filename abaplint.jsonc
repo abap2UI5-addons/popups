@@ -379,11 +379,7 @@
     // rewritten by the 702 downport (the 702 lint fails), and the ORDER BY that
     // keeps it downportable would change which rows come back
     "short_case": true,
-    "strict_sql": {
-      "exclude": [
-        "/src/03/z2ui5_cl_popup_value_help"
-      ]
-    },
+    "strict_sql": true,
     "subrc_after_assign": {
       "exclude": [
         "/src/00/z2ui5_cl_popup_context"
