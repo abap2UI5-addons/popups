@@ -28,7 +28,7 @@ view with its own events, buffers and callbacks is repetitive work.
 
 popups gives you these dialogs as finished classes. You call the popup, it
 renders itself, and your app gets the result back - either as an event you
-name, or through the popup's `result( )` method.
+name, or through `z2ui5_if_popup_result`, the same for every popup.
 
 Good for:
 
@@ -106,22 +106,73 @@ METHOD z2ui5_if_app~main.
 ENDMETHOD.
 ```
 
-Popups that return data hand it over through `result( )`. When control comes
-back, read it from the previous app:
+### Reading the result
+
+Every popup implements `z2ui5_if_popup_result`, so the result is read the
+same way whichever popup you called. When control comes back to your app:
 
 ```abap
 " open
-client->nav_app_call( z2ui5_cl_popup_textedit=>factory( `this is a text` ) ).
+client->nav_app_call( z2ui5_cl_popup_input_val=>factory( `Enter a name` ) ).
 
 " back in your app
 IF client->check_on_navigated( ).
   TRY.
-      DATA(lo_prev) = client->get_app( client->get( )-s_draft-id_prev_app ).
-      DATA(lv_text) = CAST z2ui5_cl_popup_textedit( lo_prev )->result( )-text.
-    CATCH cx_root.
+      DATA(popup) = CAST z2ui5_if_popup_result( client->get_app_prev( ) ).
+      IF popup->check_confirmed( ).
+        DATA(name) = popup->value_string( ).
+        " a table or structure: CAST to the type the popup documents
+        " DATA(range) = CAST z2ui5_cl_popup_context=>ty_t_range( popup->value( ) ).
+        " LOOP AT range->* INTO DATA(row). ...
+      ENDIF.
+    CATCH cx_sy_move_cast_error.
+      " the previous app was no popup
   ENDTRY.
 ENDIF.
 ```
+
+- `check_confirmed( )` - `abap_true` when the user confirmed (OK, Save, a
+  chosen row, an option, a transport), `abap_false` when the popup was
+  cancelled or closed without a choice. A popup that only shows something
+  has nothing to decline and always returns `abap_true`.
+- `value( )` - a reference to the popup's value (`REF TO data`); unbound for
+  a popup without one. CAST it to the type the popup documents into a
+  variable and dereference that: `DATA(r) = CAST <type>( popup->value( ) ).`
+  then `r->*` (`->*` directly behind a call is refused below 7.56).
+- `value_string( )` - the value as text for a popup with a single value;
+  empty when the value is a table or a structure.
+
+| Popup | `check_confirmed( )` is `abap_true` when | `value( )` references | `value_string( )` |
+|---|---|---|---|
+| `z2ui5_cl_popup_to_confirm` | OK | - (unbound) | empty |
+| `z2ui5_cl_popup_to_decide` | an option was pressed (not Cancel) | `string`, the number of the option | the number, `1` for the first |
+| `z2ui5_cl_popup_to_inform` | always (only informs) | - | empty |
+| `z2ui5_cl_popup_to_select` | Confirm | the chosen row (`LIKE LINE OF` your table); with `i_multiselect` the chosen rows (`LIKE` your table) | single select: the line of a table of elementary lines, else the first component of the row; empty with `i_multiselect` |
+| `z2ui5_cl_popup_input_val` | OK or Enter | `string`, the value entered | the value |
+| `z2ui5_cl_popup_textedit` | OK | `string`, the text | the text |
+| `z2ui5_cl_popup_get_values` | OK | `z2ui5_cl_popup_get_values=>ty_t_field`, the fields with their values | empty (`result_value( )` reads one field) |
+| `z2ui5_cl_popup_get_range` | OK | `z2ui5_cl_popup_context=>ty_t_range` | empty |
+| `z2ui5_cl_popup_get_ranges` | OK | `z2ui5_cl_popup_context=>ty_t_filter_multi`, the ranges per field | empty |
+| `z2ui5_cl_popup_value_help` | a row was chosen | `string`, the value of field `i_fname` of the row | the value |
+| `z2ui5_cl_popup_shlp` | a row was chosen | `string`, the value of search-help parameter `i_fname` of the row | the value |
+| `z2ui5_cl_popup_show_tr` | a transport request was selected, or No Transport | `z2ui5_cl_popup_context=>ty_s_transport` (`locl` = `abap_true` for No Transport) | the transport request, empty for No Transport |
+| `z2ui5_cl_popup_calculator` | OK | `decfloat34`, the number | the number |
+| `z2ui5_cl_popup_dtel_srch` | a data element was chosen | `z2ui5_cl_popup_dtel_srch=>ty_s_result`, the data element and its texts | the data element |
+| `z2ui5_cl_popup_msg_search` | a message was chosen | `z2ui5_cl_popup_msg_search=>ty_s_result`, message class, number and text | empty |
+| `z2ui5_cl_popup_file_ul` | OK | `z2ui5_cl_popup_file_ul=>ty_s_result`, the files with name and bytes | the last file as UTF-8 text |
+| `z2ui5_cl_popup_file_dl` | the file was downloaded | - | empty |
+| `z2ui5_cl_popup_image_edit` | Save | `string`, the image as data URL | the data URL |
+| `z2ui5_cl_popup_pdf` | OK | - | empty |
+| `z2ui5_cl_popup_table` | OK | the row reference of `result( )` | empty |
+| `z2ui5_cl_popup_data` | always (only shows) | the data shown | empty |
+| `z2ui5_cl_popup_demo_out`, `_html`, `_error` | always (only shows) | - | empty |
+| `z2ui5_cl_popup_messages`, `_msgpopover` | always (only shows) | the messages shown (`ty_t_msg` of the class) | empty |
+| `z2ui5_cl_popup_js_loader` | always | `string`, `result( )`; with `factory_check_open_ui5` `abap_bool`, `mv_is_open_ui5` | `result( )`; with `factory_check_open_ui5` the UI5 runtime |
+
+`value( )` references the popup's own attribute, not a copy. The class of
+each popup repeats its line of the table above its
+`INTERFACES z2ui5_if_popup_result`. The older ways to read a result -
+`result( )`, `ms_result`, `mv_return_value`, `ms_transport` - keep working.
 
 ### Message popover
 
@@ -216,7 +267,7 @@ client->popover_display( xml   = z2ui5_cl_popup_msgpopover=>popover_xml(
 
 | Package | Content |
 |---|---|
-| `src/` | Popup classes (`z2ui5_cl_popup_*`) |
+| `src/` | Popup classes (`z2ui5_cl_popup_*`) and their result interface `z2ui5_if_popup_result` |
 | `src/00/` | Context/utility class `z2ui5_cl_popup_context` and its exception `z2ui5_cx_popup_error` — vendored copies from [abap-util](https://github.com/abap-util/abap-util), see below |
 | `src/02/` | Samples (`z2ui5_cl_popup_sample_*`) |
 | `src/03/` | Popups with layout-management dependency (Value-Help, Search-Help) |

@@ -131,17 +131,17 @@ CLASS z2ui5_cl_popup_sample_20 IMPLEMENTATION.
     ENDIF.
 
     TRY.
-        DATA(app) = CAST z2ui5_cl_popup_shlp( client->get_app( client->get( )-s_draft-id_prev_app ) ).
+        DATA(popup) = CAST z2ui5_if_popup_result( client->get_app_prev( ) ).
 
-        IF app->mv_return_value IS INITIAL.
+        IF popup->check_confirmed( ) = abap_false.
           RETURN.
         ENDIF.
 
         CASE mv_target.
           WHEN `LANGUAGE`.
-            mv_language = app->mv_return_value.
+            mv_language = popup->value_string( ).
           WHEN `USER`.
-            mv_user = app->mv_return_value.
+            mv_user = popup->value_string( ).
         ENDCASE.
 
       CATCH cx_root ##NO_HANDLER.

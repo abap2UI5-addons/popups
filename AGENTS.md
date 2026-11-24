@@ -13,10 +13,23 @@ Ready-to-use popup and dialog apps for [abap2UI5](https://github.com/abap2UI5/ab
 
 | Package | Content |
 |---|---|
-| `src/` | Popup classes (`z2ui5_cl_popup_*`) |
+| `src/` | Popup classes (`z2ui5_cl_popup_*`) and their result interface `z2ui5_if_popup_result` |
 | `src/00/` | Context/utility class `z2ui5_cl_popup_context` and its exception `z2ui5_cx_popup_error` — **vendored copies from abap-util, see below** |
 | `src/02/` | Samples (`z2ui5_cl_popup_sample_*`) |
 | `src/03/` | Popups with layout-management dependency (Value-Help, Search-Help) |
+
+## The result contract (`z2ui5_if_popup_result`)
+
+Every popup class implements `z2ui5_if_popup_result` - `check_confirmed( )`,
+`value( )` (`REF TO data`) and `value_string( )` - so a caller reads any
+popup the same way (README, "Reading the result"). A new popup implements it
+too, says above its `INTERFACES z2ui5_if_popup_result` what `value( )`
+references and what `value_string( )` returns, adds its line to the README
+table and a `ltcl_popup_result` test class. Rules: a cancelled popup returns
+`abap_false`; a popup that only shows something returns `abap_true`;
+`value( )` is unbound when there is no value. The older accessors
+(`result( )`, `ms_result`, `mv_return_value`, `ms_transport`) stay - callers
+in other repositories read them.
 
 ## The Utility Copy Principle (`src/00/`)
 
