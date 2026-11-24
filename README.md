@@ -123,6 +123,39 @@ IF client->check_on_navigated( ).
 ENDIF.
 ```
 
+### Message popover
+
+`z2ui5_cl_popup_msgpopover` shows messages in a `sap.m.MessagePopover` next to
+a control of your view - with a filter and a count per message type. It takes
+what `z2ui5_cl_popup_messages` takes: BAPIRET2 tables, `sy`, exceptions, T100,
+string tables. Pass the id of the control it opens by; closing it (a click
+outside, Esc) returns to your app, with `i_event_close` when given:
+
+```abap
+" a Button with id="btnMessages" in your view raises SHOW_MESSAGES
+IF client->check_on_event( `SHOW_MESSAGES` ).
+  client->nav_app_call( z2ui5_cl_popup_msgpopover=>factory( i_messages    = lt_bapiret
+                                                            i_open_by_id  = `btnMessages`
+                                                            i_event_close = `MESSAGES_CLOSED` ) ).
+ENDIF.
+```
+
+To keep the popover in your own view instead - toggled from a message button
+in the footer, say - use the parts: `msg_get_t( )` turns the messages into
+the item table you bind (`ty_t_msg`), `count_get( )` gives the count per type
+and the worst type with its icon for the button, and `popover_xml( )` builds
+the popover over your binding:
+
+```abap
+mt_msg = z2ui5_cl_popup_msgpopover=>msg_get_t( lt_bapiret ).
+DATA(count) = z2ui5_cl_popup_msgpopover=>count_get( mt_msg ).   " count-error, count-icon, ...
+
+client->popover_display( xml   = z2ui5_cl_popup_msgpopover=>popover_xml(
+                                     i_items       = client->_bind( mt_msg )
+                                     i_event_close = client->_event( `MESSAGES_CLOSED` ) )
+                         by_id = `btnMessages` ).
+```
+
 ## Features
 
 * Confirm, Inform & Select popups (`z2ui5_cl_popup_to_confirm`, `z2ui5_cl_popup_to_inform`, `z2ui5_cl_popup_to_select`)
@@ -131,6 +164,7 @@ ENDIF.
 * Table, Data & Demo Output (`z2ui5_cl_popup_table`, `z2ui5_cl_popup_data`, `z2ui5_cl_popup_demo_out`)
 * Text Editor, HTML & PDF display (`z2ui5_cl_popup_textedit`, `z2ui5_cl_popup_html`, `z2ui5_cl_popup_pdf`)
 * Messages, Error & Input Validation (`z2ui5_cl_popup_messages`, `z2ui5_cl_popup_error`, `z2ui5_cl_popup_input_val`)
+* Message popover - a MessagePopover with a count per type, opened by a control of your view (`z2ui5_cl_popup_msgpopover`)
 * Range Selection (`z2ui5_cl_popup_get_range`, `z2ui5_cl_popup_get_ranges`)
 * Image Editor & JS Loader (`z2ui5_cl_popup_image_edit`, `z2ui5_cl_popup_js_loader`)
 * Value-Help & Search-Help - a search help opened by field or by name, with prefilled fields (`z2ui5_cl_popup_value_help`, `z2ui5_cl_popup_shlp`)
@@ -165,6 +199,7 @@ ENDIF.
 | `z2ui5_cl_popup_sample_22` | Calculator (`z2ui5_cl_popup_calculator`) |
 | `z2ui5_cl_popup_sample_23` | Data element search (`z2ui5_cl_popup_dtel_srch`) |
 | `z2ui5_cl_popup_sample_24` | Message search (`z2ui5_cl_popup_msg_search`) |
+| `z2ui5_cl_popup_sample_25` | Message popover by a button, and in the app's own view (`z2ui5_cl_popup_msgpopover`) |
 
 ## Demo
 
