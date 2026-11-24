@@ -70,7 +70,8 @@ CLASS z2ui5_cl_popup_sample_22 IMPLEMENTATION.
   METHOD on_event.
 
     IF client->get_event( ) = `CALCULATOR`.
-      client->nav_app_call( z2ui5_cl_popup_calculator=>factory( i_value = amount
+      " the calculator computes in DECFLOAT34 - the amount is packed
+      client->nav_app_call( z2ui5_cl_popup_calculator=>factory( i_value = CONV decfloat34( amount )
                                                                 i_title = `Calculate Amount` ) ).
     ENDIF.
 
