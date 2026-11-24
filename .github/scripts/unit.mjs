@@ -46,7 +46,7 @@ const CONFIG = {
   // built in, the others are what this repository builds on
   repos: [
     { name: "abap2UI5", url: "https://github.com/abap2UI5/abap2UI5", ref: "main" },
-    { name: "layout-management", url: "https://github.com/abap2UI5-addons/layout-management", ref: "main" },
+    { name: "layout-management", url: "https://github.com/abap2UI5-addons/layout-management", ref: "DEV" },
   ],
   // copied into <abap2UI5>/src/<into>/: entries relative to <from>/src
   packages: [

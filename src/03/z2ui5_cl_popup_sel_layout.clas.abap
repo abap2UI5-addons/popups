@@ -275,8 +275,8 @@ CLASS z2ui5_cl_popup_sel_layout IMPLEMENTATION.
 
     " the sorting of the layout - point it at the table again first: the
     " draft restores the layout's own reference as one to a copy
-    mo_layout->mr_data = mr_tab_popup.
-    mo_layout->sort( abap_true ).
+    mo_layout->sort( no_selkz_sort = abap_true
+                     data          = mr_tab_popup ).
 
   ENDMETHOD.
 

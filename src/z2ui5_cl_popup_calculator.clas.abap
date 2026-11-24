@@ -15,7 +15,7 @@ CLASS z2ui5_cl_popup_calculator DEFINITION PUBLIC.
 
     CLASS-METHODS factory
       IMPORTING
-        i_value               TYPE decfloat34 OPTIONAL
+        i_value               TYPE numeric    OPTIONAL
         i_title               TYPE clike      OPTIONAL
         i_button_text_confirm TYPE string     DEFAULT `OK`
         i_button_text_cancel  TYPE string     DEFAULT `Cancel`
@@ -113,9 +113,10 @@ CLASS z2ui5_cl_popup_calculator IMPLEMENTATION.
     r_result->title               = COND #( WHEN i_title IS INITIAL THEN `Calculator` ELSE i_title ).
     r_result->button_text_confirm = i_button_text_confirm.
     r_result->button_text_cancel  = i_button_text_cancel.
+    " any numeric start value - packed, integer, float - is taken over
     r_result->ms_result-value     = i_value.
     r_result->new_input           = abap_true.
-    r_result->display_set( i_value ).
+    r_result->display_set( r_result->ms_result-value ).
 
   ENDMETHOD.
 
