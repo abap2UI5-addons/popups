@@ -440,8 +440,8 @@ CLASS z2ui5_cl_popup_shlp IMPLEMENTATION.
       IMPORTING
         shlp_tab = <t_shlp>.
 
-    READ TABLE <t_shlp> INDEX 1 ASSIGNING FIELD-SYMBOL(<elementary>).
-    IF sy-subrc <> 0.
+    ASSIGN <t_shlp>[ 1 ] TO FIELD-SYMBOL(<elementary>).
+    IF <elementary> IS NOT ASSIGNED.
       RAISE EXCEPTION TYPE z2ui5_cx_popup_error
         EXPORTING
           val = |Search help { lv_shlpname } has no elementary search help|.

@@ -153,7 +153,7 @@ CLASS z2ui5_cl_popup_file_ul IMPLEMENTATION.
     ls_file-content = z2ui5_cl_popup_context=>conv_get_xstring_by_data_uri( mv_value ).
     " the name without the folder - the browser hands C:\fakepath\name over
     ls_file-name = mv_path.
-    REPLACE ALL OCCURRENCES OF `\` IN ls_file-name WITH `/`.
+    ls_file-name = replace( val = ls_file-name sub = `\` with = `/` occ = 0 ).
     DATA(lv_slash) = find( val = ls_file-name sub = `/` occ = -1 ).
     IF lv_slash >= 0.
       ls_file-name = substring( val = ls_file-name off = lv_slash + 1 ).

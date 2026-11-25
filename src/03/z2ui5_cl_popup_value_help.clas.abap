@@ -354,8 +354,8 @@ CLASS z2ui5_cl_popup_value_help IMPLEMENTATION.
 
     DATA(t_dfies) = z2ui5_cl_popup_context=>rtti_get_t_dfies_by_table_name( mv_table ).
 
-    READ TABLE t_dfies REFERENCE INTO DATA(dfies) WITH KEY fieldname = mv_field.
-    IF sy-subrc <> 0.
+    ASSIGN t_dfies[ fieldname = mv_field ] TO FIELD-SYMBOL(<dfies>).
+    IF <dfies> IS NOT ASSIGNED.
 
       client->popup_destroy( ).
       client->nav_app_leave( client->get_app( client->get( )-s_draft-id_prev_app_stack ) ).
@@ -366,21 +366,21 @@ CLASS z2ui5_cl_popup_value_help IMPLEMENTATION.
     " a field without a check table has no values to offer - back to the
     " caller, as for an unknown field: staying here without a view left the
     " caller's screen on display with every event routed to this popup
-    IF dfies->checktable IS INITIAL.
+    IF <dfies>-checktable IS INITIAL.
       client->nav_app_leave( client->get_app( client->get( )-s_draft-id_prev_app_stack ) ).
       RETURN.
     ENDIF.
 
-    mt_dfies = z2ui5_cl_popup_context=>rtti_get_t_dfies_by_table_name( CONV #( dfies->checktable ) ).
+    mt_dfies = z2ui5_cl_popup_context=>rtti_get_t_dfies_by_table_name( CONV #( <dfies>-checktable ) ).
 
     " determine the field of the check table, first via the data element
-    mv_check_tab_field = VALUE #( mt_dfies[ rollname = dfies->rollname ]-fieldname OPTIONAL ).
+    mv_check_tab_field = VALUE #( mt_dfies[ rollname = <dfies>-rollname ]-fieldname OPTIONAL ).
 
     " as a fallback, try to find it via the domain
     IF mv_check_tab_field IS INITIAL.
-      mv_check_tab_field = VALUE #( mt_dfies[ domname = dfies->domname ]-fieldname OPTIONAL ).
+      mv_check_tab_field = VALUE #( mt_dfies[ domname = <dfies>-domname ]-fieldname OPTIONAL ).
     ENDIF.
-    mv_check_tab = dfies->checktable.
+    mv_check_tab = <dfies>-checktable.
 
   ENDMETHOD.
 

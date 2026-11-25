@@ -276,15 +276,15 @@ CLASS z2ui5_cl_popup_msg_search IMPLEMENTATION.
 
   METHOD on_event_confirm.
 
-    READ TABLE mt_result INTO DATA(ls_row) WITH KEY selkz = abap_true.
-    IF sy-subrc <> 0.
+    ASSIGN mt_result[ selkz = abap_true ] TO FIELD-SYMBOL(<ls_row>).
+    IF <ls_row> IS NOT ASSIGNED.
       client->message_toast_display( `Select a message first.` ).
       RETURN.
     ENDIF.
 
-    ms_result = VALUE #( msgid           = ls_row-arbgb
-                         msgno           = ls_row-msgnr
-                         text            = ls_row-text
+    ms_result = VALUE #( msgid           = <ls_row>-arbgb
+                         msgno           = <ls_row>-msgnr
+                         text            = <ls_row>-text
                          check_confirmed = abap_true ).
 
     client->popup_destroy( ).
@@ -565,10 +565,10 @@ CLASS z2ui5_cl_popup_msg_search IMPLEMENTATION.
   METHOD get_like_pattern.
 
     result = val.
-    REPLACE ALL OCCURRENCES OF `#` IN result WITH `##`.
-    REPLACE ALL OCCURRENCES OF `%` IN result WITH `#%`.
-    REPLACE ALL OCCURRENCES OF `_` IN result WITH `#_`.
-    REPLACE ALL OCCURRENCES OF `*` IN result WITH `%`.
+    result = replace( val = result sub = `#` with = `##` occ = 0 ).
+    result = replace( val = result sub = `%` with = `#%` occ = 0 ).
+    result = replace( val = result sub = `_` with = `#_` occ = 0 ).
+    result = replace( val = result sub = `*` with = `%` occ = 0 ).
 
     IF contains = abap_true.
       result = |%{ result }%|.

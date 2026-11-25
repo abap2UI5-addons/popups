@@ -218,8 +218,8 @@ CLASS ltcl_test_roundtrip IMPLEMENTATION.
     FIELD-SYMBOLS <lv_sel> TYPE any.
 
     ASSIGN io_pop->mr_tab_popup->* TO <lt_pop>.
-    READ TABLE <lt_pop> ASSIGNING FIELD-SYMBOL(<ls_row>) INDEX iv_index.
-    IF sy-subrc <> 0.
+    ASSIGN <lt_pop>[ iv_index ] TO FIELD-SYMBOL(<ls_row>).
+    IF <ls_row> IS NOT ASSIGNED.
       cl_abap_unit_assert=>fail( `POPUP_TABLE_ROW_NOT_FOUND` ).
     ENDIF.
     ASSIGN COMPONENT `ZZSELKZ` OF STRUCTURE <ls_row> TO <lv_sel>.
@@ -262,8 +262,8 @@ CLASS ltcl_test_roundtrip IMPLEMENTATION.
     cl_abap_unit_assert=>assert_equals( exp = 1
                                         act = lines( <lt_result> ) ).
 
-    READ TABLE <lt_result> ASSIGNING FIELD-SYMBOL(<ls_row>) INDEX 1.
-    IF sy-subrc <> 0.
+    ASSIGN <lt_result>[ 1 ] TO FIELD-SYMBOL(<ls_row>).
+    IF <ls_row> IS NOT ASSIGNED.
       cl_abap_unit_assert=>fail( `RESULT_ROW_NOT_FOUND` ).
     ENDIF.
     ASSIGN COMPONENT `NAME` OF STRUCTURE <ls_row> TO FIELD-SYMBOL(<lv_name>).
@@ -378,8 +378,8 @@ CLASS ltcl_popup_result IMPLEMENTATION.
     result->z2ui5_if_app~main( li_client ).
 
     ASSIGN result->mr_tab_popup->* TO <tab>.
-    READ TABLE <tab> ASSIGNING <row> INDEX iv_index.
-    IF sy-subrc <> 0.
+    ASSIGN <tab>[ iv_index ] TO <row>.
+    IF <row> IS NOT ASSIGNED.
       cl_abap_unit_assert=>fail( `ROW_NOT_FOUND` ).
     ENDIF.
     ASSIGN COMPONENT `ZZSELKZ` OF STRUCTURE <row> TO <selkz>.

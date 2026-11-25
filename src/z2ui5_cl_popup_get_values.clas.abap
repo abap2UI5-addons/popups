@@ -158,11 +158,11 @@ CLASS z2ui5_cl_popup_get_values IMPLEMENTATION.
   METHOD result_value.
 
     DATA(lv_name) = to_upper( name ).
-    READ TABLE ms_result-fields REFERENCE INTO DATA(lr_field) WITH KEY name = lv_name.
-    IF sy-subrc <> 0.
+    ASSIGN ms_result-fields[ name = lv_name ] TO FIELD-SYMBOL(<ls_field>).
+    IF <ls_field> IS NOT ASSIGNED.
       RETURN.
     ENDIF.
-    result = COND #( WHEN lr_field->kind = cs_kind-checkbox THEN lr_field->flag ELSE lr_field->value ).
+    result = COND #( WHEN <ls_field>-kind = cs_kind-checkbox THEN <ls_field>-flag ELSE <ls_field>-value ).
 
   ENDMETHOD.
 

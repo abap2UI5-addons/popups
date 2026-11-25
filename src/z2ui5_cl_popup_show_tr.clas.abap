@@ -131,9 +131,9 @@ CLASS z2ui5_cl_popup_show_tr IMPLEMENTATION.
 
       WHEN `SELECT`.
 
-        READ TABLE mt_data INTO DATA(line) WITH KEY selkz = abap_true.
-        IF sy-subrc = 0.
-          ms_transport = line.
+        ASSIGN mt_data[ selkz = abap_true ] TO FIELD-SYMBOL(<line>).
+        IF <line> IS ASSIGNED.
+          ms_transport = <line>.
         ENDIF.
 
         client->popup_destroy( ).
