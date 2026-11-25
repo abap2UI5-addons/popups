@@ -2,6 +2,10 @@ CLASS z2ui5_cl_popup_get_ranges DEFINITION PUBLIC.
 
   PUBLIC SECTION.
     INTERFACES z2ui5_if_app.
+    " check_confirmed( ) - OK pressed; value( ) - REF TO
+    " z2ui5_cl_popup_context=>ty_t_filter_multi, the ranges per field
+    " (ms_result-t_filter); value_string( ) - empty
+    INTERFACES z2ui5_if_popup_result.
 
     CLASS-METHODS factory
       IMPORTING
@@ -130,8 +134,7 @@ CLASS z2ui5_cl_popup_get_ranges IMPLEMENTATION.
 
     IF ls_get-check_on_navigated = abap_true.
 
-      DATA(lo_popup) = CAST z2ui5_cl_popup_get_range( client->get_app_prev( ) ).
-      DATA(ls_popup_result) = lo_popup->result( ).
+      DATA(ls_popup_result) = CAST z2ui5_cl_popup_get_range( client->get_app_prev( ) )->result( ).
       IF ls_popup_result-check_confirmed = abap_true.
         ASSIGN ms_result-t_filter[ name = mv_popup_name ] TO FIELD-SYMBOL(<tab>).
         <tab>-t_range = ls_popup_result-t_range.
@@ -174,6 +177,25 @@ CLASS z2ui5_cl_popup_get_ranges IMPLEMENTATION.
         ENDLOOP.
 
     ENDCASE.
+  ENDMETHOD.
+
+  METHOD z2ui5_if_popup_result~check_confirmed.
+
+    result = ms_result-check_confirmed.
+
+  ENDMETHOD.
+
+  METHOD z2ui5_if_popup_result~value.
+
+    result = REF #( ms_result-t_filter ).
+
+  ENDMETHOD.
+
+  METHOD z2ui5_if_popup_result~value_string.
+
+    " no single value - empty
+    CLEAR result.
+
   ENDMETHOD.
 
 ENDCLASS.

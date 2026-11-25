@@ -2,6 +2,9 @@ CLASS z2ui5_cl_popup_to_confirm DEFINITION PUBLIC.
 
   PUBLIC SECTION.
     INTERFACES z2ui5_if_app.
+    " check_confirmed( ) - OK pressed (as result( )); value( ) - unbound;
+    " value_string( ) - empty
+    INTERFACES z2ui5_if_popup_result.
 
     CONSTANTS:
       BEGIN OF cs_event,
@@ -117,6 +120,26 @@ CLASS z2ui5_cl_popup_to_confirm IMPLEMENTATION.
         client->nav_app_leave( app   = client->get_app_prev( )
                                event = event_canceled ).
     ENDCASE.
+
+  ENDMETHOD.
+
+  METHOD z2ui5_if_popup_result~check_confirmed.
+
+    result = check_result_confirmed.
+
+  ENDMETHOD.
+
+  METHOD z2ui5_if_popup_result~value.
+
+    " no value - the reference stays unbound
+    CLEAR result.
+
+  ENDMETHOD.
+
+  METHOD z2ui5_if_popup_result~value_string.
+
+    " no single value - empty
+    CLEAR result.
 
   ENDMETHOD.
 

@@ -668,11 +668,24 @@ CLASS z2ui5_cl_popup_context DEFINITION
       RETURNING
         VALUE(mt_data) TYPE ty_t_data.
 
+    "! Record the keys of the rows in ir_data on the transport request.
+    "! Nothing is recorded and nothing committed on ABAP Cloud or for an
+    "! empty ir_data. Raises z2ui5_cx_popup_error when the request refuses
+    "! the entries - in both modes without a ROLLBACK WORK and without a
+    "! COMMIT: what was recorded so far is still in the caller's LUW, the
+    "! caller rolls it back.
+    "! @parameter iv_commit | abap_true (the default) ends with COMMIT WORK AND
+    "!                       WAIT - which commits whatever the caller has open
+    "!                       as well; abap_false leaves the commit to the
+    "!                       caller, so the entries and the caller's own
+    "!                       database changes are one LUW that one ROLLBACK
+    "!                       undoes
     CLASS-METHODS bus_tr_add
       IMPORTING
         ir_data      TYPE REF TO data
         iv_tabname   TYPE string
-        is_transport TYPE ty_s_transport.
+        is_transport TYPE ty_s_transport
+        iv_commit    TYPE abap_bool DEFAULT abap_true.
 
     CLASS-METHODS bus_search_help_read
       CHANGING
@@ -3303,17 +3316,21 @@ CLASS z2ui5_cl_popup_context IMPLEMENTATION.
         FIELD-SYMBOLS <shlp2> TYPE STANDARD TABLE.
         ASSIGN lr_t_shlp->* TO <shlp2>.
 
+        " shlp_top is typed SHLP_DESCR - pass the DDIC-typed result of
+        " F4IF_DETERMINE_SEARCHHELP, not the local rebuild ms_shlp: a
+        " function module called by name wants the exact type
         lv_fm = `F4IF_EXPAND_SEARCHHELP`.
         CALL FUNCTION lv_fm
           EXPORTING
-            shlp_top = ms_shlp
+            shlp_top = <shlp>
           IMPORTING
             shlp_tab = <shlp2>.
 
-*        DATA(ls_row) = CORRESPONDING #( <shlp2>[ 1 ] OPTIONAL ).
         FIELD-SYMBOLS <row2> TYPE any.
-        ASSIGN  <shlp2>[ 1 ] TO <row2>.
-        ms_shlp = CORRESPONDING #( <row2> ).
+        ASSIGN <shlp2>[ 1 ] TO <row2>.
+        IF sy-subrc = 0.
+          ms_shlp = CORRESPONDING #( <row2> ).
+        ENDIF.
       ENDIF.
     ENDIF.
 
@@ -3642,7 +3659,9 @@ CLASS z2ui5_cl_popup_context IMPLEMENTATION.
           error_message = 1
           OTHERS        = 2.
       IF sy-subrc <> 0.
-        RAISE EXCEPTION TYPE z2ui5_cx_popup_error.
+        RAISE EXCEPTION TYPE z2ui5_cx_popup_error
+          EXPORTING
+            val = |{ fb1 }: { sy-msgid } { sy-msgno } { sy-msgv1 } { sy-msgv2 } { sy-msgv3 } { sy-msgv4 }|.
       ENDIF.
 
       DATA(fb2) = 'TR_SORT_AND_COMPRESS_COMM'.
@@ -3653,8 +3672,10 @@ CLASS z2ui5_cl_popup_context IMPLEMENTATION.
           error_message = 1
           OTHERS        = 2.
       IF sy-subrc <> 0.
-        RAISE EXCEPTION TYPE z2ui5_cx_popup_error.
-      ELSE.
+        RAISE EXCEPTION TYPE z2ui5_cx_popup_error
+          EXPORTING
+            val = |{ fb2 }: { sy-msgid } { sy-msgno } { sy-msgv1 } { sy-msgv2 } { sy-msgv3 } { sy-msgv4 }|.
+      ELSEIF iv_commit = abap_true.
         COMMIT WORK AND WAIT.
       ENDIF.
 
@@ -3688,7 +3709,12 @@ CLASS z2ui5_cl_popup_context IMPLEMENTATION.
         ASSIGN t_e071k->* TO <t_e071k>.
         ASSIGN s_e071k->* TO <s_e071k>.
 
-      CATCH cx_root ##NO_HANDLER.
+      CATCH cx_root INTO DATA(x).
+        " without the E071K line type nothing below can be filled - say why
+        RAISE EXCEPTION TYPE z2ui5_cx_popup_error
+          EXPORTING
+            val      = |E071K line type could not be built: { x->get_text( ) }|
+            previous = x.
     ENDTRY.
 
     DATA(dfies) = rtti_get_t_dfies_by_table_name( iv_tabname ).

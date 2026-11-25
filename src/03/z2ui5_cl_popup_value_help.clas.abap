@@ -5,6 +5,10 @@ CLASS z2ui5_cl_popup_value_help DEFINITION
   PUBLIC SECTION.
     " abap2ui5lint-disable unbound-public-attribute -- a popup's attributes are its interface to the app that called it, which reads them once the popup returns
     INTERFACES z2ui5_if_app.
+    " check_confirmed( ) - a row chosen; value( ) - REF TO string, the value
+    " of the field i_fname of the row (mv_return_value); value_string( ) -
+    " the same value
+    INTERFACES z2ui5_if_popup_result.
 
     DATA mt_data         TYPE REF TO data.
     DATA ms_data_row     TYPE REF TO data.
@@ -30,6 +34,7 @@ CLASS z2ui5_cl_popup_value_help DEFINITION
     DATA client             TYPE REF TO z2ui5_if_client.
     DATA mv_check_tab_field TYPE string.
     DATA mv_check_tab       TYPE string.
+    DATA mv_check_confirmed TYPE abap_bool.
 
     METHODS get_dfies.
 
@@ -106,7 +111,7 @@ CLASS z2ui5_cl_popup_value_help IMPLEMENTATION.
                                ( name = 'ROW_ID'
                                  type = CAST #( cl_abap_datadescr=>describe_by_data( index ) ) ) ).
 
-        APPEND LINES OF z2ui5_cl_popup_context=>rtti_get_t_attri_by_table_name( mv_check_tab  ) TO comp.
+        INSERT LINES OF z2ui5_cl_popup_context=>rtti_get_t_attri_by_table_name( mv_check_tab  ) INTO TABLE comp.
 
         DATA(new_struct_desc) = cl_abap_structdescr=>create( comp ).
 
@@ -131,9 +136,9 @@ CLASS z2ui5_cl_popup_value_help IMPLEMENTATION.
 
         SELECT *
           FROM (mv_check_tab)
+          WHERE (where)
           INTO CORRESPONDING FIELDS OF TABLE @<table>
-          UP TO @mv_rows ROWS
-          WHERE (where).
+          UP TO @mv_rows ROWS.
 
         IF sy-subrc <> 0.
           client->message_toast_display( 'No entries found.' ).
@@ -157,11 +162,11 @@ CLASS z2ui5_cl_popup_value_help IMPLEMENTATION.
 
     DATA(dialog) = popup->ele( `Dialog`
                           )->a( n = `title` v = z2ui5_cl_popup_context=>rtti_get_data_element_texts( `/IWFND/SU_GWC_RH_VH`  )-medium
-                          )->a( n = `contentWidth` v = '90%'
+                          )->a( n = `contentWidth` v = `90%`
                           )->a( n = `afterClose` v = client->_event( 'F4_CLOSE' ) ).
 
     DATA(simple_form) = dialog->ele( n = `SimpleForm` ns = `form`
-                                )->a( n = `layout` v = 'ResponsiveGridLayout'
+                                )->a( n = `layout` v = `ResponsiveGridLayout`
                                 )->a( n = `editable` b = abap_true
                                 )->ele( n = `content` ns = `form` ).
 
@@ -198,13 +203,13 @@ CLASS z2ui5_cl_popup_value_help IMPLEMENTATION.
         )->a( n = `value` v = client->_bind( mv_rows )
         )->a( n = `showValueHelp` b = abap_false
         )->a( n = `submit` v = client->_event( 'F4_INPUT_DONE' )
-        )->a( n = `maxLength` v = '3' ).
+        )->a( n = `maxLength` v = `3` ).
 
     ASSIGN mt_data->* TO FIELD-SYMBOL(<table>).
 
     DATA(table) = dialog->ele( `Table`
-                      )->a( n = `growing`    v = 'true'
-                      )->a( n = `width`      v = 'auto'
+                      )->a( n = `growing`    v = `true`
+                      )->a( n = `width`      v = `auto`
                       )->a( n = `items`      v = client->_bind( val = <table> )
                       )->a( n = `headerText` t = mv_check_tab ).
 
@@ -241,8 +246,8 @@ CLASS z2ui5_cl_popup_value_help IMPLEMENTATION.
     DATA(cells) = columns->end(
                       )->ele( `items`
                       )->ele( `ColumnListItem`
-                      )->a( n = `vAlign` v = 'Middle'
-                      )->a( n = `type` v = 'Navigation'
+                      )->a( n = `vAlign` v = `Middle`
+                      )->a( n = `type` v = `Navigation`
                       )->a( n = `press` v = client->_event( val   = 'F4_ROW_SELECT'
                                                                     arg   = `${ROW_ID}` )
                       )->ele( `cells` ).
@@ -273,6 +278,10 @@ CLASS z2ui5_cl_popup_value_help IMPLEMENTATION.
       WHEN `F4_ROW_SELECT`.
 
         DATA(lt_arg) = client->get( )-t_event_arg.
+        " an event without the row index raised CX_SY_ITAB_LINE_NOT_FOUND
+        IF lt_arg IS INITIAL.
+          RETURN.
+        ENDIF.
 
         ASSIGN mt_data->* TO <tab>.
 
@@ -289,6 +298,7 @@ CLASS z2ui5_cl_popup_value_help IMPLEMENTATION.
         ENDIF.
 
         mv_return_value = <value>.
+        mv_check_confirmed = abap_true.
 
         client->popup_destroy( ).
 
@@ -344,8 +354,8 @@ CLASS z2ui5_cl_popup_value_help IMPLEMENTATION.
 
     DATA(t_dfies) = z2ui5_cl_popup_context=>rtti_get_t_dfies_by_table_name( mv_table ).
 
-    READ TABLE t_dfies REFERENCE INTO DATA(dfies) WITH KEY fieldname = mv_field.
-    IF sy-subrc <> 0.
+    ASSIGN t_dfies[ fieldname = mv_field ] TO FIELD-SYMBOL(<dfies>).
+    IF <dfies> IS NOT ASSIGNED.
 
       client->popup_destroy( ).
       client->nav_app_leave( client->get_app( client->get( )-s_draft-id_prev_app_stack ) ).
@@ -356,21 +366,21 @@ CLASS z2ui5_cl_popup_value_help IMPLEMENTATION.
     " a field without a check table has no values to offer - back to the
     " caller, as for an unknown field: staying here without a view left the
     " caller's screen on display with every event routed to this popup
-    IF dfies->checktable IS INITIAL.
+    IF <dfies>-checktable IS INITIAL.
       client->nav_app_leave( client->get_app( client->get( )-s_draft-id_prev_app_stack ) ).
       RETURN.
     ENDIF.
 
-    mt_dfies = z2ui5_cl_popup_context=>rtti_get_t_dfies_by_table_name( CONV #( dfies->checktable ) ).
+    mt_dfies = z2ui5_cl_popup_context=>rtti_get_t_dfies_by_table_name( CONV #( <dfies>-checktable ) ).
 
     " determine the field of the check table, first via the data element
-    mv_check_tab_field = VALUE #( mt_dfies[ rollname = dfies->rollname ]-fieldname OPTIONAL ).
+    mv_check_tab_field = VALUE #( mt_dfies[ rollname = <dfies>-rollname ]-fieldname OPTIONAL ).
 
     " as a fallback, try to find it via the domain
     IF mv_check_tab_field IS INITIAL.
-      mv_check_tab_field = VALUE #( mt_dfies[ domname = dfies->domname ]-fieldname OPTIONAL ).
+      mv_check_tab_field = VALUE #( mt_dfies[ domname = <dfies>-domname ]-fieldname OPTIONAL ).
     ENDIF.
-    mv_check_tab = dfies->checktable.
+    mv_check_tab = <dfies>-checktable.
 
   ENDMETHOD.
 
@@ -428,6 +438,24 @@ CLASS z2ui5_cl_popup_value_help IMPLEMENTATION.
                                                 handle01 = class
                                                 handle02 = mv_table
                                                 handle03 = 'F4'  ).
+
+  ENDMETHOD.
+
+  METHOD z2ui5_if_popup_result~check_confirmed.
+
+    result = mv_check_confirmed.
+
+  ENDMETHOD.
+
+  METHOD z2ui5_if_popup_result~value.
+
+    result = REF #( mv_return_value ).
+
+  ENDMETHOD.
+
+  METHOD z2ui5_if_popup_result~value_string.
+
+    result = mv_return_value.
 
   ENDMETHOD.
 

@@ -3,6 +3,11 @@ CLASS z2ui5_cl_popup_js_loader DEFINITION PUBLIC.
   PUBLIC SECTION.
     " abap2ui5lint-disable unbound-public-attribute -- a popup's attributes are its interface to the app that called it, which reads them once the popup returns
     INTERFACES z2ui5_if_app.
+    " check_confirmed( ) - always abap_true, the popup only loads a script;
+    " value( ) - REF TO string, result( ) - for factory_check_open_ui5 REF TO
+    " abap_bool, mv_is_open_ui5; value_string( ) - result( ), for
+    " factory_check_open_ui5 the UI5 runtime (ui5_gav)
+    INTERFACES z2ui5_if_popup_result.
 
     CLASS-METHODS factory
       IMPORTING
@@ -108,6 +113,33 @@ CLASS z2ui5_cl_popup_js_loader IMPLEMENTATION.
     IF client->get( )-event = `TIMER_FINISHED`.
       client->popup_destroy( ).
       client->nav_app_leave( ).
+    ENDIF.
+
+  ENDMETHOD.
+
+  METHOD z2ui5_if_popup_result~check_confirmed.
+
+    " shows something only - nothing to decline
+    result = abap_true.
+
+  ENDMETHOD.
+
+  METHOD z2ui5_if_popup_result~value.
+
+    IF check_open_ui5 = abap_true.
+      result = REF #( mv_is_open_ui5 ).
+    ELSE.
+      result = REF #( user_command ).
+    ENDIF.
+
+  ENDMETHOD.
+
+  METHOD z2ui5_if_popup_result~value_string.
+
+    IF check_open_ui5 = abap_true.
+      result = ui5_gav.
+    ELSE.
+      result = user_command.
     ENDIF.
 
   ENDMETHOD.

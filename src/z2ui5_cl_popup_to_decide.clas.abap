@@ -10,6 +10,10 @@ CLASS z2ui5_cl_popup_to_decide DEFINITION PUBLIC.
 
   PUBLIC SECTION.
     INTERFACES z2ui5_if_app.
+    " check_confirmed( ) - an option chosen; abap_false for Cancel;
+    " value( ) - REF TO string, the number of the option (as result( ));
+    " value_string( ) - the same number, `1` for the first option
+    INTERFACES z2ui5_if_popup_result.
 
     CONSTANTS:
       BEGIN OF cs_event,
@@ -154,6 +158,26 @@ CLASS z2ui5_cl_popup_to_decide IMPLEMENTATION.
         client->nav_app_leave( app   = client->get_app_prev( )
                                event = event_decided ).
     ENDCASE.
+
+  ENDMETHOD.
+
+  METHOD z2ui5_if_popup_result~check_confirmed.
+
+    result = xsdbool( answer IS NOT INITIAL AND answer <> cs_answer-cancel ).
+
+  ENDMETHOD.
+
+  METHOD z2ui5_if_popup_result~value.
+
+    result = REF #( answer ).
+
+  ENDMETHOD.
+
+  METHOD z2ui5_if_popup_result~value_string.
+
+    IF z2ui5_if_popup_result~check_confirmed( ) = abap_true.
+      result = answer.
+    ENDIF.
 
   ENDMETHOD.
 

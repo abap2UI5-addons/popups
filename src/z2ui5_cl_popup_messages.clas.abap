@@ -2,6 +2,10 @@ CLASS z2ui5_cl_popup_messages DEFINITION PUBLIC.
 
   PUBLIC SECTION.
     INTERFACES z2ui5_if_app.
+    " check_confirmed( ) - always abap_true, the popup only shows messages;
+    " value( ) - REF TO ty_t_msg, the messages shown (mt_msg);
+    " value_string( ) - empty
+    INTERFACES z2ui5_if_popup_result.
 
     TYPES:
       BEGIN OF ty_s_msg,
@@ -100,6 +104,26 @@ CLASS z2ui5_cl_popup_messages IMPLEMENTATION.
       client->popup_destroy( ).
       client->nav_app_leave( ).
     ENDIF.
+
+  ENDMETHOD.
+
+  METHOD z2ui5_if_popup_result~check_confirmed.
+
+    " shows something only - nothing to decline
+    result = abap_true.
+
+  ENDMETHOD.
+
+  METHOD z2ui5_if_popup_result~value.
+
+    result = REF #( mt_msg ).
+
+  ENDMETHOD.
+
+  METHOD z2ui5_if_popup_result~value_string.
+
+    " no single value - empty
+    CLEAR result.
 
   ENDMETHOD.
 

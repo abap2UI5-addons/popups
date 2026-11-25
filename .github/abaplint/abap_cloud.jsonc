@@ -10,19 +10,17 @@
     },
     {
       "url": "https://github.com/abap2UI5-addons/layout-management",
+      // layout-management main - its release tag once one is cut
+      "branch": "main",
       "folder": "/abap2UI5-layout",
       "files": "/src/**/*.*"
     },
     {
       "url": "https://github.com/abap2UI5/abap2UI5",
-      "branch": "1.150.0",
+      // 1.151.0 - back to its tag once it is cut
+      "branch": "main",
       "folder": "/abap2UI5",
-      "files": "/src/**/*.*"
-    },
-    {
-      "url": "https://github.com/abap2UI5-addons/popups",
-      "folder": "/src",
-      "files": "/src/**/*.*"
+      "files": "/src/0[0-2]/**/*.*"
     }
   ],
   "syntax": {

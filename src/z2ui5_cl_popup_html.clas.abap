@@ -2,6 +2,9 @@ CLASS z2ui5_cl_popup_html DEFINITION PUBLIC.
 
   PUBLIC SECTION.
     INTERFACES z2ui5_if_app.
+    " check_confirmed( ) - always abap_true, the popup only shows HTML;
+    " value( ) - unbound; value_string( ) - empty
+    INTERFACES z2ui5_if_popup_result.
 
     CLASS-METHODS factory
       IMPORTING
@@ -80,6 +83,27 @@ CLASS z2ui5_cl_popup_html IMPLEMENTATION.
       client->popup_destroy( ).
       client->nav_app_leave( ).
     ENDIF.
+
+  ENDMETHOD.
+
+  METHOD z2ui5_if_popup_result~check_confirmed.
+
+    " shows something only - nothing to decline
+    result = abap_true.
+
+  ENDMETHOD.
+
+  METHOD z2ui5_if_popup_result~value.
+
+    " no value - the reference stays unbound
+    CLEAR result.
+
+  ENDMETHOD.
+
+  METHOD z2ui5_if_popup_result~value_string.
+
+    " no single value - empty
+    CLEAR result.
 
   ENDMETHOD.
 

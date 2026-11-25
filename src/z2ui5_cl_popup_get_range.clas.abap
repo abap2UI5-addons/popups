@@ -2,6 +2,10 @@ CLASS z2ui5_cl_popup_get_range DEFINITION PUBLIC.
 
   PUBLIC SECTION.
     INTERFACES z2ui5_if_app.
+    " check_confirmed( ) - OK pressed; value( ) - REF TO
+    " z2ui5_cl_popup_context=>ty_t_range, the range (ms_result-t_range);
+    " value_string( ) - empty
+    INTERFACES z2ui5_if_popup_result.
 
     TYPES:
       BEGIN OF ty_s_filter_pop,
@@ -184,6 +188,25 @@ CLASS z2ui5_cl_popup_get_range IMPLEMENTATION.
         CLEAR mt_filter.
 
     ENDCASE.
+
+  ENDMETHOD.
+
+  METHOD z2ui5_if_popup_result~check_confirmed.
+
+    result = ms_result-check_confirmed.
+
+  ENDMETHOD.
+
+  METHOD z2ui5_if_popup_result~value.
+
+    result = REF #( ms_result-t_range ).
+
+  ENDMETHOD.
+
+  METHOD z2ui5_if_popup_result~value_string.
+
+    " no single value - empty
+    CLEAR result.
 
   ENDMETHOD.
 

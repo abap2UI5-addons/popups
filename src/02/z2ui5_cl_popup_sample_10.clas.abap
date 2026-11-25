@@ -18,10 +18,12 @@ CLASS z2ui5_cl_popup_sample_10 IMPLEMENTATION.
 
   METHOD on_navigation.
 
+    " every popup hands its result over through z2ui5_if_popup_result
     TRY.
-        DATA(lo_prev) = client->get_app( client->get( )-s_draft-id_prev_app ).
-        DATA(lv_text) = CAST z2ui5_cl_popup_input_val( lo_prev )->result( )-value.
-        client->message_box_display( |the input is { lv_text }| ).
+        DATA(popup) = CAST z2ui5_if_popup_result( client->get_app_prev( ) ).
+        IF popup->check_confirmed( ).
+          client->message_box_display( |the input is { popup->value_string( ) }| ).
+        ENDIF.
       CATCH cx_root ##NO_HANDLER.
     ENDTRY.
 

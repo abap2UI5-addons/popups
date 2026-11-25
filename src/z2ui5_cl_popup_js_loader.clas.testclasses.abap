@@ -183,3 +183,61 @@ CLASS ltcl_test_roundtrip IMPLEMENTATION.
   ENDMETHOD.
 
 ENDCLASS.
+
+
+CLASS ltcl_popup_result DEFINITION FINAL
+  FOR TESTING RISK LEVEL HARMLESS DURATION SHORT.
+
+  PRIVATE SECTION.
+    DATA mo_action TYPE REF TO z2ui5_cl_ui5_action.
+
+    METHODS roundtrip_init
+      IMPORTING
+        io_app TYPE REF TO z2ui5_if_app.
+
+    METHODS test_script_loaded  FOR TESTING RAISING cx_static_check.
+    METHODS test_check_open_ui5 FOR TESTING RAISING cx_static_check.
+
+ENDCLASS.
+
+
+CLASS ltcl_popup_result IMPLEMENTATION.
+
+  METHOD roundtrip_init.
+
+    mo_action = NEW #( NEW z2ui5_cl_ui5_handler( `` ) ).
+    mo_action->mo_app->mo_app = io_app.
+    io_app->main( NEW z2ui5_cl_ui5_client( mo_action ) ).
+
+  ENDMETHOD.
+
+  METHOD test_script_loaded.
+
+    DATA(lo_pop) = z2ui5_cl_popup_js_loader=>factory( `console.log( 1 );` ).
+    DATA(li_result) = CAST z2ui5_if_popup_result( lo_pop ).
+
+    cl_abap_unit_assert=>assert_true( li_result->check_confirmed( ) ).
+    cl_abap_unit_assert=>assert_equals( exp = `LOADED`
+                                        act = li_result->value_string( ) ).
+    DATA(lr_value) = CAST string( li_result->value( ) ).
+    cl_abap_unit_assert=>assert_equals( exp = `LOADED`
+                                        act = lr_value->* ).
+
+  ENDMETHOD.
+
+  METHOD test_check_open_ui5.
+
+    DATA(lo_pop) = z2ui5_cl_popup_js_loader=>factory_check_open_ui5( ).
+    roundtrip_init( lo_pop ).
+    DATA(li_result) = CAST z2ui5_if_popup_result( lo_pop ).
+
+    cl_abap_unit_assert=>assert_true( li_result->check_confirmed( ) ).
+    DATA(lr_value) = CAST abap_bool( li_result->value( ) ).
+    cl_abap_unit_assert=>assert_equals( exp = lo_pop->mv_is_open_ui5
+                                        act = lr_value->* ).
+    cl_abap_unit_assert=>assert_equals( exp = lo_pop->ui5_gav
+                                        act = li_result->value_string( ) ).
+
+  ENDMETHOD.
+
+ENDCLASS.

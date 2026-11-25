@@ -3,6 +3,10 @@ CLASS z2ui5_cl_popup_file_ul DEFINITION PUBLIC.
   PUBLIC SECTION.
     " abap2ui5lint-disable unbound-public-attribute -- a popup's attributes are its interface to the app that called it, which reads them once the popup returns
     INTERFACES z2ui5_if_app.
+    " check_confirmed( ) - OK pressed; value( ) - REF TO ty_s_result, the
+    " picked files with name, bytes and text (ms_result); value_string( ) -
+    " the last file as UTF-8 text (ms_result-value)
+    INTERFACES z2ui5_if_popup_result.
 
     CLASS-METHODS factory
       IMPORTING
@@ -149,7 +153,7 @@ CLASS z2ui5_cl_popup_file_ul IMPLEMENTATION.
     ls_file-content = z2ui5_cl_popup_context=>conv_get_xstring_by_data_uri( mv_value ).
     " the name without the folder - the browser hands C:\fakepath\name over
     ls_file-name = mv_path.
-    REPLACE ALL OCCURRENCES OF `\` IN ls_file-name WITH `/`.
+    ls_file-name = replace( val = ls_file-name sub = `\` with = `/` occ = 0 ).
     DATA(lv_slash) = find( val = ls_file-name sub = `/` occ = -1 ).
     IF lv_slash >= 0.
       ls_file-name = substring( val = ls_file-name off = lv_slash + 1 ).
@@ -197,6 +201,24 @@ CLASS z2ui5_cl_popup_file_ul IMPLEMENTATION.
         client->popup_destroy( ).
         client->nav_app_leave( ).
     ENDCASE.
+
+  ENDMETHOD.
+
+  METHOD z2ui5_if_popup_result~check_confirmed.
+
+    result = ms_result-check_confirmed.
+
+  ENDMETHOD.
+
+  METHOD z2ui5_if_popup_result~value.
+
+    result = REF #( ms_result ).
+
+  ENDMETHOD.
+
+  METHOD z2ui5_if_popup_result~value_string.
+
+    result = ms_result-value.
 
   ENDMETHOD.
 

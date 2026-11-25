@@ -5,15 +5,32 @@ CLASS z2ui5_cl_popup_show_tr DEFINITION
   PUBLIC SECTION.
     " abap2ui5lint-disable unbound-public-attribute -- a popup's attributes are its interface to the app that called it, which reads them once the popup returns
     INTERFACES z2ui5_if_app.
+    " check_confirmed( ) - a transport request chosen, or No Transport
+    " (ms_transport-locl); abap_false when closed or Select without a row;
+    " value( ) - REF TO z2ui5_cl_popup_context=>ty_s_transport
+    " (ms_transport); value_string( ) - the transport request, empty for
+    " No Transport
+    INTERFACES z2ui5_if_popup_result.
 
     DATA client       TYPE REF TO z2ui5_if_client.
     DATA ms_transport TYPE z2ui5_cl_popup_context=>ty_s_transport.
 
+    "! Record the keys of the rows in ir_data on the transport request of
+    "! is_transport (nothing for a local change, is_transport-locl - and no
+    "! commit either, whatever iv_commit says). Raises z2ui5_cx_popup_error
+    "! when the request refuses the entries, without a ROLLBACK WORK in
+    "! either mode - see bus_tr_add( ) and the README, "Commits".
+    "! @parameter iv_commit | abap_true (the default) commits the entries at
+    "!                       once - and whatever else the caller has open;
+    "!                       abap_false leaves the COMMIT WORK to the
+    "!                       caller - a caller that writes the rows itself
+    "!                       commits both together, or rolls both back
     CLASS-METHODS add_data_to_tranport
       IMPORTING
         ir_data      TYPE REF TO data
         iv_tabname   TYPE string
-        is_transport TYPE z2ui5_cl_popup_context=>ty_s_transport.
+        is_transport TYPE z2ui5_cl_popup_context=>ty_s_transport
+        iv_commit    TYPE abap_bool DEFAULT abap_true.
 
     DATA mt_data TYPE STANDARD TABLE OF z2ui5_cl_popup_context=>ty_s_transport WITH EMPTY KEY.
 
@@ -61,11 +78,11 @@ CLASS z2ui5_cl_popup_show_tr IMPLEMENTATION.
                       )->a( n = `xmlns:core` v = `sap.ui.core` ).
 
     popup->ele( `Dialog`
-        )->a( n = `contentWidth` v = '40%'
+        )->a( n = `contentWidth` v = `40%`
         )->a( n = `afterClose` v = client->_event( 'CLOSE' )
         )->a( n = `title` v = z2ui5_cl_popup_context=>rtti_get_data_element_texts( `SRET_TRORD`  )-long
         )->ele( `Table`
-        )->a( n = `mode` v = 'SingleSelectLeft'
+        )->a( n = `mode` v = `SingleSelectLeft`
         )->a( n = `items` v = client->_bind( mt_data )
         )->ele( `columns`
         )->ele( `Column`
@@ -79,25 +96,25 @@ CLASS z2ui5_cl_popup_show_tr IMPLEMENTATION.
         )->end(
         )->ele( `items`
         )->ele( `ColumnListItem`
-        )->a( n = `selected` v = '{SELKZ}'
+        )->a( n = `selected` v = `{SELKZ}`
         )->ele( `cells`
         )->tag( `Text`
-        )->a( n = `text` v = '{TRANSPORT}'
+        )->a( n = `text` v = `{TRANSPORT}`
         )->tag( `Text`
-        )->a( n = `text` v = '{SHORT_DESCRIPTION}'
+        )->a( n = `text` v = `{SHORT_DESCRIPTION}`
         )->end(
         )->end(
         )->end(
         )->end(
         )->ele( `buttons`
         )->tag( `Button`
-        )->a( n = `text` v = 'No Transport'
+        )->a( n = `text` v = `No Transport`
         )->a( n = `press` v = client->_event( 'LOCL' )
-        )->a( n = `type` v = 'Default'
+        )->a( n = `type` v = `Default`
         )->tag( `Button`
-        )->a( n = `text` v = 'Select'
+        )->a( n = `text` v = `Select`
         )->a( n = `press` v = client->_event( 'SELECT' )
-        )->a( n = `type` v = 'Emphasized' ).
+        )->a( n = `type` v = `Emphasized` ).
 
     client->popup_display( popup->stringify( ) ).
 
@@ -114,9 +131,9 @@ CLASS z2ui5_cl_popup_show_tr IMPLEMENTATION.
 
       WHEN `SELECT`.
 
-        READ TABLE mt_data INTO DATA(line) WITH KEY selkz = abap_true.
-        IF sy-subrc = 0.
-          ms_transport = line.
+        ASSIGN mt_data[ selkz = abap_true ] TO FIELD-SYMBOL(<line>).
+        IF <line> IS ASSIGNED.
+          ms_transport = <line>.
         ENDIF.
 
         client->popup_destroy( ).
@@ -145,8 +162,27 @@ CLASS z2ui5_cl_popup_show_tr IMPLEMENTATION.
     ENDIF.
 
     z2ui5_cl_popup_context=>bus_tr_add( ir_data      = ir_data
-                                   iv_tabname   = iv_tabname
-                                   is_transport = is_transport ).
+                                        iv_tabname   = iv_tabname
+                                        is_transport = is_transport
+                                        iv_commit    = iv_commit ).
+
+  ENDMETHOD.
+
+  METHOD z2ui5_if_popup_result~check_confirmed.
+
+    result = xsdbool( ms_transport IS NOT INITIAL ).
+
+  ENDMETHOD.
+
+  METHOD z2ui5_if_popup_result~value.
+
+    result = REF #( ms_transport ).
+
+  ENDMETHOD.
+
+  METHOD z2ui5_if_popup_result~value_string.
+
+    result = ms_transport-transport.
 
   ENDMETHOD.
 

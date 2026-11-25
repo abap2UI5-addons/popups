@@ -13,6 +13,10 @@ CLASS z2ui5_cl_popup_get_values DEFINITION PUBLIC.
 
   PUBLIC SECTION.
     INTERFACES z2ui5_if_app.
+    " check_confirmed( ) - OK pressed; value( ) - REF TO ty_t_field, the
+    " fields with the values entered (ms_result-fields, or result_value( ) for
+    " one of them); value_string( ) - empty
+    INTERFACES z2ui5_if_popup_result.
 
     CONSTANTS:
       BEGIN OF cs_event,
@@ -154,11 +158,11 @@ CLASS z2ui5_cl_popup_get_values IMPLEMENTATION.
   METHOD result_value.
 
     DATA(lv_name) = to_upper( name ).
-    READ TABLE ms_result-fields REFERENCE INTO DATA(lr_field) WITH KEY name = lv_name.
-    IF sy-subrc <> 0.
+    ASSIGN ms_result-fields[ name = lv_name ] TO FIELD-SYMBOL(<ls_field>).
+    IF <ls_field> IS NOT ASSIGNED.
       RETURN.
     ENDIF.
-    result = COND #( WHEN lr_field->kind = cs_kind-checkbox THEN lr_field->flag ELSE lr_field->value ).
+    result = COND #( WHEN <ls_field>-kind = cs_kind-checkbox THEN <ls_field>-flag ELSE <ls_field>-value ).
 
   ENDMETHOD.
 
@@ -320,6 +324,25 @@ CLASS z2ui5_cl_popup_get_values IMPLEMENTATION.
         client->nav_app_leave( app   = client->get_app_prev( )
                                event = event_canceled ).
     ENDCASE.
+
+  ENDMETHOD.
+
+  METHOD z2ui5_if_popup_result~check_confirmed.
+
+    result = ms_result-check_confirmed.
+
+  ENDMETHOD.
+
+  METHOD z2ui5_if_popup_result~value.
+
+    result = REF #( ms_result-fields ).
+
+  ENDMETHOD.
+
+  METHOD z2ui5_if_popup_result~value_string.
+
+    " no single value - empty
+    CLEAR result.
 
   ENDMETHOD.
 
