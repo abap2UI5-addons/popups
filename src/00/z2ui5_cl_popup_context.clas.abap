@@ -3655,7 +3655,9 @@ CLASS z2ui5_cl_popup_context IMPLEMENTATION.
           error_message = 1
           OTHERS        = 2.
       IF sy-subrc <> 0.
-        RAISE EXCEPTION TYPE z2ui5_cx_popup_error.
+        RAISE EXCEPTION TYPE z2ui5_cx_popup_error
+          EXPORTING
+            val = |{ fb1 }: { sy-msgid } { sy-msgno } { sy-msgv1 } { sy-msgv2 } { sy-msgv3 } { sy-msgv4 }|.
       ENDIF.
 
       DATA(fb2) = 'TR_SORT_AND_COMPRESS_COMM'.
@@ -3666,7 +3668,9 @@ CLASS z2ui5_cl_popup_context IMPLEMENTATION.
           error_message = 1
           OTHERS        = 2.
       IF sy-subrc <> 0.
-        RAISE EXCEPTION TYPE z2ui5_cx_popup_error.
+        RAISE EXCEPTION TYPE z2ui5_cx_popup_error
+          EXPORTING
+            val = |{ fb2 }: { sy-msgid } { sy-msgno } { sy-msgv1 } { sy-msgv2 } { sy-msgv3 } { sy-msgv4 }|.
       ELSEIF iv_commit = abap_true.
         COMMIT WORK AND WAIT.
       ENDIF.
