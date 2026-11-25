@@ -63,6 +63,10 @@ CLASS z2ui5_cl_popup_dtel_srch DEFINITION PUBLIC.
     DATA mv_langu2         TYPE string.
     DATA mt_langu          TYPE ty_t_langu.
     DATA mt_result         TYPE ty_t_row.
+    " hits translated into fewer languages are left out; 0 shows all.
+    " Public so a host that creates the app itself (CREATE OBJECT, embedded
+    " mode) can set it as factory( i_min_languages ) does
+    DATA mv_min_languages  TYPE i.
     DATA mv_check_disabled TYPE abap_bool.
     DATA mv_info           TYPE string.
     DATA mv_check_info     TYPE abap_bool.
@@ -73,6 +77,8 @@ CLASS z2ui5_cl_popup_dtel_srch DEFINITION PUBLIC.
     "! @parameter i_langu2 | second language shown side by side, default
     "!                       German (English when i_langu is German)
     "! @parameter i_max_rows | maximum number of data elements read
+    "! @parameter i_min_languages | only hits with texts in at least this many
+    "!                              languages (count of the Languages column); 0 = all
     CLASS-METHODS factory
       IMPORTING
         i_search          TYPE clike     OPTIONAL
@@ -80,6 +86,7 @@ CLASS z2ui5_cl_popup_dtel_srch DEFINITION PUBLIC.
         i_langu2          TYPE sy-langu  OPTIONAL
         i_title           TYPE clike     DEFAULT `Data Element Search`
         i_max_rows        TYPE i         DEFAULT 200
+        i_min_languages   TYPE i         DEFAULT 0
         i_event_canceled  TYPE string    OPTIONAL
         i_event_confirmed TYPE string    OPTIONAL
           PREFERRED PARAMETER i_search
@@ -136,6 +143,9 @@ CLASS z2ui5_cl_popup_dtel_srch DEFINITION PUBLIC.
     METHODS search.
     METHODS read_languages.
 
+    "! leave out the hits with fewer languages than mv_min_languages
+    METHODS apply_min_languages.
+
     "! The languages of the two Selects: English and German first, then the
     "! other languages alphabetically - those installed (T002C-LAINST), the
     "! logon language and the selected ones; all of T002T when installed is
@@ -177,6 +187,7 @@ CLASS z2ui5_cl_popup_dtel_srch IMPLEMENTATION.
                                         WHEN i_langu = `D` THEN `E`
                                         ELSE `D` ).
     r_result->max_rows        = COND #( WHEN i_max_rows > 0 THEN i_max_rows ELSE 200 ).
+    r_result->mv_min_languages = i_min_languages.
     r_result->event_canceled  = i_event_canceled.
     r_result->event_confirmed = i_event_confirmed.
 
@@ -296,6 +307,18 @@ CLASS z2ui5_cl_popup_dtel_srch IMPLEMENTATION.
 
     client->popup_destroy( ).
     client->nav_app_leave( event = event_confirmed ).
+
+  ENDMETHOD.
+
+  METHOD apply_min_languages.
+
+    IF mv_min_languages <= 0.
+      RETURN.
+    ENDIF.
+    DELETE mt_result WHERE count < mv_min_languages.
+    IF mt_result IS INITIAL.
+      client->message_toast_display( |No data elements with texts in at least { mv_min_languages } languages found.| ).
+    ENDIF.
 
   ENDMETHOD.
 
@@ -470,6 +493,8 @@ CLASS z2ui5_cl_popup_dtel_srch IMPLEMENTATION.
     ENDIF.
 
     read_details( ).
+
+    apply_min_languages( ).
 
   ENDMETHOD.
 
