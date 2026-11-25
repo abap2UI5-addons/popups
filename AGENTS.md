@@ -13,7 +13,7 @@ Ready-to-use popup and dialog apps for [abap2UI5](https://github.com/abap2UI5/ab
 
 | Package | Content |
 |---|---|
-| `src/` | Popup classes (`z2ui5_cl_popup_*`) and their result interface `z2ui5_if_popup_result` |
+| `src/` | Popup classes (`z2ui5_cl_popup_*`), their result interface `z2ui5_if_popup_result` and the embedded-mode interface `z2ui5_if_popup_embed` (README, "Embedded mode") |
 | `src/00/` | Context/utility class `z2ui5_cl_popup_context` and its exception `z2ui5_cx_popup_error` — **vendored copies from abap-util, see below** |
 | `src/02/` | Samples (`z2ui5_cl_popup_sample_*`) |
 | `src/03/` | Popups with layout-management dependency (Value-Help, Search-Help) |

@@ -197,7 +197,9 @@
     "inline_data_old_versions": true,
     "intf_referencing_clas": {
       "allow": [
-        "^cl_abap_"
+        "^cl_abap_",
+        // z2ui5_if_popup_embed hands over the node of the host view
+        "^z2ui5_cl_ui5_view_builder$"
       ],
       "exclude": []
     },

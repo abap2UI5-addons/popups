@@ -207,6 +207,46 @@ client->popover_display( xml   = z2ui5_cl_popup_msgpopover=>popover_xml(
                          by_id = `btnMessages` ).
 ```
 
+### Embedded mode
+
+The text searches `z2ui5_cl_popup_dtel_srch` and `z2ui5_cl_popup_msg_search`
+also run as a page inside another app - a tab of a view cluster, say -
+instead of as a popup. They implement `z2ui5_if_popup_embed`, the same
+contract the table maintenance has with `z2ui5_if_tm_001`:
+
+* the host sets `mo_parent_view` - the node its content goes into, normally
+  the `sap.m.Page` of its view - before **every** `main( )` and calls `main( )`
+  with its own client in every roundtrip (it builds its page anew each time);
+* the app appends its content there - search field, language selects, result
+  table - and sets `mv_view_display` when the host has to display its view
+  again (the first call); the host clears it after reading it;
+* embedded, there is no `popup_display( )`, no OK/Cancel, no
+  `nav_app_leave( )`, and the rows cannot be selected - there is nothing to
+  take them. The search runs on Enter and on a language change (event
+  `SEARCH`; a host should not use that event name itself);
+* the app handles its first call itself - `check_on_init( )` belongs to the
+  host.
+
+```abap
+" once: the tab's app
+mo_search = z2ui5_cl_popup_dtel_srch=>factory( ).
+
+" in every roundtrip
+DATA(page) = view->ele( `Page` ).     " the host's own content first
+DATA(embed) = CAST z2ui5_if_popup_embed( mo_search ).
+embed->mo_parent_view = page.
+CAST z2ui5_if_app( mo_search )->main( client ).
+IF embed->mv_view_display = abap_true.
+  CLEAR embed->mv_view_display.
+  client->view_display( view->stringify( ) ).
+ENDIF.
+```
+
+Without `mo_parent_view` both are the popups they always were - the same view,
+byte for byte. The instance must be reachable from the host's attributes
+(public, e.g. `DATA mo_search TYPE REF TO object`), so that the bindings of
+the search reach it.
+
 ## Features
 
 * Confirm, Inform & Select popups (`z2ui5_cl_popup_to_confirm`, `z2ui5_cl_popup_to_inform`, `z2ui5_cl_popup_to_select`)
@@ -267,7 +307,7 @@ client->popover_display( xml   = z2ui5_cl_popup_msgpopover=>popover_xml(
 
 | Package | Content |
 |---|---|
-| `src/` | Popup classes (`z2ui5_cl_popup_*`) and their result interface `z2ui5_if_popup_result` |
+| `src/` | Popup classes (`z2ui5_cl_popup_*`), their result interface `z2ui5_if_popup_result` and the embedded-mode interface `z2ui5_if_popup_embed` |
 | `src/00/` | Context/utility class `z2ui5_cl_popup_context` and its exception `z2ui5_cx_popup_error` — vendored copies from [abap-util](https://github.com/abap-util/abap-util), see below |
 | `src/02/` | Samples (`z2ui5_cl_popup_sample_*`) |
 | `src/03/` | Popups with layout-management dependency (Value-Help, Search-Help) |

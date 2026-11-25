@@ -1,6 +1,7 @@
 "! Developer search popup for messages: searches T100 by text and/or message
 "! class and number in a chosen language and shows a second language side by
 "! side. The caller reads the chosen message with result( ).
+"! Embedded (z2ui5_if_popup_embed) it is a search page inside a host app.
 "!
 "! T100 is reached by name only (dynamic FROM), so the class also compiles on
 "! ABAP Cloud, where it is not released - there the popup shows that the
@@ -14,6 +15,9 @@ CLASS z2ui5_cl_popup_msg_search DEFINITION PUBLIC.
     " message class, number and text (ms_result); value_string( ) - empty,
     " class and number are two values
     INTERFACES z2ui5_if_popup_result.
+    " embedded mode: with mo_parent_view set by the host, the search renders
+    " into the host's page - no popup, no OK/Cancel, no nav_app_leave( )
+    INTERFACES z2ui5_if_popup_embed.
 
     TYPES:
       BEGIN OF ty_s_result,
@@ -85,6 +89,13 @@ CLASS z2ui5_cl_popup_msg_search DEFINITION PUBLIC.
 
   PROTECTED SECTION.
     TYPES:
+      BEGIN OF ty_s_t002t,
+        sprsl TYPE c LENGTH 1,
+        sptxt TYPE c LENGTH 16,
+      END OF ty_s_t002t.
+    TYPES ty_t_t002t TYPE STANDARD TABLE OF ty_s_t002t WITH EMPTY KEY.
+
+    TYPES:
       BEGIN OF ty_s_t100,
         sprsl TYPE c LENGTH 1,
         arbgb TYPE c LENGTH 20,
@@ -98,13 +109,30 @@ CLASS z2ui5_cl_popup_msg_search DEFINITION PUBLIC.
     DATA max_rows        TYPE i.
     DATA event_confirmed TYPE string.
     DATA event_canceled  TYPE string.
+    "! embedded mode: on_init( ) ran - check_on_init( ) is the host's
+    DATA embed_initialized TYPE abap_bool.
 
     METHODS on_init.
+    "! main( ) in embedded mode - see z2ui5_if_popup_embed
+    METHODS main_embedded.
     METHODS on_event.
     METHODS on_event_confirm.
     METHODS display.
     METHODS search.
     METHODS read_languages.
+
+    "! The languages of the two Selects: English and German first, then the
+    "! other languages alphabetically - those installed (T002C-LAINST), the
+    "! logon language and the selected ones; all of T002T when installed is
+    "! empty (T002C not readable)
+    "! @parameter t002t | key and text of the languages, in the logon language
+    "! @parameter installed | the installed languages, empty for no filter
+    METHODS get_language_list
+      IMPORTING
+        t002t         TYPE ty_t_t002t
+        installed     TYPE string_table
+      RETURNING
+        VALUE(result) TYPE ty_t_langu.
     METHODS read_details.
 
     "! A LIKE pattern for the value: the escape character #, % and _ are
@@ -151,6 +179,11 @@ CLASS z2ui5_cl_popup_msg_search IMPLEMENTATION.
 
     me->client = client.
 
+    IF z2ui5_if_popup_embed~mo_parent_view IS BOUND.
+      main_embedded( ).
+      RETURN.
+    ENDIF.
+
     IF client->check_on_init( ).
       on_init( ).
       display( ).
@@ -158,6 +191,24 @@ CLASS z2ui5_cl_popup_msg_search IMPLEMENTATION.
     ENDIF.
 
     on_event( ).
+
+  ENDMETHOD.
+
+  METHOD main_embedded.
+
+    IF embed_initialized = abap_false.
+      embed_initialized = abap_true.
+      on_init( ).
+      z2ui5_if_popup_embed~mv_view_display = abap_true.
+    ELSEIF client->get( )-event = `SEARCH`.
+      " the only event of its own - OK and Cancel do not exist here, every
+      " other event belongs to the host
+      search( ).
+    ENDIF.
+
+    " the host builds its page anew in every roundtrip: the content is
+    " appended each time, the host displays it when mv_view_display is set
+    display( ).
 
   ENDMETHOD.
 
@@ -232,12 +283,8 @@ CLASS z2ui5_cl_popup_msg_search IMPLEMENTATION.
 
   METHOD read_languages.
 
-    TYPES:
-      BEGIN OF ty_s_t002t,
-        sprsl TYPE c LENGTH 1,
-        sptxt TYPE c LENGTH 16,
-      END OF ty_s_t002t.
-    DATA lt_t002t TYPE STANDARD TABLE OF ty_s_t002t WITH EMPTY KEY.
+    DATA lt_t002t TYPE ty_t_t002t.
+    DATA lt_installed TYPE string_table.
 
     TRY.
         DATA(lv_tabname) = `T002T`.
@@ -247,11 +294,11 @@ CLASS z2ui5_cl_popup_msg_search IMPLEMENTATION.
           ORDER BY sprsl
           INTO CORRESPONDING FIELDS OF TABLE @lt_t002t.
       CATCH cx_root ##NO_HANDLER.
-        " T002T not readable - the fallback list below is used
+        " T002T not readable - get_language_list( ) falls back to its texts
     ENDTRY.
 
-    " only the languages installed on the system (T002C-LAINST); if T002C
-    " cannot be read, every language of T002T stays
+    " the languages installed on the system (T002C-LAINST); if T002C cannot
+    " be read, every language of T002T stays
     TYPES:
       BEGIN OF ty_s_t002c,
         spras TYPE c LENGTH 1,
@@ -267,24 +314,65 @@ CLASS z2ui5_cl_popup_msg_search IMPLEMENTATION.
       CATCH cx_root ##NO_HANDLER.
         " T002C not readable - no filter
     ENDTRY.
-    IF lt_t002c IS NOT INITIAL.
-      LOOP AT lt_t002t INTO DATA(ls_t002t).
-        IF NOT line_exists( lt_t002c[ spras = ls_t002t-sprsl ] ).
-          DELETE TABLE lt_t002t FROM ls_t002t.
-        ENDIF.
-      ENDLOOP.
+    lt_installed = VALUE #( FOR t002c IN lt_t002c ( CONV string( t002c-spras ) ) ).
+
+    mt_langu = get_language_list( t002t     = lt_t002t
+                                  installed = lt_installed ).
+
+  ENDMETHOD.
+
+  METHOD get_language_list.
+
+    " English, German, the logon language and the languages selected now are
+    " always offered, also when T002C does not flag them - the defaults are E
+    " and D, and a Select needs an entry for its selectedKey
+    DATA(lt_always) = VALUE string_table( ( `E` ) ( `D` ) ( CONV string( sy-langu ) )
+                                          ( mv_langu ) ( mv_langu2 ) ).
+    DATA lt_rest TYPE ty_t_langu.
+    DATA lr_installed TYPE RANGE OF ty_s_t002t-sprsl.
+
+    " only the installed languages - by a range: a DELETE TABLE ... FROM on
+    " this table WITH EMPTY KEY removed the first line each time, not the
+    " one of the loop
+    DATA(lt_t002t) = t002t.
+    IF installed IS NOT INITIAL.
+      lr_installed = VALUE #( FOR inst IN installed ( sign = `I` option = `EQ` low = inst ) ).
+      lr_installed = VALUE #( BASE lr_installed
+                              FOR always IN lt_always WHERE ( table_line IS NOT INITIAL )
+                              ( sign = `I` option = `EQ` low = always ) ).
+      DELETE lt_t002t WHERE sprsl NOT IN lr_installed.
     ENDIF.
 
-    SORT lt_t002t BY sptxt.
-    mt_langu = VALUE #( FOR t002t IN lt_t002t
-                        ( key = t002t-sprsl text = |{ t002t-sptxt } ({ t002t-sprsl })| ) ).
-
-    IF mt_langu IS INITIAL.
-      mt_langu = VALUE #( ( key = `E` text = `English (E)` ) ).
-      IF sy-langu <> `E`.
-        INSERT VALUE #( key = sy-langu text = |Logon Language ({ sy-langu })| ) INTO mt_langu INDEX 1.
+    LOOP AT lt_t002t INTO DATA(ls_t002t).
+      DATA(lv_key) = CONV string( ls_t002t-sprsl ).
+      IF lv_key IS INITIAL OR lv_key = `E` OR lv_key = `D`.
+        CONTINUE.
       ENDIF.
-    ENDIF.
+      IF line_exists( lt_rest[ key = lv_key ] ).
+        CONTINUE.
+      ENDIF.
+      INSERT VALUE #( key = lv_key text = |{ ls_t002t-sptxt } ({ lv_key })| ) INTO TABLE lt_rest.
+    ENDLOOP.
+
+    " a language that must be offered but has no text in T002T
+    LOOP AT lt_always INTO lv_key.
+      IF lv_key IS INITIAL OR lv_key = `E` OR lv_key = `D` OR line_exists( lt_rest[ key = lv_key ] ).
+        CONTINUE.
+      ENDIF.
+      INSERT VALUE #( key = lv_key text = |Language ({ lv_key })| ) INTO TABLE lt_rest.
+    ENDLOOP.
+
+    SORT lt_rest BY text.
+
+    " English and German first, then the rest alphabetically
+    LOOP AT VALUE string_table( ( `E` ) ( `D` ) ) INTO lv_key.
+      DATA(lv_text) = VALUE #( t002t[ sprsl = lv_key ]-sptxt OPTIONAL ).
+      IF lv_text IS INITIAL.
+        lv_text = COND #( WHEN lv_key = `E` THEN `English` ELSE `German` ).
+      ENDIF.
+      INSERT VALUE #( key = lv_key text = |{ lv_text } ({ lv_key })| ) INTO TABLE result.
+    ENDLOOP.
+    INSERT LINES OF lt_rest INTO TABLE result.
 
   ENDMETHOD.
 
@@ -472,21 +560,37 @@ CLASS z2ui5_cl_popup_msg_search IMPLEMENTATION.
         width TYPE string,
       END OF ty_s_col.
     DATA lt_col TYPE STANDARD TABLE OF ty_s_col WITH EMPTY KEY.
+    DATA popup   TYPE REF TO z2ui5_cl_ui5_view_builder.
+    DATA dialog  TYPE REF TO z2ui5_cl_ui5_view_builder.
+    DATA content TYPE REF TO z2ui5_cl_ui5_view_builder.
 
-    DATA(popup) = z2ui5_cl_ui5_view_builder=>factory(
-                      )->ele( n = `FragmentDefinition` ns = `core`
-                      )->a( n = `xmlns` v = `sap.m`
-                      )->a( n = `xmlns:core` v = `sap.ui.core` ).
+    DATA(embedded) = xsdbool( z2ui5_if_popup_embed~mo_parent_view IS BOUND ).
 
-    DATA(dialog) = popup->ele( `Dialog`
-                            )->a( n = `title` t = title
-                            )->a( n = `contentWidth` v = `90%`
-                            )->a( n = `contentHeight` v = `80%`
-                            )->a( n = `afterClose` v = client->_event( `CANCEL` ) ).
+    IF embedded = abap_true.
 
-    DATA(content) = dialog->ele( `content`
-                              )->ele( `VBox`
-                              )->a( n = `class` v = `sapUiSmallMargin` ).
+      " embedded: into the host's page; the rows are not selectable, there
+      " is no OK to take a row
+      content = z2ui5_if_popup_embed~mo_parent_view->ele( `VBox`
+                                 )->a( n = `class` v = `sapUiSmallMargin` ).
+
+    ELSE.
+
+      popup = z2ui5_cl_ui5_view_builder=>factory(
+                  )->ele( n = `FragmentDefinition` ns = `core`
+                  )->a( n = `xmlns` v = `sap.m`
+                  )->a( n = `xmlns:core` v = `sap.ui.core` ).
+
+      dialog = popup->ele( `Dialog`
+                       )->a( n = `title` t = title
+                       )->a( n = `contentWidth` v = `90%`
+                       )->a( n = `contentHeight` v = `80%`
+                       )->a( n = `afterClose` v = client->_event( `CANCEL` ) ).
+
+      content = dialog->ele( `content`
+                         )->ele( `VBox`
+                         )->a( n = `class` v = `sapUiSmallMargin` ).
+
+    ENDIF.
 
     content->tag( `MessageStrip`
         )->a( n = `text` v = client->_bind( mv_info )
@@ -550,7 +654,7 @@ CLASS z2ui5_cl_popup_msg_search IMPLEMENTATION.
         )->a( n = `class` v = `sapUiSmallMarginBegin` ).
 
     DATA(table) = content->ele( `Table`
-                             )->a( n = `mode` v = `SingleSelectLeft`
+                             )->a( n = `mode` v = COND #( WHEN embedded = abap_true THEN `None` ELSE `SingleSelectLeft` )
                              )->a( n = `items` v = client->_bind( mt_result )
                              )->a( n = `growing` b = abap_true
                              )->a( n = `growingThreshold` v = `50`
@@ -577,6 +681,10 @@ CLASS z2ui5_cl_popup_msg_search IMPLEMENTATION.
       cells->tag( `Text`
           )->a( n = `text` v = |\{{ ls_col-name }\}| ).
     ENDLOOP.
+
+    IF embedded = abap_true.
+      RETURN.
+    ENDIF.
 
     dialog->ele( `buttons`
         )->tag( `Button`
