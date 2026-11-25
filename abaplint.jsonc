@@ -539,6 +539,10 @@
         "Perform",
         "Form",
         "Write"
+      ],
+      // the vendored abap-util copies stay close to the master (AGENTS.md)
+      "exclude": [
+        "/src/00/"
       ]
     },
     "function_module_parameter_names": true,
