@@ -10,8 +10,8 @@
     },
     {
       "url": "https://github.com/abap2UI5-addons/layout-management",
-      // branch DEV of popups runs on layout-management DEV
-      "branch": "DEV",
+      // layout-management main - its release tag once one is cut
+      "branch": "main",
       "folder": "/abap2UI5-layout",
       "files": "/src/**/*.*"
     },
