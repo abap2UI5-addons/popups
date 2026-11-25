@@ -65,14 +65,14 @@ CLASS z2ui5_cl_popup_dtel_srch DEFINITION PUBLIC.
 
     "! @parameter i_search | prefilled search text; when supplied, the
     "!                       search runs as soon as the popup opens
-    "! @parameter i_langu | language of the texts, default logon language
+    "! @parameter i_langu | language of the texts, default English
     "! @parameter i_langu2 | second language shown side by side, default
-    "!                       English (German when i_langu is English)
+    "!                       German (English when i_langu is German)
     "! @parameter i_max_rows | maximum number of data elements read
     CLASS-METHODS factory
       IMPORTING
         i_search          TYPE clike     OPTIONAL
-        i_langu           TYPE sy-langu  DEFAULT sy-langu
+        i_langu           TYPE sy-langu  DEFAULT 'E'
         i_langu2          TYPE sy-langu  OPTIONAL
         i_title           TYPE clike     DEFAULT `Data Element Search`
         i_max_rows        TYPE i         DEFAULT 200
@@ -146,8 +146,8 @@ CLASS z2ui5_cl_popup_dtel_srch IMPLEMENTATION.
     r_result->mv_search       = i_search.
     r_result->mv_langu        = i_langu.
     r_result->mv_langu2       = COND #( WHEN i_langu2 IS NOT INITIAL THEN i_langu2
-                                        WHEN i_langu = `E` THEN `D`
-                                        ELSE `E` ).
+                                        WHEN i_langu = `D` THEN `E`
+                                        ELSE `D` ).
     r_result->max_rows        = COND #( WHEN i_max_rows > 0 THEN i_max_rows ELSE 200 ).
     r_result->event_canceled  = i_event_canceled.
     r_result->event_confirmed = i_event_confirmed.
@@ -181,6 +181,21 @@ CLASS z2ui5_cl_popup_dtel_srch IMPLEMENTATION.
       mv_info = `The data element search is not available on ABAP Cloud: DD04T is not released there.`.
       mv_check_info = abap_true.
       RETURN.
+    ENDIF.
+
+    " started without factory( ) (CREATE OBJECT from customizing): the
+    " defaults of factory( )
+    IF mv_langu IS INITIAL.
+      mv_langu = `E`.
+    ENDIF.
+    IF mv_langu2 IS INITIAL.
+      mv_langu2 = COND #( WHEN mv_langu = `D` THEN `E` ELSE `D` ).
+    ENDIF.
+    IF max_rows <= 0.
+      max_rows = 200.
+    ENDIF.
+    IF title IS INITIAL.
+      title = `Data Element Search`.
     ENDIF.
 
     read_languages( ).
@@ -252,6 +267,31 @@ CLASS z2ui5_cl_popup_dtel_srch IMPLEMENTATION.
       CATCH cx_root ##NO_HANDLER.
         " T002T not readable - the fallback list below is used
     ENDTRY.
+
+    " only the languages installed on the system (T002C-LAINST); if T002C
+    " cannot be read, every language of T002T stays
+    TYPES:
+      BEGIN OF ty_s_t002c,
+        spras TYPE c LENGTH 1,
+      END OF ty_s_t002c.
+    DATA lt_t002c TYPE STANDARD TABLE OF ty_s_t002c WITH EMPTY KEY.
+    TRY.
+        DATA(lv_tabname_c) = `T002C`.
+        SELECT spras
+          FROM (lv_tabname_c)
+          WHERE lainst = @abap_true
+          ORDER BY spras
+          INTO CORRESPONDING FIELDS OF TABLE @lt_t002c.
+      CATCH cx_root ##NO_HANDLER.
+        " T002C not readable - no filter
+    ENDTRY.
+    IF lt_t002c IS NOT INITIAL.
+      LOOP AT lt_t002t INTO DATA(ls_t002t).
+        IF NOT line_exists( lt_t002c[ spras = ls_t002t-sprsl ] ).
+          DELETE TABLE lt_t002t FROM ls_t002t.
+        ENDIF.
+      ENDLOOP.
+    ENDIF.
 
     SORT lt_t002t BY sptxt.
     mt_langu = VALUE #( FOR t002t IN lt_t002t
