@@ -169,7 +169,11 @@ ENDIF.
 | `z2ui5_cl_popup_messages`, `_msgpopover` | always (only shows) | the messages shown (`ty_t_msg` of the class) | empty |
 | `z2ui5_cl_popup_js_loader` | always | `string`, `result( )`; with `factory_check_open_ui5` `abap_bool`, `mv_is_open_ui5` | `result( )`; with `factory_check_open_ui5` the UI5 runtime |
 
-`value( )` references the popup's own attribute, not a copy. The class of
+`value( )` references the popup's own attribute, not a copy. Copy the value
+(`DATA(r) = CAST <type>( popup->value( ) ).` then `my_field = r->*.`); do not
+keep the reference in an attribute of your app - a `REF TO data` attribute
+that is not PUBLIC fails to serialize into the draft on a system
+(CX_REFERENCE_NOT_SERIALIZABLE), although the transpiled tests pass. The class of
 each popup repeats its line of the table above its
 `INTERFACES z2ui5_if_popup_result`. The older ways to read a result -
 `result( )`, `ms_result`, `mv_return_value`, `ms_transport` - keep working.
