@@ -3316,17 +3316,21 @@ CLASS z2ui5_cl_popup_context IMPLEMENTATION.
         FIELD-SYMBOLS <shlp2> TYPE STANDARD TABLE.
         ASSIGN lr_t_shlp->* TO <shlp2>.
 
+        " shlp_top is typed SHLP_DESCR - pass the DDIC-typed result of
+        " F4IF_DETERMINE_SEARCHHELP, not the local rebuild ms_shlp: a
+        " function module called by name wants the exact type
         lv_fm = `F4IF_EXPAND_SEARCHHELP`.
         CALL FUNCTION lv_fm
           EXPORTING
-            shlp_top = ms_shlp
+            shlp_top = <shlp>
           IMPORTING
             shlp_tab = <shlp2>.
 
-*        DATA(ls_row) = CORRESPONDING #( <shlp2>[ 1 ] OPTIONAL ).
         FIELD-SYMBOLS <row2> TYPE any.
-        ASSIGN  <shlp2>[ 1 ] TO <row2>.
-        ms_shlp = CORRESPONDING #( <row2> ).
+        ASSIGN <shlp2>[ 1 ] TO <row2>.
+        IF sy-subrc = 0.
+          ms_shlp = CORRESPONDING #( <row2> ).
+        ENDIF.
       ENDIF.
     ENDIF.
 
