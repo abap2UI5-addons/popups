@@ -297,6 +297,59 @@ How the copy is maintained:
 * If a popup needs a utility method that is not in the copy yet, it is added directly to the local `z2ui5_cl_popup_context` (if it already exists in abap-util, it is copied from there with its private helpers instead of re-implemented).
 * Every few weeks an AI compares abap-util with all consumers and merges locally added methods back into abap-util, so the master catalog stays the superset of all methods.
 
+## Commits
+
+The abap2UI5 addons (layout-management, popups, table-maintenance) share one
+commit model:
+
+- **The addon commits only in its own apps.** A popup or app of the addon
+  that saves on a button of its own runs in a roundtrip of its own and ends
+  its own LUW - `COMMIT WORK AND WAIT`, or `ROLLBACK WORK` on failure.
+- **A library method commits only with `iv_commit = abap_true`.** Every
+  public method that writes on behalf of its caller takes
+  `iv_commit TYPE abap_bool DEFAULT abap_true`. The default keeps the old
+  behaviour: the method ends with `COMMIT WORK AND WAIT` - and so commits
+  whatever the caller has open at that moment as well. With
+  `iv_commit = abap_false` it neither commits nor rolls back: its writes join
+  the caller's LUW, and the caller commits them once, together with its own
+  changes.
+- **On failure the method raises its exception.** With
+  `iv_commit = abap_false` it never runs `ROLLBACK WORK` - whatever it wrote
+  before the failure is still in the caller's LUW, and the caller decides,
+  normally with `ROLLBACK WORK`. With `iv_commit = abap_true` it fails as it
+  always did (the table below).
+- **The caller must commit.** abap2UI5 runs `ROLLBACK WORK` before and after
+  `main( )` of a stateless app, so what an app writes - itself, or through a
+  method called with `iv_commit = abap_false` - is lost unless the app commits
+  it in the same roundtrip.
+
+In this addon:
+
+| Where | Commits | On failure with `iv_commit = abap_true` |
+|---|---|---|
+| `z2ui5_cl_popup_show_tr=>add_data_to_tranport( )` - library | with `iv_commit = abap_true` (default), and only when it recorded entries | `z2ui5_cx_popup_error`, no `ROLLBACK WORK` and no commit |
+| `z2ui5_cl_popup_context=>bus_tr_add( )` - the same, called by it | as above | as above |
+| The popup apps | never - a popup only returns what the user chose (`z2ui5_cl_popup_show_tr` the transport request) | - |
+
+`add_data_to_tranport( )` records nothing and commits nothing for a local
+change (`is_transport-locl`), on ABAP Cloud, or for an empty `ir_data` - a
+caller must not rely on it to commit its own changes. An app that writes rows
+and records them on the request commits once:
+
+```abap
+TRY.
+    MODIFY ztab FROM TABLE @lt_rows.
+    z2ui5_cl_popup_show_tr=>add_data_to_tranport( ir_data      = REF #( lt_rows )
+                                                  iv_tabname   = `ZTAB`
+                                                  is_transport = ms_transport
+                                                  iv_commit    = abap_false ).
+    COMMIT WORK AND WAIT.
+  CATCH z2ui5_cx_popup_error INTO DATA(lx).
+    ROLLBACK WORK.
+    client->message_box_display( text = lx->get_text( ) type = `error` ).
+ENDTRY.
+```
+
 ## Security
 
 The value-help and search-help popups read the DDIC check table the user selects, without an authorization check of their own. Before using them beyond a development system, add your own authorization checks and restrict which tables may be browsed.

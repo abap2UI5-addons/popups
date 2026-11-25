@@ -669,10 +669,17 @@ CLASS z2ui5_cl_popup_context DEFINITION
         VALUE(mt_data) TYPE ty_t_data.
 
     "! Record the keys of the rows in ir_data on the transport request.
+    "! Nothing is recorded and nothing committed on ABAP Cloud or for an
+    "! empty ir_data. Raises z2ui5_cx_popup_error when the request refuses
+    "! the entries - in both modes without a ROLLBACK WORK and without a
+    "! COMMIT: what was recorded so far is still in the caller's LUW, the
+    "! caller rolls it back.
     "! @parameter iv_commit | abap_true (the default) ends with COMMIT WORK AND
-    "!                       WAIT; abap_false leaves the commit to the caller,
-    "!                       so the entries and the caller's own database
-    "!                       changes are one LUW that one ROLLBACK undoes
+    "!                       WAIT - which commits whatever the caller has open
+    "!                       as well; abap_false leaves the commit to the
+    "!                       caller, so the entries and the caller's own
+    "!                       database changes are one LUW that one ROLLBACK
+    "!                       undoes
     CLASS-METHODS bus_tr_add
       IMPORTING
         ir_data      TYPE REF TO data

@@ -16,9 +16,13 @@ CLASS z2ui5_cl_popup_show_tr DEFINITION
     DATA ms_transport TYPE z2ui5_cl_popup_context=>ty_s_transport.
 
     "! Record the keys of the rows in ir_data on the transport request of
-    "! is_transport (nothing for a local change, is_transport-locl).
+    "! is_transport (nothing for a local change, is_transport-locl - and no
+    "! commit either, whatever iv_commit says). Raises z2ui5_cx_popup_error
+    "! when the request refuses the entries, without a ROLLBACK WORK in
+    "! either mode - see bus_tr_add( ) and the README, "Commits".
     "! @parameter iv_commit | abap_true (the default) commits the entries at
-    "!                       once; abap_false leaves the COMMIT WORK to the
+    "!                       once - and whatever else the caller has open;
+    "!                       abap_false leaves the COMMIT WORK to the
     "!                       caller - a caller that writes the rows itself
     "!                       commits both together, or rolls both back
     CLASS-METHODS add_data_to_tranport
