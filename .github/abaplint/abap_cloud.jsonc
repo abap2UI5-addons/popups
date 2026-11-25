@@ -20,7 +20,7 @@
       // 1.151.0 - back to its tag once it is cut
       "branch": "main",
       "folder": "/abap2UI5",
-      "files": "/src/**/*.*"
+      "files": "/src/0[0-2]/**/*.*"
     }
   ],
   "syntax": {
