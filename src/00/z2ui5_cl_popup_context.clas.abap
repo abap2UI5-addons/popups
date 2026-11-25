@@ -3705,7 +3705,12 @@ CLASS z2ui5_cl_popup_context IMPLEMENTATION.
         ASSIGN t_e071k->* TO <t_e071k>.
         ASSIGN s_e071k->* TO <s_e071k>.
 
-      CATCH cx_root ##NO_HANDLER.
+      CATCH cx_root INTO DATA(x).
+        " without the E071K line type nothing below can be filled - say why
+        RAISE EXCEPTION TYPE z2ui5_cx_popup_error
+          EXPORTING
+            val      = |E071K line type could not be built: { x->get_text( ) }|
+            previous = x.
     ENDTRY.
 
     DATA(dfies) = rtti_get_t_dfies_by_table_name( iv_tabname ).
