@@ -394,10 +394,7 @@
     // subrc_after_assign, ambiguous_statement, else_after_all_returns,
     // fully_type_itabs and unnecessary_chaining exclude z2ui5_cl_popup_context,
     // the vendored copy of abap-util (src/00/): it is not edited here, abap-util
-    // is the place to fix it; strict_sql excludes z2ui5_cl_popup_value_help:
-    // its dynamic SELECT ... UP TO n ROWS with INTO last is left half
-    // rewritten by the 702 downport (the 702 lint fails), and the ORDER BY that
-    // keeps it downportable would change which rows come back
+    // is the place to fix it
     "short_case": true,
     "strict_sql": true,
     "subrc_after_assign": {

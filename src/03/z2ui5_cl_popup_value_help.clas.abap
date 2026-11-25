@@ -278,6 +278,10 @@ CLASS z2ui5_cl_popup_value_help IMPLEMENTATION.
       WHEN `F4_ROW_SELECT`.
 
         DATA(lt_arg) = client->get( )-t_event_arg.
+        " an event without the row index raised CX_SY_ITAB_LINE_NOT_FOUND
+        IF lt_arg IS INITIAL.
+          RETURN.
+        ENDIF.
 
         ASSIGN mt_data->* TO <tab>.
 
