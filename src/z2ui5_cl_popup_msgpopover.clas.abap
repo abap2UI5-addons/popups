@@ -266,8 +266,7 @@ CLASS z2ui5_cl_popup_msgpopover IMPLEMENTATION.
       IF event_close IS INITIAL.
         client->nav_app_leave( ).
       ELSE.
-        client->nav_app_leave( app   = client->get_app_prev( )
-                               event = event_close ).
+        client->nav_app_leave( event = event_close ).
       ENDIF.
     ENDIF.
 
