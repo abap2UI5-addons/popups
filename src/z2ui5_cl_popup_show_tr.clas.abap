@@ -32,7 +32,8 @@ CLASS z2ui5_cl_popup_show_tr DEFINITION
         is_transport TYPE z2ui5_cl_popup_context=>ty_s_transport
         iv_commit    TYPE abap_bool DEFAULT abap_true.
 
-    DATA mt_data TYPE STANDARD TABLE OF z2ui5_cl_popup_context=>ty_s_transport WITH EMPTY KEY.
+    TYPES temp1_25b75d9fca TYPE STANDARD TABLE OF z2ui5_cl_popup_context=>ty_s_transport WITH DEFAULT KEY.
+DATA mt_data TYPE temp1_25b75d9fca.
 
     CLASS-METHODS factory
       RETURNING
@@ -53,10 +54,10 @@ CLASS z2ui5_cl_popup_show_tr IMPLEMENTATION.
 
     me->client = client.
 
-    IF client->check_on_init( ).
+    IF client->check_on_init( ) IS NOT INITIAL.
       on_init( ).
       render_view( ).
-    ELSEIF client->check_on_navigated( ).
+    ELSEIF client->check_on_navigated( ) IS NOT INITIAL.
       render_view( ).
     ELSE.
       on_event( ).
@@ -72,7 +73,8 @@ CLASS z2ui5_cl_popup_show_tr IMPLEMENTATION.
 
   METHOD render_view.
 
-    DATA(popup) = z2ui5_cl_ui5_view_builder=>factory(
+    DATA popup TYPE REF TO z2ui5_cl_ui5_view_builder.
+    popup = z2ui5_cl_ui5_view_builder=>factory(
                       )->ele( n = `FragmentDefinition` ns = `core`
                       )->a( n = `xmlns` v = `sap.m`
                       )->a( n = `xmlns:core` v = `sap.ui.core` ).
@@ -121,6 +123,7 @@ CLASS z2ui5_cl_popup_show_tr IMPLEMENTATION.
   ENDMETHOD.
 
   METHOD on_event.
+        FIELD-SYMBOLS <line> TYPE z2ui5_cl_popup_context=>ty_s_transport.
     CASE client->get( )-event.
 
       WHEN `CLOSE`.
@@ -131,7 +134,8 @@ CLASS z2ui5_cl_popup_show_tr IMPLEMENTATION.
 
       WHEN `SELECT`.
 
-        ASSIGN mt_data[ selkz = abap_true ] TO FIELD-SYMBOL(<line>).
+
+        READ TABLE mt_data WITH KEY selkz = abap_true ASSIGNING <line>.
         IF <line> IS ASSIGNED.
           ms_transport = <line>.
         ENDIF.
@@ -152,7 +156,7 @@ CLASS z2ui5_cl_popup_show_tr IMPLEMENTATION.
   ENDMETHOD.
 
   METHOD factory.
-    result = NEW #( ).
+    CREATE OBJECT result.
   ENDMETHOD.
 
   METHOD add_data_to_tranport.
@@ -170,13 +174,15 @@ CLASS z2ui5_cl_popup_show_tr IMPLEMENTATION.
 
   METHOD z2ui5_if_popup_result~check_confirmed.
 
-    result = xsdbool( ms_transport IS NOT INITIAL ).
+    DATA temp1 TYPE xsdboolean.
+    temp1 = boolc( ms_transport IS NOT INITIAL ).
+    result = temp1.
 
   ENDMETHOD.
 
   METHOD z2ui5_if_popup_result~value.
 
-    result = REF #( ms_transport ).
+    GET REFERENCE OF ms_transport INTO result.
 
   ENDMETHOD.
 

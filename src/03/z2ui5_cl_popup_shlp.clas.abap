@@ -19,7 +19,7 @@ CLASS z2ui5_cl_popup_shlp DEFINITION
         value   TYPE string,
         t_range TYPE z2ui5_cl_popup_context=>ty_t_range,
       END OF ty_s_init.
-    TYPES ty_t_init TYPE STANDARD TABLE OF ty_s_init WITH EMPTY KEY.
+    TYPES ty_t_init TYPE STANDARD TABLE OF ty_s_init WITH DEFAULT KEY.
 
     DATA mv_searchhelp   TYPE string.
     DATA mv_table        TYPE string.
@@ -92,7 +92,7 @@ CLASS z2ui5_cl_popup_shlp IMPLEMENTATION.
 
     me->client = client.
 
-    IF client->check_on_init( ).
+    IF client->check_on_init( ) IS NOT INITIAL.
       on_init( ).
       render_view( ).
     ELSE.
@@ -124,8 +124,11 @@ CLASS z2ui5_cl_popup_shlp IMPLEMENTATION.
 
   METHOD get_layout.
 
-    DATA(class) = z2ui5_cl_popup_context=>rtti_get_classname_by_ref( me ).
-    DATA(app) = z2ui5_cl_popup_context=>url_param_get( val = 'app'
+    DATA class TYPE string.
+    DATA app TYPE string.
+    class = z2ui5_cl_popup_context=>rtti_get_classname_by_ref( me ).
+
+    app = z2ui5_cl_popup_context=>url_param_get( val = 'app'
                                               url = client->get( )-s_config-search ).
 
     mo_layout = z2ui5_cl_layo_manager=>factory( control  = z2ui5_cl_layo_manager=>m_table
@@ -139,36 +142,70 @@ CLASS z2ui5_cl_popup_shlp IMPLEMENTATION.
 
   METHOD render_view.
 
-    DATA(popup) = z2ui5_cl_ui5_view_builder=>factory(
+    DATA popup TYPE REF TO z2ui5_cl_ui5_view_builder.
+    DATA dialog TYPE REF TO z2ui5_cl_ui5_view_builder.
+    DATA simple_form TYPE REF TO z2ui5_cl_ui5_view_builder.
+    FIELD-SYMBOLS <data_row> TYPE data.
+    DATA temp10 LIKE LINE OF mt_result_desc.
+    DATA dfies LIKE REF TO temp10.
+      DATA temp11 TYPE z2ui5_cl_popup_context=>ty_ddshiface-value.
+      DATA temp12 TYPE z2ui5_cl_popup_context=>ty_ddshiface.
+      DATA enabled TYPE abap_bool.
+      DATA temp1 TYPE xsdboolean.
+      FIELD-SYMBOLS <val> TYPE any.
+    FIELD-SYMBOLS <mt_data> TYPE data.
+    DATA table TYPE REF TO z2ui5_cl_ui5_view_builder.
+    DATA header TYPE REF TO z2ui5_cl_ui5_view_builder.
+    DATA columns TYPE REF TO z2ui5_cl_ui5_view_builder.
+    DATA temp13 LIKE LINE OF mo_layout->ms_layout-t_layout.
+    DATA layout LIKE REF TO temp13.
+      DATA lv_index LIKE sy-tabix.
+    DATA cells TYPE REF TO z2ui5_cl_ui5_view_builder.
+    popup = z2ui5_cl_ui5_view_builder=>factory(
                       )->ele( n = `FragmentDefinition` ns = `core`
                       )->a( n = `xmlns` v = `sap.m`
                       )->a( n = `xmlns:core` v = `sap.ui.core`
                       )->a( n = `xmlns:form` v = `sap.ui.layout.form` ).
 
-    DATA(dialog) = popup->ele( `Dialog`
+
+    dialog = popup->ele( `Dialog`
                           )->a( n = `title` v = z2ui5_cl_popup_context=>rtti_get_data_element_texts( `SCRFMTCH`  )-medium
                           )->a( n = `contentWidth` v = `70%`
                           )->a( n = `afterClose` v = client->_event( 'SHLP_CLOSE' ) ).
 
-    DATA(simple_form) = dialog->ele( n = `SimpleForm` ns = `form`
+
+    simple_form = dialog->ele( n = `SimpleForm` ns = `form`
                                 )->a( n = `layout` v = `ResponsiveGridLayout`
                                 )->a( n = `editable` b = abap_true
                                 )->ele( n = `content` ns = `form` ).
 
-    ASSIGN ms_data_row->* TO FIELD-SYMBOL(<data_row>).
+
+    ASSIGN ms_data_row->* TO <data_row>.
 
     " loop over all components
-    LOOP AT mt_result_desc REFERENCE INTO DATA(dfies).
+
+
+    LOOP AT mt_result_desc REFERENCE INTO dfies.
 
       " fixed values of the search help are not editable
-      DATA(enabled) = xsdbool(
-          VALUE #( ms_shlp-interface[ shlpfield = dfies->fieldname ]-value OPTIONAL ) IS INITIAL ).
+
+      CLEAR temp11.
+
+      READ TABLE ms_shlp-interface INTO temp12 WITH KEY shlpfield = dfies->fieldname.
+      IF sy-subrc = 0.
+        temp11 = temp12-value.
+      ENDIF.
+
+
+      temp1 = boolc( temp11 IS INITIAL ).
+      enabled = temp1.
 
       " the row carries the list fields of the search help only, the record
       " description every field - without the check the input of a field
       " that is not listed was bound to the previous field, or the first
       " one to an unassigned field symbol
-      ASSIGN COMPONENT dfies->fieldname OF STRUCTURE <data_row> TO FIELD-SYMBOL(<val>).
+
+      ASSIGN COMPONENT dfies->fieldname OF STRUCTURE <data_row> TO <val>.
       IF sy-subrc <> 0.
         CONTINUE.
       ENDIF.
@@ -184,15 +221,18 @@ CLASS z2ui5_cl_popup_shlp IMPLEMENTATION.
 
     ENDLOOP.
 
-    ASSIGN mt_data->* TO FIELD-SYMBOL(<mt_data>).
 
-    DATA(table) = dialog->ele( `Table`
+    ASSIGN mt_data->* TO <mt_data>.
+
+
+    table = dialog->ele( `Table`
                       )->a( n = `growing`    v = `true`
                       )->a( n = `width`      v = `auto`
                       )->a( n = `items`      v = client->_bind( <mt_data> )
                       )->a( n = `headerText` v = get_title( ) ).
 
-    DATA(header) = table->ele( `headerToolbar`
+
+    header = table->ele( `headerToolbar`
                        )->ele( `OverflowToolbar`
                        )->tag( `Title`
                        )->a( n = `text` v = get_title( )
@@ -202,10 +242,14 @@ CLASS z2ui5_cl_popup_shlp IMPLEMENTATION.
                                                         client = client
                                                         layout = mo_layout ).
 
-    DATA(columns) = table->ele( `columns` ).
 
-    LOOP AT mo_layout->ms_layout-t_layout REFERENCE INTO DATA(layout).
-      DATA(lv_index) = sy-tabix.
+    columns = table->ele( `columns` ).
+
+
+
+    LOOP AT mo_layout->ms_layout-t_layout REFERENCE INTO layout.
+
+      lv_index = sy-tabix.
 
       columns->ele( `Column`
           )->a( n = `visible` v = client->_bind( val       = layout->visible
@@ -222,7 +266,8 @@ CLASS z2ui5_cl_popup_shlp IMPLEMENTATION.
 
     ENDLOOP.
 
-    DATA(cells) = columns->end(
+
+    cells = columns->end(
                       )->ele( `items`
                       )->ele( `ColumnListItem`
                       )->a( n = `vAlign` v = `Middle`
@@ -245,6 +290,11 @@ CLASS z2ui5_cl_popup_shlp IMPLEMENTATION.
   METHOD on_event.
 
     FIELD-SYMBOLS <tab> TYPE STANDARD TABLE.
+        DATA lt_arg TYPE string_table.
+        FIELD-SYMBOLS <row> TYPE any.
+        FIELD-SYMBOLS <temp1> LIKE LINE OF lt_arg.
+        DATA temp2 LIKE sy-tabix.
+        FIELD-SYMBOLS <value> TYPE any.
 
     CASE client->get( )-event.
 
@@ -256,7 +306,8 @@ CLASS z2ui5_cl_popup_shlp IMPLEMENTATION.
 
       WHEN `SHLP_ROW_SELECT`.
 
-        DATA(lt_arg) = client->get( )-t_event_arg.
+
+        lt_arg = client->get( )-t_event_arg.
         " an event without the row index raised CX_SY_ITAB_LINE_NOT_FOUND
         IF lt_arg IS INITIAL.
           RETURN.
@@ -264,14 +315,24 @@ CLASS z2ui5_cl_popup_shlp IMPLEMENTATION.
 
         ASSIGN mt_data->* TO <tab>.
 
-        ASSIGN <tab>[ lt_arg[ 1 ] ] TO FIELD-SYMBOL(<row>).
+
+
+
+        temp2 = sy-tabix.
+        READ TABLE lt_arg INDEX 1 ASSIGNING <temp1>.
+        sy-tabix = temp2.
+        IF sy-subrc <> 0.
+          ASSERT 1 = 0.
+        ENDIF.
+        READ TABLE <tab> INDEX <temp1> ASSIGNING <row>.
         " the index comes from the client - a row that is not there must not
         " reach ASSIGN COMPONENT on an unassigned field symbol
         IF <row> IS NOT ASSIGNED.
           RETURN.
         ENDIF.
 
-        ASSIGN COMPONENT mv_shlpfield OF STRUCTURE <row> TO FIELD-SYMBOL(<value>).
+
+        ASSIGN COMPONENT mv_shlpfield OF STRUCTURE <row> TO <value>.
         IF sy-subrc <> 0.
           RETURN.
         ENDIF.
@@ -298,8 +359,12 @@ CLASS z2ui5_cl_popup_shlp IMPLEMENTATION.
   ENDMETHOD.
 
   METHOD factory.
+      DATA t_comp TYPE abap_component_tab.
+      DATA struct_desc TYPE REF TO cl_abap_structdescr.
+      FIELD-SYMBOLS <i_data> TYPE data.
+      FIELD-SYMBOLS <mr_data> TYPE data.
 
-    result = NEW #( ).
+    CREATE OBJECT result.
 
     result->mv_table = i_table.
     result->mv_fname = i_fname.
@@ -308,12 +373,16 @@ CLASS z2ui5_cl_popup_shlp IMPLEMENTATION.
 
     IF i_data IS SUPPLIED.
 
-      DATA(t_comp) = z2ui5_cl_popup_context=>rtti_get_t_attri_by_any( i_data ).
-      DATA(struct_desc) = cl_abap_structdescr=>create( t_comp ).
+
+      t_comp = z2ui5_cl_popup_context=>rtti_get_t_attri_by_any( i_data ).
+
+      struct_desc = cl_abap_structdescr=>create( t_comp ).
       CREATE DATA result->mr_data TYPE HANDLE struct_desc.
 
-      ASSIGN i_data->* TO FIELD-SYMBOL(<i_data>).
-      ASSIGN result->mr_data->* TO FIELD-SYMBOL(<mr_data>).
+
+      ASSIGN i_data->* TO <i_data>.
+
+      ASSIGN result->mr_data->* TO <mr_data>.
 
       <mr_data> = <i_data>.
 
@@ -323,7 +392,7 @@ CLASS z2ui5_cl_popup_shlp IMPLEMENTATION.
 
   METHOD factory_by_searchhelp.
 
-    result = NEW #( ).
+    CREATE OBJECT result.
 
     result->mv_searchhelp = to_upper( i_searchhelp ).
     result->mv_fname      = to_upper( i_fname ).
@@ -333,11 +402,16 @@ CLASS z2ui5_cl_popup_shlp IMPLEMENTATION.
   ENDMETHOD.
 
   METHOD on_after_layout.
+          DATA temp14 TYPE REF TO z2ui5_cl_layo_pop.
+          DATA app LIKE temp14.
 
     " only relevant when returning from another app
-    IF client->check_on_navigated( ).
+    IF client->check_on_navigated( ) IS NOT INITIAL.
       TRY.
-          DATA(app) = CAST z2ui5_cl_layo_pop( client->get_app( client->get( )-s_draft-id_prev_app ) ).
+
+          temp14 ?= client->get_app( client->get( )-s_draft-id_prev_app ).
+
+          app = temp14.
           mo_layout = app->mo_layout.
           render_view( ).
 
@@ -348,14 +422,22 @@ CLASS z2ui5_cl_popup_shlp IMPLEMENTATION.
   ENDMETHOD.
 
   METHOD set_selopt.
+    FIELD-SYMBOLS <data_row> TYPE data.
+    DATA dfies LIKE LINE OF mt_result_desc.
+      FIELD-SYMBOLS <value> TYPE any.
+      DATA temp15 TYPE z2ui5_cl_popup_context=>ty_shlp_descr-selopt.
+      DATA temp16 LIKE LINE OF temp15.
 
     CLEAR ms_shlp-selopt.
 
-    ASSIGN ms_data_row->* TO FIELD-SYMBOL(<data_row>).
 
-    LOOP AT mt_result_desc INTO DATA(dfies).
+    ASSIGN ms_data_row->* TO <data_row>.
 
-      ASSIGN COMPONENT dfies-fieldname OF STRUCTURE <data_row> TO FIELD-SYMBOL(<value>).
+
+    LOOP AT mt_result_desc INTO dfies.
+
+
+      ASSIGN COMPONENT dfies-fieldname OF STRUCTURE <data_row> TO <value>.
 
       IF sy-subrc <> 0.
         CONTINUE.
@@ -364,12 +446,17 @@ CLASS z2ui5_cl_popup_shlp IMPLEMENTATION.
         CONTINUE.
       ENDIF.
 
-      ms_shlp-selopt = VALUE #( BASE ms_shlp-selopt
-                                ( shlpfield = dfies-fieldname
-                                  shlpname  = ''
-                                  sign      = 'I'
-                                  option    = 'CP'
-                                  low       = |*{ <value> }*|  ) ).
+
+      CLEAR temp15.
+      temp15 = ms_shlp-selopt.
+
+      temp16-shlpfield = dfies-fieldname.
+      temp16-shlpname = ''.
+      temp16-sign = 'I'.
+      temp16-option = 'CP'.
+      temp16-low = |*{ <value> }*|.
+      INSERT temp16 INTO TABLE temp15.
+      ms_shlp-selopt = temp15.
 
     ENDLOOP.
 
@@ -401,21 +488,30 @@ CLASS z2ui5_cl_popup_shlp IMPLEMENTATION.
 
     FIELD-SYMBOLS <shlp>   TYPE any.
     FIELD-SYMBOLS <t_shlp> TYPE STANDARD TABLE.
+    DATA lv_type TYPE string.
+    DATA lv_fm TYPE string.
+    DATA lv_type_t TYPE string.
+    FIELD-SYMBOLS <elementary> TYPE any.
+    DATA temp17 TYPE z2ui5_cl_popup_context=>ty_ddshiface-shlpfield.
+    DATA temp18 TYPE z2ui5_cl_popup_context=>ty_ddshiface.
+    DATA lv_shlpfield LIKE temp17.
 
     lv_shlpname = mv_searchhelp.
 
-    DATA(lv_type) = `SHLP_DESCR`.
+
+    lv_type = `SHLP_DESCR`.
     CREATE DATA lr_shlp TYPE (lv_type).
     ASSIGN lr_shlp->* TO <shlp>.
 
-    DATA(lv_fm) = `F4IF_GET_SHLP_DESCR`.
+
+    lv_fm = `F4IF_GET_SHLP_DESCR`.
     CALL FUNCTION lv_fm
       EXPORTING
         shlpname = lv_shlpname
       IMPORTING
         shlp     = <shlp>.
 
-    ms_shlp = CORRESPONDING #( <shlp> ).
+    MOVE-CORRESPONDING <shlp> TO ms_shlp.
 
     IF ms_shlp-fieldprop IS INITIAL.
       RAISE EXCEPTION TYPE z2ui5_cx_popup_error
@@ -429,7 +525,8 @@ CLASS z2ui5_cl_popup_shlp IMPLEMENTATION.
 
     " a collective search help - its first elementary search help is used,
     " the returned parameter follows the mapping of the collective one
-    DATA(lv_type_t) = `SHLP_DESCT`.
+
+    lv_type_t = `SHLP_DESCT`.
     CREATE DATA lr_t_shlp TYPE (lv_type_t).
     ASSIGN lr_t_shlp->* TO <t_shlp>.
 
@@ -440,16 +537,25 @@ CLASS z2ui5_cl_popup_shlp IMPLEMENTATION.
       IMPORTING
         shlp_tab = <t_shlp>.
 
-    ASSIGN <t_shlp>[ 1 ] TO FIELD-SYMBOL(<elementary>).
+
+    READ TABLE <t_shlp> INDEX 1 ASSIGNING <elementary>.
     IF <elementary> IS NOT ASSIGNED.
       RAISE EXCEPTION TYPE z2ui5_cx_popup_error
         EXPORTING
           val = |Search help { lv_shlpname } has no elementary search help|.
     ENDIF.
 
-    ms_shlp = CORRESPONDING #( <elementary> ).
+    MOVE-CORRESPONDING <elementary> TO ms_shlp.
 
-    DATA(lv_shlpfield) = VALUE #( ms_shlp-interface[ topshlpfld = mv_fname ]-shlpfield OPTIONAL ).
+
+    CLEAR temp17.
+
+    READ TABLE ms_shlp-interface INTO temp18 WITH KEY topshlpfld = mv_fname.
+    IF sy-subrc = 0.
+      temp17 = temp18-shlpfield.
+    ENDIF.
+
+    lv_shlpfield = temp17.
     IF lv_shlpfield IS NOT INITIAL.
       mv_shlpfield = lv_shlpfield.
     ENDIF.
@@ -458,11 +564,19 @@ CLASS z2ui5_cl_popup_shlp IMPLEMENTATION.
 
   METHOD init_set_row.
 
-    ASSIGN ms_data_row->* TO FIELD-SYMBOL(<data_row>).
+    FIELD-SYMBOLS <data_row> TYPE data.
+    DATA init LIKE LINE OF mt_init.
+      DATA temp19 TYPE string.
+FIELD-SYMBOLS <value> TYPE any.
+    ASSIGN ms_data_row->* TO <data_row>.
 
-    LOOP AT mt_init INTO DATA(init) WHERE value IS NOT INITIAL.
 
-      ASSIGN COMPONENT to_upper( init-name ) OF STRUCTURE <data_row> TO FIELD-SYMBOL(<value>).
+    LOOP AT mt_init INTO init WHERE value IS NOT INITIAL.
+
+
+      temp19 = to_upper( init-name ).
+
+ASSIGN COMPONENT temp19 OF STRUCTURE <data_row> TO <value>.
       IF sy-subrc <> 0.
         CONTINUE.
       ENDIF.
@@ -477,19 +591,36 @@ CLASS z2ui5_cl_popup_shlp IMPLEMENTATION.
 
     FIELD-SYMBOLS <value> TYPE any.
 
-    ASSIGN ms_data_row->* TO FIELD-SYMBOL(<data_row>).
+    FIELD-SYMBOLS <data_row> TYPE data.
+    DATA init LIKE LINE OF mt_init.
+      DATA lv_name TYPE string.
+      DATA range LIKE LINE OF init-t_range.
+        DATA temp20 TYPE z2ui5_cl_popup_context=>ty_shlp_descr-selopt.
+        DATA temp21 LIKE LINE OF temp20.
+      DATA temp22 TYPE z2ui5_cl_popup_context=>ty_shlp_descr-selopt.
+      DATA temp23 LIKE LINE OF temp22.
+      DATA temp3 TYPE z2ui5_cl_popup_context=>ty_ddshselopt-option.
+    ASSIGN ms_data_row->* TO <data_row>.
 
-    LOOP AT mt_init INTO DATA(init).
 
-      DATA(lv_name) = to_upper( init-name ).
+    LOOP AT mt_init INTO init.
 
-      LOOP AT init-t_range INTO DATA(range).
-        result = VALUE #( BASE result
-                          ( shlpfield = lv_name
-                            sign      = range-sign
-                            option    = range-option
-                            low       = range-low
-                            high      = range-high ) ).
+
+      lv_name = to_upper( init-name ).
+
+
+      LOOP AT init-t_range INTO range.
+
+        CLEAR temp20.
+        temp20 = result.
+
+        temp21-shlpfield = lv_name.
+        temp21-sign = range-sign.
+        temp21-option = range-option.
+        temp21-low = range-low.
+        temp21-high = range-high.
+        INSERT temp21 INTO TABLE temp20.
+        result = temp20.
       ENDLOOP.
 
       IF init-value IS INITIAL.
@@ -503,26 +634,42 @@ CLASS z2ui5_cl_popup_shlp IMPLEMENTATION.
         CONTINUE.
       ENDIF.
 
-      result = VALUE #( BASE result
-                        ( shlpfield = lv_name
-                          sign      = `I`
-                          option    = COND #( WHEN init-value CA `*+` THEN `CP` ELSE `EQ` )
-                          low       = init-value ) ).
+
+      CLEAR temp22.
+      temp22 = result.
+
+      temp23-shlpfield = lv_name.
+      temp23-sign = `I`.
+
+      IF init-value CA `*+`.
+        temp3 = `CP`.
+      ELSE.
+        temp3 = `EQ`.
+      ENDIF.
+      temp23-option = temp3.
+      temp23-low = init-value.
+      INSERT temp23 INTO TABLE temp22.
+      result = temp22.
 
     ENDLOOP.
 
   ENDMETHOD.
 
   METHOD get_title.
+    DATA temp24 TYPE string.
 
     IF mv_table IS NOT INITIAL.
       result = z2ui5_cl_popup_context=>rtti_get_table_desrc( mv_table ).
       RETURN.
     ENDIF.
 
-    result = COND #( WHEN ms_shlp-intdescr-ddtext IS NOT INITIAL
-                     THEN ms_shlp-intdescr-ddtext
-                     ELSE mv_searchhelp ).
+
+    IF ms_shlp-intdescr-ddtext IS NOT INITIAL.
+      temp24 = ms_shlp-intdescr-ddtext.
+    ELSE.
+      temp24 = mv_searchhelp.
+    ENDIF.
+    result = temp24.
 
   ENDMETHOD.
 
@@ -534,7 +681,7 @@ CLASS z2ui5_cl_popup_shlp IMPLEMENTATION.
 
   METHOD z2ui5_if_popup_result~value.
 
-    result = REF #( mv_return_value ).
+    GET REFERENCE OF mv_return_value INTO result.
 
   ENDMETHOD.
 

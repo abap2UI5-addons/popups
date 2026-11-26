@@ -15,19 +15,23 @@ CLASS ltcl_test IMPLEMENTATION.
 
   METHOD test_factory.
 
-    DATA(lo_pop) = z2ui5_cl_popup_input_val=>factory( ).
+    DATA lo_pop TYPE REF TO z2ui5_cl_popup_input_val.
+    lo_pop = z2ui5_cl_popup_input_val=>factory( ).
     cl_abap_unit_assert=>assert_bound( lo_pop ).
 
   ENDMETHOD.
 
   METHOD test_factory_with_val.
 
-    DATA(lo_pop) = z2ui5_cl_popup_input_val=>factory(
+    DATA lo_pop TYPE REF TO z2ui5_cl_popup_input_val.
+    DATA ls_result TYPE z2ui5_cl_popup_input_val=>ty_s_result.
+    lo_pop = z2ui5_cl_popup_input_val=>factory(
       val   = `initial value`
       title = `Custom Title`
       text  = `Enter value` ).
 
-    DATA(ls_result) = lo_pop->result( ).
+
+    ls_result = lo_pop->result( ).
     cl_abap_unit_assert=>assert_equals( exp = `initial value`
                                         act = ls_result-value ).
     cl_abap_unit_assert=>assert_false( ls_result-check_confirmed ).
@@ -36,8 +40,11 @@ CLASS ltcl_test IMPLEMENTATION.
 
   METHOD test_result_initial.
 
-    DATA(lo_pop) = z2ui5_cl_popup_input_val=>factory( ).
-    DATA(ls_result) = lo_pop->result( ).
+    DATA lo_pop TYPE REF TO z2ui5_cl_popup_input_val.
+    DATA ls_result TYPE z2ui5_cl_popup_input_val=>ty_s_result.
+    lo_pop = z2ui5_cl_popup_input_val=>factory( ).
+
+    ls_result = lo_pop->result( ).
     cl_abap_unit_assert=>assert_false( ls_result-check_confirmed ).
     cl_abap_unit_assert=>assert_initial( ls_result-value ).
 
@@ -81,9 +88,11 @@ CLASS ltcl_test_roundtrip IMPLEMENTATION.
 
   METHOD client_create.
 
-    mo_action = NEW #( NEW z2ui5_cl_ui5_handler( `` ) ).
+    DATA temp1 TYPE REF TO z2ui5_cl_ui5_handler.
+    CREATE OBJECT temp1 TYPE z2ui5_cl_ui5_handler EXPORTING VAL = ``.
+    CREATE OBJECT mo_action EXPORTING VAL = temp1.
     mo_action->mo_app->mo_app = io_app.
-    mi_client = NEW z2ui5_cl_ui5_client( mo_action ).
+    CREATE OBJECT mi_client TYPE z2ui5_cl_ui5_client EXPORTING ACTION = mo_action.
 
   ENDMETHOD.
 
@@ -98,22 +107,32 @@ CLASS ltcl_test_roundtrip IMPLEMENTATION.
 
   METHOD test_init_displays_popup.
 
-    DATA(lo_pop) = z2ui5_cl_popup_input_val=>factory( val   = `Init Value`
+    DATA lo_pop TYPE REF TO z2ui5_cl_popup_input_val.
+    DATA lv_xml TYPE string.
+    DATA temp1 TYPE xsdboolean.
+    DATA temp2 TYPE xsdboolean.
+    lo_pop = z2ui5_cl_popup_input_val=>factory( val   = `Init Value`
                                                     text  = `Enter something:`
                                                     title = `Input Title` ).
     client_create( lo_pop ).
 
     lo_pop->z2ui5_if_app~main( mi_client ).
 
-    DATA(lv_xml) = popup_xml( ).
-    cl_abap_unit_assert=>assert_true( xsdbool( lv_xml CS `Enter something:` ) ).
-    cl_abap_unit_assert=>assert_true( xsdbool( lv_xml CS `Input Title` ) ).
+
+    lv_xml = popup_xml( ).
+
+    temp1 = boolc( lv_xml CS `Enter something:` ).
+    cl_abap_unit_assert=>assert_true( temp1 ).
+
+    temp2 = boolc( lv_xml CS `Input Title` ).
+    cl_abap_unit_assert=>assert_true( temp2 ).
 
   ENDMETHOD.
 
   METHOD test_confirm.
 
-    DATA(lo_pop) = z2ui5_cl_popup_input_val=>factory( `Init Value` ).
+    DATA lo_pop TYPE REF TO z2ui5_cl_popup_input_val.
+    lo_pop = z2ui5_cl_popup_input_val=>factory( `Init Value` ).
     roundtrip_event( io_app   = lo_pop
                      iv_event = `BUTTON_CONFIRM` ).
 
@@ -127,7 +146,8 @@ CLASS ltcl_test_roundtrip IMPLEMENTATION.
 
   METHOD test_cancel.
 
-    DATA(lo_pop) = z2ui5_cl_popup_input_val=>factory( `Init Value` ).
+    DATA lo_pop TYPE REF TO z2ui5_cl_popup_input_val.
+    lo_pop = z2ui5_cl_popup_input_val=>factory( `Init Value` ).
     roundtrip_event( io_app   = lo_pop
                      iv_event = `BUTTON_CANCEL` ).
 
@@ -138,7 +158,8 @@ CLASS ltcl_test_roundtrip IMPLEMENTATION.
 
   METHOD popup_xml.
 
-    LOOP AT mo_action->ms_next-t_action_front INTO DATA(ls_action)
+    DATA ls_action LIKE LINE OF mo_action->ms_next-t_action_front.
+    LOOP AT mo_action->ms_next-t_action_front INTO ls_action
          WHERE slot = z2ui5_if_client=>cs_view-popup AND method = `display`.
       result = ls_action-xml.
     ENDLOOP.
@@ -147,8 +168,13 @@ CLASS ltcl_test_roundtrip IMPLEMENTATION.
 
   METHOD popup_destroyed.
 
-    result = xsdbool( line_exists( mo_action->ms_next-t_action_front[ slot   = z2ui5_if_client=>cs_view-popup
-                                                                      method = `destroy` ] ) ).
+    DATA temp1 LIKE sy-subrc.
+    DATA temp3 TYPE xsdboolean.
+    READ TABLE mo_action->ms_next-t_action_front WITH KEY slot = z2ui5_if_client=>cs_view-popup method = `destroy` TRANSPORTING NO FIELDS.
+    temp1 = sy-subrc.
+
+    temp3 = boolc( temp1 = 0 ).
+    result = temp3.
 
   ENDMETHOD.
 
@@ -180,19 +206,30 @@ CLASS ltcl_popup_result IMPLEMENTATION.
 
     " a roundtrip with an event, after the first one - as the button press
     " of the user
-    mo_action = NEW #( NEW z2ui5_cl_ui5_handler( `` ) ).
+    DATA temp3 TYPE REF TO z2ui5_cl_ui5_handler.
+    DATA temp2 TYPE REF TO z2ui5_cl_ui5_client.
+    CREATE OBJECT temp3 TYPE z2ui5_cl_ui5_handler EXPORTING VAL = ``.
+    CREATE OBJECT mo_action EXPORTING VAL = temp3.
     mo_action->mo_app->mo_app = io_app.
     mo_action->mo_app->mv_check_initialized = abap_true.
     mo_action->ms_actual-event = iv_event.
     mo_action->ms_actual-t_event_arg = it_arg.
-    io_app->main( NEW z2ui5_cl_ui5_client( mo_action ) ).
+
+    CREATE OBJECT temp2 TYPE z2ui5_cl_ui5_client EXPORTING ACTION = mo_action.
+    io_app->main( temp2 ).
 
   ENDMETHOD.
 
   METHOD test_initial_not_confirmed.
 
-    DATA(lo_pop) = z2ui5_cl_popup_input_val=>factory( `abc` ).
-    DATA(li_result) = CAST z2ui5_if_popup_result( lo_pop ).
+    DATA lo_pop TYPE REF TO z2ui5_cl_popup_input_val.
+    DATA temp3 TYPE REF TO z2ui5_if_popup_result.
+    DATA li_result LIKE temp3.
+    lo_pop = z2ui5_cl_popup_input_val=>factory( `abc` ).
+
+    temp3 ?= lo_pop.
+
+    li_result = temp3.
 
     cl_abap_unit_assert=>assert_false( li_result->check_confirmed( ) ).
 
@@ -200,15 +237,26 @@ CLASS ltcl_popup_result IMPLEMENTATION.
 
   METHOD test_confirmed.
 
-    DATA(lo_pop) = z2ui5_cl_popup_input_val=>factory( `abc` ).
+    DATA lo_pop TYPE REF TO z2ui5_cl_popup_input_val.
+    DATA temp4 TYPE REF TO z2ui5_if_popup_result.
+    DATA li_result LIKE temp4.
+    DATA temp5 TYPE REF TO string.
+    DATA lr_value LIKE temp5.
+    lo_pop = z2ui5_cl_popup_input_val=>factory( `abc` ).
     roundtrip( io_app   = lo_pop
                iv_event = `BUTTON_CONFIRM` ).
-    DATA(li_result) = CAST z2ui5_if_popup_result( lo_pop ).
+
+    temp4 ?= lo_pop.
+
+    li_result = temp4.
 
     cl_abap_unit_assert=>assert_true( li_result->check_confirmed( ) ).
     cl_abap_unit_assert=>assert_equals( exp = `abc`
                                         act = li_result->value_string( ) ).
-    DATA(lr_value) = CAST string( li_result->value( ) ).
+
+    temp5 ?= li_result->value( ).
+
+    lr_value = temp5.
     cl_abap_unit_assert=>assert_equals( exp = `abc`
                                         act = lr_value->* ).
 
@@ -216,10 +264,16 @@ CLASS ltcl_popup_result IMPLEMENTATION.
 
   METHOD test_cancelled.
 
-    DATA(lo_pop) = z2ui5_cl_popup_input_val=>factory( `abc` ).
+    DATA lo_pop TYPE REF TO z2ui5_cl_popup_input_val.
+    DATA temp6 TYPE REF TO z2ui5_if_popup_result.
+    DATA li_result LIKE temp6.
+    lo_pop = z2ui5_cl_popup_input_val=>factory( `abc` ).
     roundtrip( io_app   = lo_pop
                iv_event = `BUTTON_CANCEL` ).
-    DATA(li_result) = CAST z2ui5_if_popup_result( lo_pop ).
+
+    temp6 ?= lo_pop.
+
+    li_result = temp6.
 
     cl_abap_unit_assert=>assert_false( li_result->check_confirmed( ) ).
 

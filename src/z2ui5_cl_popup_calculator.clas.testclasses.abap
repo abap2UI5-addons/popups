@@ -23,19 +23,30 @@ CLASS ltcl_popup_result IMPLEMENTATION.
 
     " a roundtrip with an event, after the first one - as the button press
     " of the user
-    mo_action = NEW #( NEW z2ui5_cl_ui5_handler( `` ) ).
+    DATA temp2 TYPE REF TO z2ui5_cl_ui5_handler.
+    DATA temp1 TYPE REF TO z2ui5_cl_ui5_client.
+    CREATE OBJECT temp2 TYPE z2ui5_cl_ui5_handler EXPORTING VAL = ``.
+    CREATE OBJECT mo_action EXPORTING VAL = temp2.
     mo_action->mo_app->mo_app = io_app.
     mo_action->mo_app->mv_check_initialized = abap_true.
     mo_action->ms_actual-event = iv_event.
     mo_action->ms_actual-t_event_arg = it_arg.
-    io_app->main( NEW z2ui5_cl_ui5_client( mo_action ) ).
+
+    CREATE OBJECT temp1 TYPE z2ui5_cl_ui5_client EXPORTING ACTION = mo_action.
+    io_app->main( temp1 ).
 
   ENDMETHOD.
 
   METHOD test_initial_not_confirmed.
 
-    DATA(lo_pop) = z2ui5_cl_popup_calculator=>factory( 12 ).
-    DATA(li_result) = CAST z2ui5_if_popup_result( lo_pop ).
+    DATA lo_pop TYPE REF TO z2ui5_cl_popup_calculator.
+    DATA temp2 TYPE REF TO z2ui5_if_popup_result.
+    DATA li_result LIKE temp2.
+    lo_pop = z2ui5_cl_popup_calculator=>factory( 12 ).
+
+    temp2 ?= lo_pop.
+
+    li_result = temp2.
 
     cl_abap_unit_assert=>assert_false( li_result->check_confirmed( ) ).
 
@@ -43,16 +54,28 @@ CLASS ltcl_popup_result IMPLEMENTATION.
 
   METHOD test_confirmed.
 
-    DATA(lo_pop) = z2ui5_cl_popup_calculator=>factory( 12 ).
+    DATA lo_pop TYPE REF TO z2ui5_cl_popup_calculator.
+    DATA temp3 TYPE REF TO z2ui5_if_popup_result.
+    DATA li_result LIKE temp3.
+    DATA lv_exp TYPE decfloat34 VALUE 12.
+    DATA temp4 TYPE REF TO decfloat34.
+    DATA lr_value LIKE temp4.
+    lo_pop = z2ui5_cl_popup_calculator=>factory( 12 ).
     roundtrip( io_app   = lo_pop
                iv_event = `BUTTON_CONFIRM` ).
-    DATA(li_result) = CAST z2ui5_if_popup_result( lo_pop ).
+
+    temp3 ?= lo_pop.
+
+    li_result = temp3.
 
     cl_abap_unit_assert=>assert_true( li_result->check_confirmed( ) ).
     cl_abap_unit_assert=>assert_equals( exp = `12`
                                         act = li_result->value_string( ) ).
-    DATA lv_exp TYPE decfloat34 VALUE 12.
-    DATA(lr_value) = CAST decfloat34( li_result->value( ) ).
+
+
+    temp4 ?= li_result->value( ).
+
+    lr_value = temp4.
     cl_abap_unit_assert=>assert_equals( exp = lv_exp
                                         act = lr_value->* ).
 
@@ -60,10 +83,16 @@ CLASS ltcl_popup_result IMPLEMENTATION.
 
   METHOD test_cancelled.
 
-    DATA(lo_pop) = z2ui5_cl_popup_calculator=>factory( 12 ).
+    DATA lo_pop TYPE REF TO z2ui5_cl_popup_calculator.
+    DATA temp5 TYPE REF TO z2ui5_if_popup_result.
+    DATA li_result LIKE temp5.
+    lo_pop = z2ui5_cl_popup_calculator=>factory( 12 ).
     roundtrip( io_app   = lo_pop
                iv_event = `BUTTON_CANCEL` ).
-    DATA(li_result) = CAST z2ui5_if_popup_result( lo_pop ).
+
+    temp5 ?= lo_pop.
+
+    li_result = temp5.
 
     cl_abap_unit_assert=>assert_false( li_result->check_confirmed( ) ).
 

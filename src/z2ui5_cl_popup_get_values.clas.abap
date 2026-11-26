@@ -47,7 +47,7 @@ CLASS z2ui5_cl_popup_get_values DEFINITION PUBLIC.
         required  TYPE abap_bool,
         read_only TYPE abap_bool,
       END OF ty_s_field.
-    TYPES ty_t_field TYPE STANDARD TABLE OF ty_s_field WITH EMPTY KEY.
+    TYPES ty_t_field TYPE STANDARD TABLE OF ty_s_field WITH DEFAULT KEY.
 
     TYPES:
       "! a value of the listbox (or multi listbox) of field name
@@ -56,7 +56,7 @@ CLASS z2ui5_cl_popup_get_values DEFINITION PUBLIC.
         key  TYPE string,
         text TYPE string,
       END OF ty_s_listbox.
-    TYPES ty_t_listbox TYPE STANDARD TABLE OF ty_s_listbox WITH EMPTY KEY.
+    TYPES ty_t_listbox TYPE STANDARD TABLE OF ty_s_listbox WITH DEFAULT KEY.
 
     TYPES:
       BEGIN OF ty_s_result,
@@ -125,8 +125,12 @@ ENDCLASS.
 CLASS z2ui5_cl_popup_get_values IMPLEMENTATION.
 
   METHOD factory.
+    DATA temp29 LIKE LINE OF r_result->mt_field.
+    DATA lr_field LIKE REF TO temp29.
+    DATA temp30 LIKE LINE OF r_result->listbox.
+    DATA lr_listbox LIKE REF TO temp30.
 
-    r_result = NEW #( ).
+    CREATE OBJECT r_result.
 
     r_result->mt_field            = i_fields.
     r_result->title               = i_title.
@@ -137,13 +141,17 @@ CLASS z2ui5_cl_popup_get_values IMPLEMENTATION.
     r_result->text_required       = i_text_required.
     r_result->event_confirm       = i_event_confirm.
     r_result->event_canceled      = i_event_cancel.
-    LOOP AT r_result->mt_field REFERENCE INTO DATA(lr_field).
+
+
+    LOOP AT r_result->mt_field REFERENCE INTO lr_field.
       lr_field->name = to_upper( lr_field->name ).
       IF lr_field->kind IS INITIAL.
         lr_field->kind = cs_kind-input.
       ENDIF.
     ENDLOOP.
-    LOOP AT r_result->listbox REFERENCE INTO DATA(lr_listbox).
+
+
+    LOOP AT r_result->listbox REFERENCE INTO lr_listbox.
       lr_listbox->name = to_upper( lr_listbox->name ).
     ENDLOOP.
 
@@ -157,19 +165,33 @@ CLASS z2ui5_cl_popup_get_values IMPLEMENTATION.
 
   METHOD result_value.
 
-    DATA(lv_name) = to_upper( name ).
-    ASSIGN ms_result-fields[ name = lv_name ] TO FIELD-SYMBOL(<ls_field>).
+    DATA lv_name TYPE string.
+    FIELD-SYMBOLS <ls_field> TYPE z2ui5_cl_popup_get_values=>ty_s_field.
+    DATA temp31 TYPE string.
+    lv_name = to_upper( name ).
+
+    READ TABLE ms_result-fields WITH KEY name = lv_name ASSIGNING <ls_field>.
     IF <ls_field> IS NOT ASSIGNED.
       RETURN.
     ENDIF.
-    result = COND #( WHEN <ls_field>-kind = cs_kind-checkbox THEN <ls_field>-flag ELSE <ls_field>-value ).
+
+    IF <ls_field>-kind = cs_kind-checkbox.
+      temp31 = <ls_field>-flag.
+    ELSE.
+      temp31 = <ls_field>-value.
+    ENDIF.
+    result = temp31.
 
   ENDMETHOD.
 
   METHOD check_required.
+    DATA temp32 LIKE LINE OF mt_field.
+    DATA lr_field LIKE REF TO temp32.
 
     result = abap_true.
-    LOOP AT mt_field REFERENCE INTO DATA(lr_field)
+
+
+    LOOP AT mt_field REFERENCE INTO lr_field
          WHERE required = abap_true AND kind <> cs_kind-checkbox.
       IF ( lr_field->kind = cs_kind-multi AND lr_field->keys IS INITIAL )
           OR ( lr_field->kind <> cs_kind-multi AND lr_field->value IS INITIAL ).
@@ -185,7 +207,9 @@ CLASS z2ui5_cl_popup_get_values IMPLEMENTATION.
 
   METHOD view_display.
 
-    DATA(popup) = z2ui5_cl_ui5_view_builder=>factory(
+    DATA popup TYPE REF TO z2ui5_cl_ui5_view_builder.
+    DATA content TYPE REF TO z2ui5_cl_ui5_view_builder.
+    popup = z2ui5_cl_ui5_view_builder=>factory(
                       )->ele( n = `FragmentDefinition` ns = `core`
                       )->a( n = `xmlns` v = `sap.m`
                       )->a( n = `xmlns:core` v = `sap.ui.core`
@@ -193,7 +217,8 @@ CLASS z2ui5_cl_popup_get_values IMPLEMENTATION.
                       )->a( n = `title` t = title
                       )->a( n = `afterClose` v = client->_event( `BUTTON_CANCEL` ) ).
 
-    DATA(content) = popup->ele( `content`
+
+    content = popup->ele( `content`
         )->ele( `VBox`
             )->a( n = `class` v = `sapUiSmallMargin` ).
     IF mv_error IS NOT INITIAL.
@@ -224,15 +249,33 @@ CLASS z2ui5_cl_popup_get_values IMPLEMENTATION.
 
   METHOD render_fields.
 
-    DATA(form) = node->ele( n = `SimpleForm` ns = `form`
+    DATA form TYPE REF TO z2ui5_cl_ui5_view_builder.
+    DATA temp33 LIKE LINE OF mt_field.
+    DATA lr_field LIKE REF TO temp33.
+      DATA lv_index LIKE sy-tabix.
+          DATA temp1 TYPE xsdboolean.
+          DATA temp2 TYPE xsdboolean.
+          DATA multi TYPE REF TO z2ui5_cl_ui5_view_builder.
+          DATA temp3 TYPE xsdboolean.
+          DATA temp34 LIKE LINE OF listbox.
+          DATA lr_multi LIKE REF TO temp34.
+          DATA items TYPE REF TO z2ui5_cl_ui5_view_builder.
+          DATA temp4 TYPE xsdboolean.
+          DATA temp35 LIKE LINE OF listbox.
+          DATA lr_value LIKE REF TO temp35.
+          DATA temp5 TYPE xsdboolean.
+    form = node->ele( n = `SimpleForm` ns = `form`
         )->a( n = `xmlns:form` v = `sap.ui.layout.form`
         )->a( n = `editable` b = abap_true
         )->a( n = `layout` v = `ResponsiveGridLayout`
         )->a( n = `labelSpanM` v = `4`
         )->a( n = `labelSpanL` v = `4` ).
 
-    LOOP AT mt_field REFERENCE INTO DATA(lr_field).
-      DATA(lv_index) = sy-tabix.
+
+
+    LOOP AT mt_field REFERENCE INTO lr_field.
+
+      lv_index = sy-tabix.
 
       form->tag( `Label`
           )->a( n = `text` t = lr_field->text
@@ -240,56 +283,72 @@ CLASS z2ui5_cl_popup_get_values IMPLEMENTATION.
 
       CASE lr_field->kind.
         WHEN cs_kind-checkbox.
+
+          temp1 = boolc( lr_field->read_only = abap_false ).
           form->tag( `CheckBox`
               )->a( n = `selected` v = client->_bind( val       = lr_field->flag
                                                      tab       = mt_field
                                                      tab_index = lv_index )
-              )->a( n = `editable` b = xsdbool( lr_field->read_only = abap_false ) ).
+              )->a( n = `editable` b = temp1 ).
 
         WHEN cs_kind-date.
+
+          temp2 = boolc( lr_field->read_only = abap_false ).
           form->tag( `DatePicker`
               )->a( n = `value` v = client->_bind( val       = lr_field->value
                                                   tab       = mt_field
                                                   tab_index = lv_index )
               )->a( n = `valueFormat` v = `yyyyMMdd`
-              )->a( n = `editable` b = xsdbool( lr_field->read_only = abap_false ) ).
+              )->a( n = `editable` b = temp2 ).
 
         WHEN cs_kind-multi.
-          DATA(multi) = form->ele( `MultiComboBox`
+
+
+          temp3 = boolc( lr_field->read_only = abap_false ).
+          multi = form->ele( `MultiComboBox`
               )->a( n = `selectedKeys` v = client->_bind( val       = lr_field->keys
                                                          tab       = mt_field
                                                          tab_index = lv_index )
-              )->a( n = `editable` b = xsdbool( lr_field->read_only = abap_false )
+              )->a( n = `editable` b = temp3
               )->ele( `items` ).
-          LOOP AT listbox REFERENCE INTO DATA(lr_multi) WHERE name = lr_field->name.
+
+
+          LOOP AT listbox REFERENCE INTO lr_multi WHERE name = lr_field->name.
             multi->tag( n = `Item` ns = `core`
                 )->a( n = `key` t = lr_multi->key
                 )->a( n = `text` t = lr_multi->text ).
           ENDLOOP.
 
         WHEN cs_kind-listbox.
-          DATA(items) = form->ele( `Select`
+
+
+          temp4 = boolc( lr_field->read_only = abap_false ).
+          items = form->ele( `Select`
               )->a( n = `selectedKey` v = client->_bind( val       = lr_field->value
                                                         tab       = mt_field
                                                         tab_index = lv_index )
               )->a( n = `forceSelection` b = abap_false
-              )->a( n = `editable` b = xsdbool( lr_field->read_only = abap_false )
+              )->a( n = `editable` b = temp4
               )->ele( `items` ).
           items->tag( n = `Item` ns = `core`
               )->a( n = `key` v = ``
               )->a( n = `text` v = `` ).
-          LOOP AT listbox REFERENCE INTO DATA(lr_value) WHERE name = lr_field->name.
+
+
+          LOOP AT listbox REFERENCE INTO lr_value WHERE name = lr_field->name.
             items->tag( n = `Item` ns = `core`
                 )->a( n = `key` t = lr_value->key
                 )->a( n = `text` t = lr_value->text ).
           ENDLOOP.
 
         WHEN OTHERS.
+
+          temp5 = boolc( lr_field->read_only = abap_false ).
           form->tag( `Input`
               )->a( n = `value` v = client->_bind( val       = lr_field->value
                                                   tab       = mt_field
                                                   tab_index = lv_index )
-              )->a( n = `editable` b = xsdbool( lr_field->read_only = abap_false ) ).
+              )->a( n = `editable` b = temp5 ).
       ENDCASE.
     ENDLOOP.
 
@@ -299,7 +358,7 @@ CLASS z2ui5_cl_popup_get_values IMPLEMENTATION.
 
     me->client = client.
 
-    IF client->check_on_init( ).
+    IF client->check_on_init( ) IS NOT INITIAL.
       view_display( ).
       RETURN.
     ENDIF.
@@ -335,7 +394,7 @@ CLASS z2ui5_cl_popup_get_values IMPLEMENTATION.
 
   METHOD z2ui5_if_popup_result~value.
 
-    result = REF #( ms_result-fields ).
+    GET REFERENCE OF ms_result-fields INTO result.
 
   ENDMETHOD.
 

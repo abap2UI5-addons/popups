@@ -70,7 +70,7 @@ CLASS z2ui5_cl_popup_to_decide IMPLEMENTATION.
 
   METHOD factory.
 
-    r_result = NEW #( ).
+    CREATE OBJECT r_result.
 
     r_result->title              = i_title.
     r_result->icon               = i_icon.
@@ -92,7 +92,12 @@ CLASS z2ui5_cl_popup_to_decide IMPLEMENTATION.
 
   METHOD view_display.
 
-    DATA(popup) = z2ui5_cl_ui5_view_builder=>factory(
+    DATA popup TYPE REF TO z2ui5_cl_ui5_view_builder.
+    DATA buttons TYPE REF TO z2ui5_cl_ui5_view_builder.
+    DATA lv_option LIKE LINE OF options.
+      DATA lv_number LIKE sy-tabix.
+      DATA temp21 TYPE string.
+    popup = z2ui5_cl_ui5_view_builder=>factory(
                       )->ele( n = `FragmentDefinition` ns = `core`
                       )->a( n = `xmlns` v = `sap.m`
                       )->a( n = `xmlns:core` v = `sap.ui.core`
@@ -107,13 +112,22 @@ CLASS z2ui5_cl_popup_to_decide IMPLEMENTATION.
             )->tag( `Text`
                 )->a( n = `text` t = question_text ).
 
-    DATA(buttons) = popup->ele( `buttons` ).
-    LOOP AT options INTO DATA(lv_option).
+
+    buttons = popup->ele( `buttons` ).
+
+    LOOP AT options INTO lv_option.
       " sy-tabix is read once: every a( ) below appends and moves it
-      DATA(lv_number) = sy-tabix.
+
+      lv_number = sy-tabix.
+
+      IF lv_number = 1.
+        temp21 = `Emphasized`.
+      ELSE.
+        temp21 = `Default`.
+      ENDIF.
       buttons->tag( `Button`
           )->a( n = `text` t = lv_option
-          )->a( n = `type` v = COND #( WHEN lv_number = 1 THEN `Emphasized` ELSE `Default` )
+          )->a( n = `type` v = temp21
           )->a( n = `press` v = client->_event( |{ cv_event_option }{ lv_number }| ) ).
     ENDLOOP.
     IF check_cancel = abap_true.
@@ -127,15 +141,20 @@ CLASS z2ui5_cl_popup_to_decide IMPLEMENTATION.
   ENDMETHOD.
 
   METHOD z2ui5_if_app~main.
+    DATA lv_event TYPE z2ui5_if_client=>ty_s_get-event.
+        DATA lv_number TYPE string.
+        DATA temp22 TYPE i.
+        DATA temp3 TYPE i.
 
     me->client = client.
 
-    IF client->check_on_init( ).
+    IF client->check_on_init( ) IS NOT INITIAL.
       view_display( ).
       RETURN.
     ENDIF.
 
-    DATA(lv_event) = client->get( )-event.
+
+    lv_event = client->get( )-event.
     CASE lv_event.
       WHEN `BUTTON_CANCEL`.
         answer = cs_answer-cancel.
@@ -147,10 +166,15 @@ CLASS z2ui5_cl_popup_to_decide IMPLEMENTATION.
         IF strlen( lv_event ) <= strlen( cv_event_option ) OR lv_event NP |{ cv_event_option }*|.
           RETURN.
         ENDIF.
-        DATA(lv_number) = substring( val = lv_event
+
+        lv_number = substring( val = lv_event
                                      off = strlen( cv_event_option ) ).
         " only a button of the popup - the event comes from the browser
-        IF lv_number CN `0123456789` OR CONV i( lv_number ) < 1 OR CONV i( lv_number ) > lines( options ).
+
+        temp22 = lv_number.
+
+        temp3 = lv_number.
+        IF lv_number CN `0123456789` OR temp22 < 1 OR temp3 > lines( options ).
           RETURN.
         ENDIF.
         answer = lv_number.
@@ -163,13 +187,15 @@ CLASS z2ui5_cl_popup_to_decide IMPLEMENTATION.
 
   METHOD z2ui5_if_popup_result~check_confirmed.
 
-    result = xsdbool( answer IS NOT INITIAL AND answer <> cs_answer-cancel ).
+    DATA temp1 TYPE xsdboolean.
+    temp1 = boolc( answer IS NOT INITIAL AND answer <> cs_answer-cancel ).
+    result = temp1.
 
   ENDMETHOD.
 
   METHOD z2ui5_if_popup_result~value.
 
-    result = REF #( answer ).
+    GET REFERENCE OF answer INTO result.
 
   ENDMETHOD.
 

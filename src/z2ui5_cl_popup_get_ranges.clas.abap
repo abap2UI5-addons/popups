@@ -41,7 +41,7 @@ CLASS z2ui5_cl_popup_get_ranges IMPLEMENTATION.
 
   METHOD factory.
 
-    r_result = NEW #( ).
+    CREATE OBJECT r_result.
     r_result->ms_result-t_filter = val.
 
   ENDMETHOD.
@@ -54,7 +54,11 @@ CLASS z2ui5_cl_popup_get_ranges IMPLEMENTATION.
 
   METHOD popup_display.
 
-    DATA(lo_popup) = z2ui5_cl_ui5_view_builder=>factory(
+    DATA lo_popup TYPE REF TO z2ui5_cl_ui5_view_builder.
+    DATA vbox TYPE REF TO z2ui5_cl_ui5_view_builder.
+    DATA item TYPE REF TO z2ui5_cl_ui5_view_builder.
+    DATA grid TYPE REF TO z2ui5_cl_ui5_view_builder.
+    lo_popup = z2ui5_cl_ui5_view_builder=>factory(
                          )->ele( n = `FragmentDefinition` ns = `core`
                          )->a( n = `xmlns` v = `sap.m`
                          )->a( n = `xmlns:core` v = `sap.ui.core`
@@ -65,16 +69,19 @@ CLASS z2ui5_cl_popup_get_ranges IMPLEMENTATION.
                    )->a( n = `contentWidth` v = `50%`
                    )->a( n = `title` v = `Define Filter Conditions` ).
 
-    DATA(vbox) = lo_popup->ele( `VBox`
+
+    vbox = lo_popup->ele( `VBox`
                      )->a( n = `height` v = `100%`
                      )->a( n = `justifyContent` v = `SpaceBetween` ).
 
-    DATA(item) = vbox->ele( `List`
+
+    item = vbox->ele( `List`
                      )->a( n = `noDataText` v = `No conditions defined`
                      )->a( n = `items` v = client->_bind( ms_result-t_filter )
                      )->ele( `CustomListItem` ).
 
-    DATA(grid) = item->ele( n = `Grid` ns = `layout`
+
+    grid = item->ele( n = `Grid` ns = `layout`
                      )->a( n = `class` v = `sapUiSmallMarginTop sapUiSmallMarginBottom sapUiSmallMarginBegin` ).
     grid->tag( `Text`
         )->a( n = `text` v = `{NAME}` ).
@@ -123,20 +130,33 @@ CLASS z2ui5_cl_popup_get_ranges IMPLEMENTATION.
   ENDMETHOD.
 
   METHOD z2ui5_if_app~main.
+    DATA ls_get TYPE z2ui5_if_client=>ty_s_get.
+      DATA temp26 TYPE REF TO z2ui5_cl_popup_get_range.
+      DATA ls_popup_result TYPE z2ui5_cl_popup_get_range=>ty_s_result.
+        FIELD-SYMBOLS <tab> TYPE z2ui5_cl_popup_context=>ty_s_filter_multi.
+        FIELD-SYMBOLS <temp27> LIKE LINE OF ms_result-t_filter.
+        DATA temp28 LIKE sy-tabix.
+        DATA temp29 LIKE LINE OF ms_result-t_filter.
+        DATA lr_filter LIKE REF TO temp29.
     me->client = client.
 
-    IF client->check_on_init( ).
+    IF client->check_on_init( ) IS NOT INITIAL.
       init( ).
       RETURN.
     ENDIF.
 
-    DATA(ls_get) = client->get( ).
+
+    ls_get = client->get( ).
 
     IF ls_get-check_on_navigated = abap_true.
 
-      DATA(ls_popup_result) = CAST z2ui5_cl_popup_get_range( client->get_app_prev( ) )->result( ).
+
+      temp26 ?= client->get_app_prev( ).
+
+      ls_popup_result = temp26->result( ).
       IF ls_popup_result-check_confirmed = abap_true.
-        ASSIGN ms_result-t_filter[ name = mv_popup_name ] TO FIELD-SYMBOL(<tab>).
+
+        READ TABLE ms_result-t_filter WITH KEY name = mv_popup_name ASSIGNING <tab>.
         <tab>-t_range = ls_popup_result-t_range.
         <tab>-t_token = z2ui5_cl_popup_context=>filter_get_token_t_by_range_t( <tab>-t_range ).
       ENDIF.
@@ -148,7 +168,7 @@ CLASS z2ui5_cl_popup_get_ranges IMPLEMENTATION.
 
       WHEN `LIST_DELETE`.
         UNASSIGN <tab>.
-        ASSIGN ms_result-t_filter[ name = client->get_event_arg( ) ] TO <tab>.
+        READ TABLE ms_result-t_filter WITH KEY name = client->get_event_arg( ) ASSIGNING <tab>.
         " the name comes from the client - an unknown one is ignored
         IF <tab> IS NOT ASSIGNED.
           RETURN.
@@ -158,8 +178,16 @@ CLASS z2ui5_cl_popup_get_ranges IMPLEMENTATION.
 
       WHEN `LIST_OPEN`.
         mv_popup_name = client->get_event_arg( ).
+
+
+        temp28 = sy-tabix.
+        READ TABLE ms_result-t_filter WITH KEY name = mv_popup_name ASSIGNING <temp27>.
+        sy-tabix = temp28.
+        IF sy-subrc <> 0.
+          ASSERT 1 = 0.
+        ENDIF.
         client->nav_app_call( z2ui5_cl_popup_get_range=>factory(
-            ms_result-t_filter[ name = mv_popup_name ]-t_range ) ).
+            <temp27>-t_range ) ).
 
       WHEN `BUTTON_CONFIRM`.
         ms_result-check_confirmed = abap_true.
@@ -171,7 +199,9 @@ CLASS z2ui5_cl_popup_get_ranges IMPLEMENTATION.
         client->nav_app_leave( ).
 
       WHEN `POPUP_DELETE_ALL`.
-        LOOP AT ms_result-t_filter REFERENCE INTO DATA(lr_filter).
+
+
+        LOOP AT ms_result-t_filter REFERENCE INTO lr_filter.
           CLEAR lr_filter->t_range.
           CLEAR lr_filter->t_token.
         ENDLOOP.
@@ -187,7 +217,7 @@ CLASS z2ui5_cl_popup_get_ranges IMPLEMENTATION.
 
   METHOD z2ui5_if_popup_result~value.
 
-    result = REF #( ms_result-t_filter ).
+    GET REFERENCE OF ms_result-t_filter INTO result.
 
   ENDMETHOD.
 

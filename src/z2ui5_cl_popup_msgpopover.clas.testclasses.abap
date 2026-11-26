@@ -40,9 +40,11 @@ CLASS ltcl_test IMPLEMENTATION.
 
   METHOD client_create.
 
-    mo_action = NEW #( NEW z2ui5_cl_ui5_handler( `` ) ).
+    DATA temp1 TYPE REF TO z2ui5_cl_ui5_handler.
+    CREATE OBJECT temp1 TYPE z2ui5_cl_ui5_handler EXPORTING VAL = ``.
+    CREATE OBJECT mo_action EXPORTING VAL = temp1.
     mo_action->mo_app->mo_app = io_app.
-    mi_client = NEW z2ui5_cl_ui5_client( mo_action ).
+    CREATE OBJECT mi_client TYPE z2ui5_cl_ui5_client EXPORTING ACTION = mo_action.
 
   ENDMETHOD.
 
@@ -56,9 +58,11 @@ CLASS ltcl_test IMPLEMENTATION.
   ENDMETHOD.
 
   METHOD popover_displayed.
+    DATA ls_action LIKE LINE OF mo_action->ms_next-t_action_front.
 
     CLEAR: ev_xml, ev_open_by.
-    LOOP AT mo_action->ms_next-t_action_front INTO DATA(ls_action)
+
+    LOOP AT mo_action->ms_next-t_action_front INTO ls_action
          WHERE slot = z2ui5_if_client=>cs_view-popover AND method = `display`.
       ev_xml = ls_action-xml.
       IF ls_action-options IS BOUND.
@@ -70,52 +74,151 @@ CLASS ltcl_test IMPLEMENTATION.
 
   METHOD popover_destroyed.
 
-    result = xsdbool( line_exists( mo_action->ms_next-t_action_front[ slot   = z2ui5_if_client=>cs_view-popover
-                                                                      method = `destroy` ] ) ).
+    DATA temp1 LIKE sy-subrc.
+    DATA temp2 TYPE xsdboolean.
+    READ TABLE mo_action->ms_next-t_action_front WITH KEY slot = z2ui5_if_client=>cs_view-popover method = `destroy` TRANSPORTING NO FIELDS.
+    temp1 = sy-subrc.
+
+    temp2 = boolc( temp1 = 0 ).
+    result = temp2.
 
   ENDMETHOD.
 
   METHOD msg_get_t_texts.
 
-    DATA(lt_msg) = z2ui5_cl_popup_msgpopover=>msg_get_t( VALUE string_table( ( `first message` )
-                                                                             ( `second message` ) ) ).
+    DATA temp2 TYPE string_table.
+    DATA lt_msg TYPE z2ui5_cl_popup_msgpopover=>ty_t_msg.
+    FIELD-SYMBOLS <temp4> LIKE LINE OF lt_msg.
+    DATA temp5 LIKE sy-tabix.
+    FIELD-SYMBOLS <temp6> LIKE LINE OF lt_msg.
+    DATA temp7 LIKE sy-tabix.
+    FIELD-SYMBOLS <temp8> LIKE LINE OF lt_msg.
+    DATA temp9 LIKE sy-tabix.
+    FIELD-SYMBOLS <temp2> LIKE LINE OF lt_msg.
+    DATA temp3 LIKE sy-tabix.
+    FIELD-SYMBOLS <temp10> LIKE LINE OF lt_msg.
+    DATA temp11 LIKE sy-tabix.
+    CLEAR temp2.
+    INSERT `first message` INTO TABLE temp2.
+    INSERT `second message` INTO TABLE temp2.
+
+    lt_msg = z2ui5_cl_popup_msgpopover=>msg_get_t( temp2 ).
 
     cl_abap_unit_assert=>assert_equals( exp = 2
                                         act = lines( lt_msg ) ).
+
+
+    temp5 = sy-tabix.
+    READ TABLE lt_msg INDEX 1 ASSIGNING <temp4>.
+    sy-tabix = temp5.
+    IF sy-subrc <> 0.
+      ASSERT 1 = 0.
+    ENDIF.
     cl_abap_unit_assert=>assert_equals( exp = `first message`
-                                        act = lt_msg[ 1 ]-title ).
+                                        act = <temp4>-title ).
+
+
+    temp7 = sy-tabix.
+    READ TABLE lt_msg INDEX 1 ASSIGNING <temp6>.
+    sy-tabix = temp7.
+    IF sy-subrc <> 0.
+      ASSERT 1 = 0.
+    ENDIF.
     cl_abap_unit_assert=>assert_equals( exp = `first message`
-                                        act = lt_msg[ 1 ]-description ).
-    cl_abap_unit_assert=>assert_equals( exp = lt_msg[ 1 ]-type
-                                        act = lt_msg[ 1 ]-group ).
-    cl_abap_unit_assert=>assert_initial( lt_msg[ 1 ]-subtitle ).
+                                        act = <temp6>-description ).
+
+
+    temp9 = sy-tabix.
+    READ TABLE lt_msg INDEX 1 ASSIGNING <temp8>.
+    sy-tabix = temp9.
+    IF sy-subrc <> 0.
+      ASSERT 1 = 0.
+    ENDIF.
+
+
+    temp3 = sy-tabix.
+    READ TABLE lt_msg INDEX 1 ASSIGNING <temp2>.
+    sy-tabix = temp3.
+    IF sy-subrc <> 0.
+      ASSERT 1 = 0.
+    ENDIF.
+    cl_abap_unit_assert=>assert_equals( exp = <temp8>-type
+                                        act = <temp2>-group ).
+
+
+    temp11 = sy-tabix.
+    READ TABLE lt_msg INDEX 1 ASSIGNING <temp10>.
+    sy-tabix = temp11.
+    IF sy-subrc <> 0.
+      ASSERT 1 = 0.
+    ENDIF.
+    cl_abap_unit_assert=>assert_initial( <temp10>-subtitle ).
 
   ENDMETHOD.
 
   METHOD msg_get_t_exception.
 
-    DATA(lx) = NEW z2ui5_cx_popup_error( val = `went wrong` ).
+    DATA lx TYPE REF TO z2ui5_cx_popup_error.
+    DATA lt_msg TYPE z2ui5_cl_popup_msgpopover=>ty_t_msg.
+    FIELD-SYMBOLS <temp12> LIKE LINE OF lt_msg.
+    DATA temp13 LIKE sy-tabix.
+    FIELD-SYMBOLS <temp14> LIKE LINE OF lt_msg.
+    DATA temp15 LIKE sy-tabix.
+    DATA temp3 TYPE xsdboolean.
+    CREATE OBJECT lx TYPE z2ui5_cx_popup_error EXPORTING val = `went wrong`.
 
-    DATA(lt_msg) = z2ui5_cl_popup_msgpopover=>msg_get_t( lx ).
+
+    lt_msg = z2ui5_cl_popup_msgpopover=>msg_get_t( lx ).
 
     cl_abap_unit_assert=>assert_equals( exp = 1
                                         act = lines( lt_msg ) ).
+
+
+    temp13 = sy-tabix.
+    READ TABLE lt_msg INDEX 1 ASSIGNING <temp12>.
+    sy-tabix = temp13.
+    IF sy-subrc <> 0.
+      ASSERT 1 = 0.
+    ENDIF.
     cl_abap_unit_assert=>assert_equals( exp = z2ui5_cl_popup_context=>cs_ui5_msg_type-e
-                                        act = lt_msg[ 1 ]-type ).
-    cl_abap_unit_assert=>assert_true( xsdbool( lt_msg[ 1 ]-title CS `went wrong` ) ).
+                                        act = <temp12>-type ).
+
+
+    temp15 = sy-tabix.
+    READ TABLE lt_msg INDEX 1 ASSIGNING <temp14>.
+    sy-tabix = temp15.
+    IF sy-subrc <> 0.
+      ASSERT 1 = 0.
+    ENDIF.
+
+    temp3 = boolc( <temp14>-title CS `went wrong` ).
+    cl_abap_unit_assert=>assert_true( temp3 ).
 
   ENDMETHOD.
 
   METHOD count_get_worst_type.
 
-    DATA(lt_msg) = VALUE z2ui5_cl_popup_msgpopover=>ty_t_msg(
-                       ( type = z2ui5_cl_popup_context=>cs_ui5_msg_type-s )
-                       ( type = z2ui5_cl_popup_context=>cs_ui5_msg_type-w )
-                       ( type = z2ui5_cl_popup_context=>cs_ui5_msg_type-e )
-                       ( type = z2ui5_cl_popup_context=>cs_ui5_msg_type-e )
-                       ( type = z2ui5_cl_popup_context=>cs_ui5_msg_type-i ) ).
+    DATA temp16 TYPE z2ui5_cl_popup_msgpopover=>ty_t_msg.
+    DATA temp17 LIKE LINE OF temp16.
+    DATA lt_msg LIKE temp16.
+    DATA ls_count TYPE z2ui5_cl_popup_msgpopover=>ty_s_count.
+    CLEAR temp16.
 
-    DATA(ls_count) = z2ui5_cl_popup_msgpopover=>count_get( lt_msg ).
+    temp17-type = z2ui5_cl_popup_context=>cs_ui5_msg_type-s.
+    INSERT temp17 INTO TABLE temp16.
+    temp17-type = z2ui5_cl_popup_context=>cs_ui5_msg_type-w.
+    INSERT temp17 INTO TABLE temp16.
+    temp17-type = z2ui5_cl_popup_context=>cs_ui5_msg_type-e.
+    INSERT temp17 INTO TABLE temp16.
+    temp17-type = z2ui5_cl_popup_context=>cs_ui5_msg_type-e.
+    INSERT temp17 INTO TABLE temp16.
+    temp17-type = z2ui5_cl_popup_context=>cs_ui5_msg_type-i.
+    INSERT temp17 INTO TABLE temp16.
+
+    lt_msg = temp16.
+
+
+    ls_count = z2ui5_cl_popup_msgpopover=>count_get( lt_msg ).
 
     cl_abap_unit_assert=>assert_equals( exp = 2
                                         act = ls_count-error ).
@@ -143,7 +246,8 @@ CLASS ltcl_test IMPLEMENTATION.
 
     DATA lt_msg TYPE z2ui5_cl_popup_msgpopover=>ty_t_msg.
 
-    DATA(ls_count) = z2ui5_cl_popup_msgpopover=>count_get( lt_msg ).
+    DATA ls_count TYPE z2ui5_cl_popup_msgpopover=>ty_s_count.
+    ls_count = z2ui5_cl_popup_msgpopover=>count_get( lt_msg ).
 
     cl_abap_unit_assert=>assert_initial( ls_count ).
 
@@ -151,18 +255,37 @@ CLASS ltcl_test IMPLEMENTATION.
 
   METHOD popover_xml_bindings.
 
-    DATA(lv_xml) = z2ui5_cl_popup_msgpopover=>popover_xml( i_items       = `{/MT_MSG}`
+    DATA lv_xml TYPE string.
+    DATA temp4 TYPE xsdboolean.
+    DATA temp5 TYPE xsdboolean.
+    DATA temp6 TYPE xsdboolean.
+    DATA temp7 TYPE xsdboolean.
+    DATA temp8 TYPE xsdboolean.
+    DATA temp9 TYPE xsdboolean.
+    lv_xml = z2ui5_cl_popup_msgpopover=>popover_xml( i_items       = `{/MT_MSG}`
                                                            i_event_close = `.eB(['CLOSE'])`
                                                            i_placement   = z2ui5_cl_popup_msgpopover=>cs_placement-top ).
 
-    cl_abap_unit_assert=>assert_true( xsdbool( lv_xml CS `MessagePopover` ) ).
-    cl_abap_unit_assert=>assert_true( xsdbool( lv_xml CS `{/MT_MSG}` ) ).
-    cl_abap_unit_assert=>assert_true( xsdbool( lv_xml CS `afterClose` ) ).
-    cl_abap_unit_assert=>assert_true( xsdbool( lv_xml CS `placement="Top"` ) ).
-    cl_abap_unit_assert=>assert_true( xsdbool( lv_xml CS `{DESCRIPTION}` ) ).
+
+    temp4 = boolc( lv_xml CS `MessagePopover` ).
+    cl_abap_unit_assert=>assert_true( temp4 ).
+
+    temp5 = boolc( lv_xml CS `{/MT_MSG}` ).
+    cl_abap_unit_assert=>assert_true( temp5 ).
+
+    temp6 = boolc( lv_xml CS `afterClose` ).
+    cl_abap_unit_assert=>assert_true( temp6 ).
+
+    temp7 = boolc( lv_xml CS `placement="Top"` ).
+    cl_abap_unit_assert=>assert_true( temp7 ).
+
+    temp8 = boolc( lv_xml CS `{DESCRIPTION}` ).
+    cl_abap_unit_assert=>assert_true( temp8 ).
 
     lv_xml = z2ui5_cl_popup_msgpopover=>popover_xml( `{/MT_MSG}` ).
-    cl_abap_unit_assert=>assert_false( xsdbool( lv_xml CS `afterClose` ) ).
+
+    temp9 = boolc( lv_xml CS `afterClose` ).
+    cl_abap_unit_assert=>assert_false( temp9 ).
 
   ENDMETHOD.
 
@@ -171,8 +294,14 @@ CLASS ltcl_test IMPLEMENTATION.
     DATA lv_xml     TYPE string.
     DATA lv_open_by TYPE string.
 
-    DATA(lo_pop) = z2ui5_cl_popup_msgpopover=>factory(
-                       i_messages   = VALUE string_table( ( `first message` ) )
+    DATA temp18 TYPE string_table.
+    DATA lo_pop TYPE REF TO z2ui5_cl_popup_msgpopover.
+    DATA temp10 TYPE xsdboolean.
+    CLEAR temp18.
+    INSERT `first message` INTO TABLE temp18.
+
+    lo_pop = z2ui5_cl_popup_msgpopover=>factory(
+                       i_messages   = temp18
                        i_open_by_id = `btnMessages` ).
     client_create( lo_pop ).
 
@@ -180,7 +309,9 @@ CLASS ltcl_test IMPLEMENTATION.
 
     popover_displayed( IMPORTING ev_xml     = lv_xml
                                  ev_open_by = lv_open_by ).
-    cl_abap_unit_assert=>assert_true( xsdbool( lv_xml CS `MessagePopover` ) ).
+
+    temp10 = boolc( lv_xml CS `MessagePopover` ).
+    cl_abap_unit_assert=>assert_true( temp10 ).
     cl_abap_unit_assert=>assert_equals( exp = `btnMessages`
                                         act = lv_open_by ).
     cl_abap_unit_assert=>assert_equals( exp = 1
@@ -190,7 +321,12 @@ CLASS ltcl_test IMPLEMENTATION.
 
   METHOD close_leaves.
 
-    DATA(lo_pop) = z2ui5_cl_popup_msgpopover=>factory( i_messages   = VALUE string_table( ( `msg` ) )
+    DATA temp20 TYPE string_table.
+    DATA lo_pop TYPE REF TO z2ui5_cl_popup_msgpopover.
+    CLEAR temp20.
+    INSERT `msg` INTO TABLE temp20.
+
+    lo_pop = z2ui5_cl_popup_msgpopover=>factory( i_messages   = temp20
                                                        i_open_by_id = `btn` ).
     roundtrip_event( io_app   = lo_pop
                      iv_event = `MSGPOPOVER_CLOSE` ).
@@ -202,7 +338,12 @@ CLASS ltcl_test IMPLEMENTATION.
 
   METHOD close_raises_event.
 
-    DATA(lo_pop) = z2ui5_cl_popup_msgpopover=>factory( i_messages    = VALUE string_table( ( `msg` ) )
+    DATA temp22 TYPE string_table.
+    DATA lo_pop TYPE REF TO z2ui5_cl_popup_msgpopover.
+    CLEAR temp22.
+    INSERT `msg` INTO TABLE temp22.
+
+    lo_pop = z2ui5_cl_popup_msgpopover=>factory( i_messages    = temp22
                                                        i_open_by_id  = `btn`
                                                        i_event_close = `MESSAGES_CLOSED` ).
     roundtrip_event( io_app   = lo_pop
@@ -230,12 +371,27 @@ CLASS ltcl_popup_result IMPLEMENTATION.
 
   METHOD test_closed_is_confirmed.
 
-    DATA(lo_pop) = z2ui5_cl_popup_msgpopover=>factory( i_messages   = VALUE string_table( ( `msg` ) )
+    DATA temp24 TYPE string_table.
+    DATA lo_pop TYPE REF TO z2ui5_cl_popup_msgpopover.
+    DATA temp26 TYPE REF TO z2ui5_if_popup_result.
+    DATA li_result LIKE temp26.
+    DATA temp27 TYPE REF TO z2ui5_cl_popup_msgpopover=>ty_t_msg.
+    DATA lr_msg LIKE temp27.
+    CLEAR temp24.
+    INSERT `msg` INTO TABLE temp24.
+
+    lo_pop = z2ui5_cl_popup_msgpopover=>factory( i_messages   = temp24
                                                        i_open_by_id = `btn` ).
-    DATA(li_result) = CAST z2ui5_if_popup_result( lo_pop ).
+
+    temp26 ?= lo_pop.
+
+    li_result = temp26.
 
     cl_abap_unit_assert=>assert_true( li_result->check_confirmed( ) ).
-    DATA(lr_msg) = CAST z2ui5_cl_popup_msgpopover=>ty_t_msg( li_result->value( ) ).
+
+    temp27 ?= li_result->value( ).
+
+    lr_msg = temp27.
     cl_abap_unit_assert=>assert_equals( exp = 1
                                         act = lines( lr_msg->* ) ).
     cl_abap_unit_assert=>assert_initial( li_result->value_string( ) ).

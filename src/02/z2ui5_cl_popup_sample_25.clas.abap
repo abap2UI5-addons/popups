@@ -20,23 +20,40 @@ ENDCLASS.
 CLASS z2ui5_cl_popup_sample_25 IMPLEMENTATION.
 
   METHOD z2ui5_if_app~main.
+      DATA temp1 TYPE bapirettab.
+      DATA temp2 LIKE LINE OF temp1.
 
     me->client = client.
 
     " the popover hands control back with its event AND check_on_navigated( )
     " at once, so the event arm comes before the navigated arm
-    IF client->check_on_init( ).
-      mt_msg = z2ui5_cl_popup_msgpopover=>msg_get_t( VALUE bapirettab(
-                   ( type = `E` id = `MSG1` number = `001` message = `Storage bin is blocked` )
-                   ( type = `W` id = `MSG1` number = `002` message = `Quantity exceeds the planned quantity` )
-                   ( type = `S` id = `MSG1` number = `003` message = `Handling unit created` ) ) ).
+    IF client->check_on_init( ) IS NOT INITIAL.
+
+      CLEAR temp1.
+
+      temp2-type = `E`.
+      temp2-id = `MSG1`.
+      temp2-number = `001`.
+      temp2-message = `Storage bin is blocked`.
+      INSERT temp2 INTO TABLE temp1.
+      temp2-type = `W`.
+      temp2-id = `MSG1`.
+      temp2-number = `002`.
+      temp2-message = `Quantity exceeds the planned quantity`.
+      INSERT temp2 INTO TABLE temp1.
+      temp2-type = `S`.
+      temp2-id = `MSG1`.
+      temp2-number = `003`.
+      temp2-message = `Handling unit created`.
+      INSERT temp2 INTO TABLE temp1.
+      mt_msg = z2ui5_cl_popup_msgpopover=>msg_get_t( temp1 ).
       view_display( ).
 
     " abap2ui5lint-disable-next-line handler-without-event -- raised by z2ui5_cl_popup_msgpopover, named in i_event_close
-    ELSEIF client->check_on_event( `POPOVER_CLOSED` ).
+    ELSEIF client->check_on_event( `POPOVER_CLOSED` ) IS NOT INITIAL.
       client->message_toast_display( `Message popover closed` ).
 
-    ELSEIF client->check_on_navigated( ).
+    ELSEIF client->check_on_navigated( ) IS NOT INITIAL.
       view_display( ).
 
     ELSE.
@@ -46,30 +63,59 @@ CLASS z2ui5_cl_popup_sample_25 IMPLEMENTATION.
   ENDMETHOD.
 
   METHOD on_event.
+        DATA temp3 TYPE bapirettab.
+        DATA temp4 LIKE LINE OF temp3.
+        DATA temp5 TYPE string_table.
+            DATA lv_dummy TYPE i.
+            DATA lx TYPE REF TO cx_root.
 
     CASE client->get( )-event.
 
       WHEN `POPOVER_BAPIRET`.
+
+        CLEAR temp3.
+
+        temp4-type = `E`.
+        temp4-id = `MSG1`.
+        temp4-number = `001`.
+        temp4-message = `An empty Report field causes an empty XML Message to be sent`.
+        INSERT temp4 INTO TABLE temp3.
+        temp4-type = `W`.
+        temp4-id = `MSG2`.
+        temp4-number = `002`.
+        temp4-message = `Product already in use`.
+        INSERT temp4 INTO TABLE temp3.
+        temp4-type = `S`.
+        temp4-id = `MSG3`.
+        temp4-number = `003`.
+        temp4-message = `Order saved`.
+        INSERT temp4 INTO TABLE temp3.
+        temp4-type = `I`.
+        temp4-id = `MSG4`.
+        temp4-number = `004`.
+        temp4-message = `Delivery date moved`.
+        INSERT temp4 INTO TABLE temp3.
         client->nav_app_call( z2ui5_cl_popup_msgpopover=>factory(
-            i_messages    = VALUE bapirettab(
-                ( type = `E` id = `MSG1` number = `001` message = `An empty Report field causes an empty XML Message to be sent` )
-                ( type = `W` id = `MSG2` number = `002` message = `Product already in use` )
-                ( type = `S` id = `MSG3` number = `003` message = `Order saved` )
-                ( type = `I` id = `MSG4` number = `004` message = `Delivery date moved` ) )
+            i_messages    = temp3
             i_open_by_id  = `btnBapiret`
             i_event_close = `POPOVER_CLOSED` ) ).
 
       WHEN `POPOVER_TEXTS`.
+
+        CLEAR temp5.
+        INSERT `First note` INTO TABLE temp5.
+        INSERT `Second note` INTO TABLE temp5.
         client->nav_app_call( z2ui5_cl_popup_msgpopover=>factory(
-            i_messages   = VALUE string_table( ( `First note` )
-                                               ( `Second note` ) )
+            i_messages   = temp5
             i_open_by_id = `btnTexts`
             i_placement  = z2ui5_cl_popup_msgpopover=>cs_placement-bottom ) ).
 
       WHEN `POPOVER_EXCEPTION`.
         TRY.
-            DATA(lv_dummy) = 1 / 0 ##NEEDED.
-          CATCH cx_root INTO DATA(lx) ##NO_HANDLER.
+
+            lv_dummy = 1 / 0 ##NEEDED.
+
+          CATCH cx_root INTO lx.
         ENDTRY.
         client->nav_app_call( z2ui5_cl_popup_msgpopover=>factory( i_messages   = lx
                                                                   i_open_by_id = `btnException` ) ).
@@ -86,16 +132,22 @@ CLASS z2ui5_cl_popup_sample_25 IMPLEMENTATION.
 
   METHOD view_display.
 
-    DATA(ls_count) = z2ui5_cl_popup_msgpopover=>count_get( mt_msg ).
+    DATA ls_count TYPE z2ui5_cl_popup_msgpopover=>ty_s_count.
+    DATA view TYPE REF TO z2ui5_cl_ui5_view_builder.
+    DATA page TYPE REF TO z2ui5_cl_ui5_view_builder.
+    DATA temp7 TYPE string.
+    ls_count = z2ui5_cl_popup_msgpopover=>count_get( mt_msg ).
 
-    DATA(view) = z2ui5_cl_ui5_view_builder=>factory(
+
+    view = z2ui5_cl_ui5_view_builder=>factory(
                      )->ele( n = `View` ns = `mvc`
                      )->a( n = `xmlns` v = `sap.m`
                      )->a( n = `xmlns:mvc` v = `sap.ui.core.mvc`
                      )->a( n = `displayBlock` v = `true`
                      )->a( n = `height` v = `100%` ).
 
-    DATA(page) = view->ele( `Shell`
+
+    page = view->ele( `Shell`
                      )->ele( `Page`
                      )->a( n = `title` v = `abap2UI5 - Message Popover`
                      )->a( n = `navButtonPress` v = client->_event_nav_app_leave( )
@@ -117,12 +169,18 @@ CLASS z2ui5_cl_popup_sample_25 IMPLEMENTATION.
             )->a( n = `text` v = `Exception`
             )->a( n = `press` v = client->_event( `POPOVER_EXCEPTION` ) ).
 
+
+    IF ls_count-error > 0.
+      temp7 = `Reject`.
+    ELSE.
+      temp7 = `Default`.
+    ENDIF.
     page->ele( `footer`
         )->ele( `OverflowToolbar`
             )->tag( `Button`
             )->a( n = `id` v = `btnMessages`
             )->a( n = `icon` v = ls_count-icon
-            )->a( n = `type` v = COND #( WHEN ls_count-error > 0 THEN `Reject` ELSE `Default` )
+            )->a( n = `type` v = temp7
             )->a( n = `text` t = |{ ls_count-total }|
             )->a( n = `press` v = client->_event( `MESSAGES_OPEN` ) ).
 

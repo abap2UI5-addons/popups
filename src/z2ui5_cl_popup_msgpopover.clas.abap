@@ -32,7 +32,7 @@ CLASS z2ui5_cl_popup_msgpopover DEFINITION PUBLIC.
         id          TYPE string,
         number      TYPE string,
       END OF ty_s_msg.
-    TYPES ty_t_msg TYPE STANDARD TABLE OF ty_s_msg WITH EMPTY KEY.
+    TYPES ty_t_msg TYPE STANDARD TABLE OF ty_s_msg WITH DEFAULT KEY.
 
     TYPES:
       "! the messages per type, and the worst type of them with its icon -
@@ -125,7 +125,7 @@ CLASS z2ui5_cl_popup_msgpopover IMPLEMENTATION.
 
   METHOD factory.
 
-    r_result = NEW #( ).
+    CREATE OBJECT r_result.
     r_result->mt_msg      = msg_get_t( i_messages ).
     r_result->open_by_id  = i_open_by_id.
     r_result->placement   = i_placement.
@@ -137,7 +137,13 @@ CLASS z2ui5_cl_popup_msgpopover IMPLEMENTATION.
 
     DATA ls_msg TYPE ty_s_msg.
 
-    LOOP AT z2ui5_cl_popup_context=>msg_get_t( i_messages ) REFERENCE INTO DATA(lr_row).
+    DATA temp28 TYPE z2ui5_cl_popup_context=>ty_t_msg.
+    DATA temp4 LIKE LINE OF temp28.
+    DATA lr_row LIKE REF TO temp4.
+    temp28 = z2ui5_cl_popup_context=>msg_get_t( i_messages ).
+
+
+    LOOP AT temp28 REFERENCE INTO lr_row.
 
       CLEAR ls_msg.
       ls_msg-type        = z2ui5_cl_popup_context=>ui5_get_msg_type( lr_row->type ).
@@ -157,7 +163,9 @@ CLASS z2ui5_cl_popup_msgpopover IMPLEMENTATION.
 
   METHOD count_get.
 
-    LOOP AT it_msg REFERENCE INTO DATA(lr_msg).
+    DATA temp29 LIKE LINE OF it_msg.
+    DATA lr_msg LIKE REF TO temp29.
+    LOOP AT it_msg REFERENCE INTO lr_msg.
       CASE lr_msg->type.
         WHEN z2ui5_cl_popup_context=>cs_ui5_msg_type-e.
           result-error = result-error + 1.
@@ -196,7 +204,9 @@ CLASS z2ui5_cl_popup_msgpopover IMPLEMENTATION.
 
   METHOD popover_xml.
 
-    DATA(popover) = z2ui5_cl_ui5_view_builder=>factory(
+    DATA popover TYPE REF TO z2ui5_cl_ui5_view_builder.
+    DATA temp30 TYPE string.
+    popover = z2ui5_cl_ui5_view_builder=>factory(
                         )->ele( n = `FragmentDefinition` ns = `core`
                         )->a( n = `xmlns` v = `sap.m`
                         )->a( n = `xmlns:core` v = `sap.ui.core` ).
@@ -204,9 +214,15 @@ CLASS z2ui5_cl_popup_msgpopover IMPLEMENTATION.
     " the caller's own binding and event, built with _bind( ) and _event( )
     " abap2ui5lint-disable-next-line unescaped-text-in-attribute -- a binding path from client->_bind( )
     popover = popover->ele( `MessagePopover` )->a( n = `items` v = i_items ).
-    popover->a( n = `placement` v = COND #( WHEN i_placement = cs_placement-top THEN `Top`
-                                            WHEN i_placement = cs_placement-bottom THEN `Bottom`
-                                            ELSE `Vertical` ) ).
+
+    IF i_placement = cs_placement-top.
+      temp30 = `Top`.
+    ELSEIF i_placement = cs_placement-bottom.
+      temp30 = `Bottom`.
+    ELSE.
+      temp30 = `Vertical`.
+    ENDIF.
+    popover->a( n = `placement` v = temp30 ).
     popover->a( n = `initiallyExpanded` b = abap_true ).
     IF i_event_close IS NOT INITIAL.
       " abap2ui5lint-disable-next-line unescaped-text-in-attribute -- an event from client->_event( )
@@ -226,16 +242,24 @@ CLASS z2ui5_cl_popup_msgpopover IMPLEMENTATION.
 
   METHOD view_display.
 
-    DATA(popover) = z2ui5_cl_ui5_view_builder=>factory(
+    DATA popover TYPE REF TO z2ui5_cl_ui5_view_builder.
+    DATA temp31 TYPE string.
+    popover = z2ui5_cl_ui5_view_builder=>factory(
                         )->ele( n = `FragmentDefinition` ns = `core`
                         )->a( n = `xmlns` v = `sap.m`
                         )->a( n = `xmlns:core` v = `sap.ui.core` ).
 
+
+    IF placement = cs_placement-top.
+      temp31 = `Top`.
+    ELSEIF placement = cs_placement-bottom.
+      temp31 = `Bottom`.
+    ELSE.
+      temp31 = `Vertical`.
+    ENDIF.
     popover->ele( `MessagePopover`
         )->a( n = `items` v = client->_bind( mt_msg )
-        )->a( n = `placement` v = COND #( WHEN placement = cs_placement-top THEN `Top`
-                                          WHEN placement = cs_placement-bottom THEN `Bottom`
-                                          ELSE `Vertical` )
+        )->a( n = `placement` v = temp31
         )->a( n = `initiallyExpanded` b = abap_true
         )->a( n = `afterClose` v = client->_event( `MSGPOPOVER_CLOSE` )
         )->ele( `MessageItem`
@@ -254,14 +278,14 @@ CLASS z2ui5_cl_popup_msgpopover IMPLEMENTATION.
 
     me->client = client.
 
-    IF client->check_on_init( ).
+    IF client->check_on_init( ) IS NOT INITIAL.
       view_display( ).
       RETURN.
-    ELSEIF client->check_on_navigated( ).
+    ELSEIF client->check_on_navigated( ) IS NOT INITIAL.
       view_display( ).
     ENDIF.
 
-    IF client->check_on_event( `MSGPOPOVER_CLOSE` ).
+    IF client->check_on_event( `MSGPOPOVER_CLOSE` ) IS NOT INITIAL.
       client->popover_destroy( ).
       IF event_close IS INITIAL.
         client->nav_app_leave( ).
@@ -281,7 +305,7 @@ CLASS z2ui5_cl_popup_msgpopover IMPLEMENTATION.
 
   METHOD z2ui5_if_popup_result~value.
 
-    result = REF #( mt_msg ).
+    GET REFERENCE OF mt_msg INTO result.
 
   ENDMETHOD.
 

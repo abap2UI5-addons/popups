@@ -17,11 +17,16 @@ ENDCLASS.
 CLASS z2ui5_cl_popup_sample_10 IMPLEMENTATION.
 
   METHOD on_navigation.
+        DATA temp1 TYPE REF TO z2ui5_if_popup_result.
+        DATA popup LIKE temp1.
 
     " every popup hands its result over through z2ui5_if_popup_result
     TRY.
-        DATA(popup) = CAST z2ui5_if_popup_result( client->get_app_prev( ) ).
-        IF popup->check_confirmed( ).
+
+        temp1 ?= client->get_app_prev( ).
+
+        popup = temp1.
+        IF popup->check_confirmed( ) IS NOT INITIAL.
           client->message_box_display( |the input is { popup->value_string( ) }| ).
         ENDIF.
       CATCH cx_root ##NO_HANDLER.
@@ -32,7 +37,8 @@ CLASS z2ui5_cl_popup_sample_10 IMPLEMENTATION.
 
   METHOD view_display.
 
-    DATA(view) = z2ui5_cl_ui5_view_builder=>factory(
+    DATA view TYPE REF TO z2ui5_cl_ui5_view_builder.
+    view = z2ui5_cl_ui5_view_builder=>factory(
                      )->ele( n = `View` ns = `mvc`
                      )->a( n = `xmlns` v = `sap.m`
                      )->a( n = `xmlns:mvc` v = `sap.ui.core.mvc`
@@ -53,9 +59,11 @@ CLASS z2ui5_cl_popup_sample_10 IMPLEMENTATION.
 
 
   METHOD on_event.
+      DATA lo_app TYPE REF TO z2ui5_cl_popup_input_val.
 
     IF client->get( )-event = `POPUP`.
-      DATA(lo_app) = z2ui5_cl_popup_input_val=>factory( text = `Amount of products:` ).
+
+      lo_app = z2ui5_cl_popup_input_val=>factory( text = `Amount of products:` ).
       client->nav_app_call( lo_app ).
     ENDIF.
 

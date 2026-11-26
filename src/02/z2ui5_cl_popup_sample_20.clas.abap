@@ -30,7 +30,7 @@ CLASS z2ui5_cl_popup_sample_20 IMPLEMENTATION.
   METHOD z2ui5_if_app~main.
     me->client = client.
 
-    IF client->check_on_init( ).
+    IF client->check_on_init( ) IS NOT INITIAL.
       on_init( ).
     ENDIF.
 
@@ -47,6 +47,8 @@ CLASS z2ui5_cl_popup_sample_20 IMPLEMENTATION.
   ENDMETHOD.
 
   METHOD on_event.
+        DATA temp1 TYPE z2ui5_cl_popup_shlp=>ty_t_init.
+        DATA temp2 LIKE LINE OF temp1.
 
     CASE client->get( )-event.
 
@@ -62,11 +64,17 @@ CLASS z2ui5_cl_popup_sample_20 IMPLEMENTATION.
       WHEN `CALL_SHLP_PREFILLED`.
         " search help of field USR01-BNAME, its user field prefilled
         mv_target = `USER`.
+
+        CLEAR temp1.
+
+        temp2-name = `BNAME`.
+        temp2-value = mv_prefill.
+        INSERT temp2 INTO TABLE temp1.
         client->nav_app_call( z2ui5_cl_popup_shlp=>factory(
                                   i_table = `USR01`
                                   i_fname = `BNAME`
                                   i_value = mv_user
-                                  it_init = VALUE #( ( name = `BNAME` value = mv_prefill ) ) ) ).
+                                  it_init = temp1 ) ).
 
       WHEN OTHERS.
 
@@ -76,18 +84,24 @@ CLASS z2ui5_cl_popup_sample_20 IMPLEMENTATION.
 
   METHOD render_main.
 
-    DATA(view) = z2ui5_cl_ui5_view_builder=>factory(
+    DATA view TYPE REF TO z2ui5_cl_ui5_view_builder.
+    DATA page TYPE REF TO z2ui5_cl_ui5_view_builder.
+    DATA temp1 TYPE xsdboolean.
+    view = z2ui5_cl_ui5_view_builder=>factory(
                      )->ele( n = `View` ns = `mvc`
                      )->a( n = `xmlns` v = `sap.m`
                      )->a( n = `xmlns:mvc` v = `sap.ui.core.mvc`
                      )->a( n = `xmlns:form` v = `sap.ui.layout.form`
                      )->a( n = `displayBlock` v = `true`
                      )->a( n = `height` v = `100%` ).
-    DATA(page) = view->ele( `Shell`
+
+
+    temp1 = boolc( client->get( )-s_draft-id_prev_app_stack IS NOT INITIAL ).
+    page = view->ele( `Shell`
                      )->ele( `Page`
                      )->a( n = `title` v = `Search-Help by Name and Prefill`
                      )->a( n = `navButtonPress` v = client->_event( `BACK` )
-                     )->a( n = `showNavButton` b = xsdbool( client->get( )-s_draft-id_prev_app_stack IS NOT INITIAL )
+                     )->a( n = `showNavButton` b = temp1
                      )->a( n = `class` v = `sapUiContentPadding` ).
 
     page->ele( n = `SimpleForm` ns = `form`
@@ -125,13 +139,18 @@ CLASS z2ui5_cl_popup_sample_20 IMPLEMENTATION.
   ENDMETHOD.
 
   METHOD on_after_search.
+        DATA temp3 TYPE REF TO z2ui5_if_popup_result.
+        DATA popup LIKE temp3.
 
     IF client->get( )-check_on_navigated = abap_false.
       RETURN.
     ENDIF.
 
     TRY.
-        DATA(popup) = CAST z2ui5_if_popup_result( client->get_app_prev( ) ).
+
+        temp3 ?= client->get_app_prev( ).
+
+        popup = temp3.
 
         IF popup->check_confirmed( ) = abap_false.
           RETURN.

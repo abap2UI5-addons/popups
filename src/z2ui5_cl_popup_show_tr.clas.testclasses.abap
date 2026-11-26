@@ -25,19 +25,30 @@ CLASS ltcl_popup_result IMPLEMENTATION.
 
     " a roundtrip with an event, after the first one - as the button press
     " of the user
-    mo_action = NEW #( NEW z2ui5_cl_ui5_handler( `` ) ).
+    DATA temp2 TYPE REF TO z2ui5_cl_ui5_handler.
+    DATA temp1 TYPE REF TO z2ui5_cl_ui5_client.
+    CREATE OBJECT temp2 TYPE z2ui5_cl_ui5_handler EXPORTING VAL = ``.
+    CREATE OBJECT mo_action EXPORTING VAL = temp2.
     mo_action->mo_app->mo_app = io_app.
     mo_action->mo_app->mv_check_initialized = abap_true.
     mo_action->ms_actual-event = iv_event.
     mo_action->ms_actual-t_event_arg = it_arg.
-    io_app->main( NEW z2ui5_cl_ui5_client( mo_action ) ).
+
+    CREATE OBJECT temp1 TYPE z2ui5_cl_ui5_client EXPORTING ACTION = mo_action.
+    io_app->main( temp1 ).
 
   ENDMETHOD.
 
   METHOD test_initial_not_confirmed.
 
-    DATA(lo_pop) = z2ui5_cl_popup_show_tr=>factory( ).
-    DATA(li_result) = CAST z2ui5_if_popup_result( lo_pop ).
+    DATA lo_pop TYPE REF TO z2ui5_cl_popup_show_tr.
+    DATA temp2 TYPE REF TO z2ui5_if_popup_result.
+    DATA li_result LIKE temp2.
+    lo_pop = z2ui5_cl_popup_show_tr=>factory( ).
+
+    temp2 ?= lo_pop.
+
+    li_result = temp2.
 
     cl_abap_unit_assert=>assert_false( li_result->check_confirmed( ) ).
 
@@ -45,17 +56,39 @@ CLASS ltcl_popup_result IMPLEMENTATION.
 
   METHOD test_confirmed.
 
-    DATA(lo_pop) = z2ui5_cl_popup_show_tr=>factory( ).
-    lo_pop->mt_data = VALUE #( ( transport = `DEVK900000` )
-                               ( transport = `DEVK900001` selkz = abap_true ) ).
+    DATA lo_pop TYPE REF TO z2ui5_cl_popup_show_tr.
+    DATA temp3 LIKE lo_pop->mt_data.
+    DATA temp4 LIKE LINE OF temp3.
+    DATA temp5 TYPE REF TO z2ui5_if_popup_result.
+    DATA li_result LIKE temp5.
+    DATA temp6 TYPE REF TO z2ui5_cl_popup_context=>ty_s_transport.
+    DATA lr_value LIKE temp6.
+    lo_pop = z2ui5_cl_popup_show_tr=>factory( ).
+
+    CLEAR temp3.
+
+    CLEAR temp4.
+    temp4-transport = `DEVK900000`.
+    INSERT temp4 INTO TABLE temp3.
+    CLEAR temp4.
+    temp4-transport = `DEVK900001`.
+    temp4-selkz = abap_true.
+    INSERT temp4 INTO TABLE temp3.
+    lo_pop->mt_data = temp3.
     roundtrip( io_app   = lo_pop
                iv_event = `SELECT` ).
-    DATA(li_result) = CAST z2ui5_if_popup_result( lo_pop ).
+
+    temp5 ?= lo_pop.
+
+    li_result = temp5.
 
     cl_abap_unit_assert=>assert_true( li_result->check_confirmed( ) ).
     cl_abap_unit_assert=>assert_equals( exp = `DEVK900001`
                                         act = li_result->value_string( ) ).
-    DATA(lr_value) = CAST z2ui5_cl_popup_context=>ty_s_transport( li_result->value( ) ).
+
+    temp6 ?= li_result->value( ).
+
+    lr_value = temp6.
     cl_abap_unit_assert=>assert_equals( exp = `DEVK900001`
                                         act = lr_value->transport ).
 
@@ -63,10 +96,16 @@ CLASS ltcl_popup_result IMPLEMENTATION.
 
   METHOD test_cancelled.
 
-    DATA(lo_pop) = z2ui5_cl_popup_show_tr=>factory( ).
+    DATA lo_pop TYPE REF TO z2ui5_cl_popup_show_tr.
+    DATA temp7 TYPE REF TO z2ui5_if_popup_result.
+    DATA li_result LIKE temp7.
+    lo_pop = z2ui5_cl_popup_show_tr=>factory( ).
     roundtrip( io_app   = lo_pop
                iv_event = `CLOSE` ).
-    DATA(li_result) = CAST z2ui5_if_popup_result( lo_pop ).
+
+    temp7 ?= lo_pop.
+
+    li_result = temp7.
 
     cl_abap_unit_assert=>assert_false( li_result->check_confirmed( ) ).
 
@@ -74,13 +113,24 @@ CLASS ltcl_popup_result IMPLEMENTATION.
 
   METHOD test_no_transport.
 
-    DATA(lo_pop) = z2ui5_cl_popup_show_tr=>factory( ).
+    DATA lo_pop TYPE REF TO z2ui5_cl_popup_show_tr.
+    DATA temp8 TYPE REF TO z2ui5_if_popup_result.
+    DATA li_result LIKE temp8.
+    DATA temp9 TYPE REF TO z2ui5_cl_popup_context=>ty_s_transport.
+    DATA lr_value LIKE temp9.
+    lo_pop = z2ui5_cl_popup_show_tr=>factory( ).
     roundtrip( io_app   = lo_pop
                iv_event = `LOCL` ).
-    DATA(li_result) = CAST z2ui5_if_popup_result( lo_pop ).
+
+    temp8 ?= lo_pop.
+
+    li_result = temp8.
 
     cl_abap_unit_assert=>assert_true( li_result->check_confirmed( ) ).
-    DATA(lr_value) = CAST z2ui5_cl_popup_context=>ty_s_transport( li_result->value( ) ).
+
+    temp9 ?= li_result->value( ).
+
+    lr_value = temp9.
     cl_abap_unit_assert=>assert_true( lr_value->locl ).
     cl_abap_unit_assert=>assert_initial( li_result->value_string( ) ).
 
@@ -88,11 +138,24 @@ CLASS ltcl_popup_result IMPLEMENTATION.
 
   METHOD test_select_without_row.
 
-    DATA(lo_pop) = z2ui5_cl_popup_show_tr=>factory( ).
-    lo_pop->mt_data = VALUE #( ( transport = `DEVK900000` ) ).
+    DATA lo_pop TYPE REF TO z2ui5_cl_popup_show_tr.
+    DATA temp10 LIKE lo_pop->mt_data.
+    DATA temp11 LIKE LINE OF temp10.
+    DATA temp12 TYPE REF TO z2ui5_if_popup_result.
+    DATA li_result LIKE temp12.
+    lo_pop = z2ui5_cl_popup_show_tr=>factory( ).
+
+    CLEAR temp10.
+
+    temp11-transport = `DEVK900000`.
+    INSERT temp11 INTO TABLE temp10.
+    lo_pop->mt_data = temp10.
     roundtrip( io_app   = lo_pop
                iv_event = `SELECT` ).
-    DATA(li_result) = CAST z2ui5_if_popup_result( lo_pop ).
+
+    temp12 ?= lo_pop.
+
+    li_result = temp12.
 
     cl_abap_unit_assert=>assert_false( li_result->check_confirmed( ) ).
 
