@@ -129,7 +129,7 @@ CLASS z2ui5_cl_popup_to_select IMPLEMENTATION.
 
     LOOP AT lt_comp INTO DATA(ls_comp).
       cells->tag( `Text`
-          )->a( n = `text` v = |\{{ ls_comp-name }\}| ).
+          )->a( n = `text` v = |\{{ z2ui5_cl_ui5_view_builder=>component_path( ls_comp-name ) }\}| ).
     ENDLOOP.
 
     DATA(columns) = tab->ele( `columns` ).

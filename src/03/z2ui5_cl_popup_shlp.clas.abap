@@ -234,7 +234,7 @@ CLASS z2ui5_cl_popup_shlp IMPLEMENTATION.
     LOOP AT mo_layout->ms_layout-t_layout REFERENCE INTO layout.
 
       cells->ele( `ObjectIdentifier`
-          )->a( n = `text` v = |\{{ layout->fname }\}| ).
+          )->a( n = `text` v = |\{{ z2ui5_cl_ui5_view_builder=>component_path( layout->fname ) }\}| ).
 
     ENDLOOP.
 
