@@ -121,8 +121,8 @@ CLASS z2ui5_cl_popup_to_select IMPLEMENTATION.
                     )->a( n = `search` v = client->_event(
                                val   = `SEARCH`
                                t_arg = VALUE #( ( `${$parameters>/value}` ) ( `${$parameters>/clearButtonPressed}` ) ) )
-                    )->a( n = `confirm` v = client->_event( val   = `CONFIRM`
-                                           arg   = `${$parameters>/selectedContexts[0]/sPath}` )
+                    " the selection comes with the model (ZZSELKZ), not as an argument
+                    )->a( n = `confirm` v = client->_event( `CONFIRM` )
                     )->a( n = `growing` b = abap_true
                     )->a( n = `contentWidth` v = content_width
                     )->a( n = `contentHeight` v = content_height
