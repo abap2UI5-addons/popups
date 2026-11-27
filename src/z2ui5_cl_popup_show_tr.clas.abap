@@ -3,7 +3,6 @@ CLASS z2ui5_cl_popup_show_tr DEFINITION
   CREATE PUBLIC.
 
   PUBLIC SECTION.
-    " abap2ui5lint-disable unbound-public-attribute -- a popup's attributes are its interface to the app that called it, which reads them once the popup returns
     INTERFACES z2ui5_if_app.
     " check_confirmed( ) - a transport request chosen, or No Transport
     " (ms_transport-locl); abap_false when closed or Select without a row;
@@ -37,7 +36,6 @@ CLASS z2ui5_cl_popup_show_tr DEFINITION
     CLASS-METHODS factory
       RETURNING
         VALUE(result) TYPE REF TO z2ui5_cl_popup_show_tr.
-    " abap2ui5lint-enable unbound-public-attribute
 
   PROTECTED SECTION.
     METHODS on_init.

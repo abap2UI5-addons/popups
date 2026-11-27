@@ -75,7 +75,7 @@ CLASS z2ui5_cl_popup_messages IMPLEMENTATION.
     popup->ele( `MessageView`
         )->a( n = `items` v = client->_bind( mt_msg )
         )->ele( `MessageItem`
-        )->a( n = `type` v = `{TYPE}`
+        )->a( n = `type` v = `{= ${TYPE} || 'None' }`
         )->a( n = `title` v = `{TITLE}`
         )->a( n = `subtitle` v = `{SUBTITLE}` ).
 

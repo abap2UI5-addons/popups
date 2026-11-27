@@ -612,7 +612,7 @@ CLASS z2ui5_cl_popup_dtel_srch IMPLEMENTATION.
           )->tag( `Text`
           )->a( n = `text` t = ls_col-text ).
       cells->tag( `Text`
-          )->a( n = `text` v = |\{{ ls_col-name }\}| ).
+          )->a( n = `text` v = |\{{ z2ui5_cl_ui5_view_builder=>component_path( ls_col-name ) }\}| ).
     ENDLOOP.
 
     IF embedded = abap_true.

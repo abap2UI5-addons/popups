@@ -26,6 +26,13 @@
   // counted and never listed, a NEW one fails normally, and an entry whose
   // finding is gone is stale and fails too - so this file only shrinks.
   // Refresh it with `npx abap2ui5lint --update-baseline` after fixing things.
+  //
+  // One entry came later, with @abap2ui5/linter 0.13.0: start-param-by-hand
+  // in z2ui5_cl_popup_shlp=>get_layout, which reads `app` from the URL query
+  // as handle03 of the layout-management variants. client->get_start_param( )
+  // would also read the launchpad tile and intent, so inside the launchpad the
+  // handle - and with it which saved layouts a user sees - would change. That
+  // is a decision about stored variants, not a lint fix.
   "baseline": "abap2ui5lint-baseline.json",
 
   // The two README badges, rewritten on every run. They say two different
