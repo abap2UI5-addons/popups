@@ -214,7 +214,7 @@ CLASS z2ui5_cl_popup_msgpopover IMPLEMENTATION.
     ENDIF.
 
     popover->ele( `MessageItem`
-        )->a( n = `type` v = `{TYPE}`
+        )->a( n = `type` v = `{= ${TYPE} || 'None' }`
         )->a( n = `title` v = `{TITLE}`
         )->a( n = `subtitle` v = `{SUBTITLE}`
         )->a( n = `description` v = `{DESCRIPTION}`
@@ -239,7 +239,7 @@ CLASS z2ui5_cl_popup_msgpopover IMPLEMENTATION.
         )->a( n = `initiallyExpanded` b = abap_true
         )->a( n = `afterClose` v = client->_event( `MSGPOPOVER_CLOSE` )
         )->ele( `MessageItem`
-        )->a( n = `type` v = `{TYPE}`
+        )->a( n = `type` v = `{= ${TYPE} || 'None' }`
         )->a( n = `title` v = `{TITLE}`
         )->a( n = `subtitle` v = `{SUBTITLE}`
         )->a( n = `description` v = `{DESCRIPTION}`
