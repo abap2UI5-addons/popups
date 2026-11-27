@@ -233,7 +233,7 @@ CLASS z2ui5_cl_popup_shlp IMPLEMENTATION.
 
         client->popup_destroy( ).
 
-        client->nav_app_leave( client->get_app( client->get( )-s_draft-id_prev_app_stack ) ).
+        client->nav_app_leave( ).
 
       WHEN `SHLP_ROW_SELECT`.
 
@@ -251,7 +251,7 @@ CLASS z2ui5_cl_popup_shlp IMPLEMENTATION.
 
         client->popup_destroy( ).
 
-        client->nav_app_leave( client->get_app( client->get( )-s_draft-id_prev_app_stack ) ).
+        client->nav_app_leave( ).
 
       WHEN 'SHLP_INPUT_DONE'.
 
@@ -312,8 +312,10 @@ CLASS z2ui5_cl_popup_shlp IMPLEMENTATION.
     DATA(layout) = z2ui5_cl_popup_value_help=>get_layout_back( client ).
     IF layout IS BOUND.
       mo_layout = layout.
-      render_view( ).
     ENDIF.
+    " back from the layout popup, or a restored draft (browser Forward, a
+    " reload) whose popup went with the page - show it (again)
+    render_view( ).
 
   ENDMETHOD.
 

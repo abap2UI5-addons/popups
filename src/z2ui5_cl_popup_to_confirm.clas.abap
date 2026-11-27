@@ -105,20 +105,23 @@ CLASS z2ui5_cl_popup_to_confirm IMPLEMENTATION.
     IF client->check_on_init( ).
       view_display( ).
       RETURN.
+    ELSEIF client->check_on_navigated( ).
+      " a restored draft (browser Forward, a reload): the popup went with
+      " the page - show it again
+      view_display( ).
+      RETURN.
     ENDIF.
 
     CASE client->get( )-event.
       WHEN `BUTTON_CONFIRM`.
         check_result_confirmed = abap_true.
         client->popup_destroy( ).
-        client->nav_app_leave( app   = client->get_app_prev( )
-                               event = event_confirm ).
+        client->nav_app_leave( event = event_confirm ).
 
       WHEN `BUTTON_CANCEL`.
         check_result_confirmed = abap_false.
         client->popup_destroy( ).
-        client->nav_app_leave( app   = client->get_app_prev( )
-                               event = event_canceled ).
+        client->nav_app_leave( event = event_canceled ).
     ENDCASE.
 
   ENDMETHOD.

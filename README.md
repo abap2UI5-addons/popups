@@ -266,7 +266,7 @@ the search reach it.
 * Messages, Error & Input Validation (`z2ui5_cl_popup_messages`, `z2ui5_cl_popup_error`, `z2ui5_cl_popup_input_val`)
 * Message popover - a MessagePopover with a count per type, opened by a control of your view (`z2ui5_cl_popup_msgpopover`)
 * Range Selection (`z2ui5_cl_popup_get_range`, `z2ui5_cl_popup_get_ranges`)
-* Image Editor & JS Loader (`z2ui5_cl_popup_image_edit`, `z2ui5_cl_popup_js_loader`)
+* Image Editor & JS Loader (`z2ui5_cl_popup_image_edit`, `z2ui5_cl_popup_js_loader` - only `factory_check_open_ui5`, whether the frontend runs OpenUI5; the script of `factory( i_js )` is not run any more, since abap2UI5 has no path for raw JavaScript - ship frontend code as a custom control)
 * Value-Help & Search-Help - a search help opened by field or by name, with prefilled fields (`z2ui5_cl_popup_value_help`, `z2ui5_cl_popup_shlp`)
 * Calculator built with CSS grid (`z2ui5_cl_popup_calculator`)
 * Developer text search - data elements (DD04T) and messages (T100) in two languages (`z2ui5_cl_popup_dtel_srch`, `z2ui5_cl_popup_msg_search`)

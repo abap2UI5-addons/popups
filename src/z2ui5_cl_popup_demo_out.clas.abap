@@ -86,7 +86,6 @@ CLASS z2ui5_cl_popup_demo_out IMPLEMENTATION.
                       )->ele( n = `FragmentDefinition` ns = `core`
                       )->a( n = `xmlns` v = `sap.m`
                       )->a( n = `xmlns:core` v = `sap.ui.core`
-                      )->a( n = `xmlns:html` v = `http://www.w3.org/1999/xhtml`
                       )->ele( `Dialog`
                       )->a( n = `title` t = title
                       )->a( n = `icon` v = icon
@@ -97,10 +96,8 @@ CLASS z2ui5_cl_popup_demo_out IMPLEMENTATION.
                       )->ele( `content`
                       )->ele( `VBox`
                       )->a( n = `class` v = `sapUiMediumMargin`
-                      )->tag( n = `ZZPLAIN` ns = `html`
-                      )->a( n = `VALUE` v = get_style( )
                       )->ele( n = `HTML` ns = `core`
-                      )->a( n = `content` t = html
+                      )->a( n = `content` t = get_style( ) && html
                       )->end(
                       )->end(
                       )->end(
@@ -125,7 +122,6 @@ CLASS z2ui5_cl_popup_demo_out IMPLEMENTATION.
                      )->a( n = `xmlns` v = `sap.m`
                      )->a( n = `xmlns:mvc` v = `sap.ui.core.mvc`
                      )->a( n = `xmlns:core` v = `sap.ui.core`
-                     )->a( n = `xmlns:html` v = `http://www.w3.org/1999/xhtml`
                      )->a( n = `displayBlock` v = `true`
                      )->a( n = `height` v = `100%`
                      )->ele( `Shell`
@@ -143,10 +139,8 @@ CLASS z2ui5_cl_popup_demo_out IMPLEMENTATION.
     page->ele( `content`
         )->ele( `VBox`
         )->a( n = `class` v = `sapUiMediumMargin`
-        )->tag( n = `ZZPLAIN` ns = `html`
-        )->a( n = `VALUE` v = get_style( )
         )->ele( n = `HTML` ns = `core`
-        )->a( n = `content` t = html ).
+        )->a( n = `content` t = get_style( ) && html ).
 
     client->view_display( page->stringify( ) ).
 
@@ -183,7 +177,12 @@ CLASS z2ui5_cl_popup_demo_out IMPLEMENTATION.
 
   METHOD get_style.
 
-    result = `<html:style type="text/css">` && |\n| &&
+    " a style element in front of the output, inside the core:HTML content:
+    " the view builder has no raw-text node (the ZZPLAIN pseudo-tag of the
+    " old xml_view is rendered as an element of its own, so the CSS never
+    " reached the page)
+    result = `<style type="text/css">` && |\n| &&
+              " abap2ui5lint-disable-next-line unescaped-brace-in-style -- plain CSS: render_popup( ) and render_page( ) pass it through `t =`, which escapes every brace
               `  body {` && |\n| &&
               `    font-family: Arial;` && |\n| &&
               `    font-size: 90%;` && |\n| &&
@@ -269,7 +268,7 @@ CLASS z2ui5_cl_popup_demo_out IMPLEMENTATION.
               `    background-color: #D1D1D1;` && |\n| &&
               `    padding: 4px;` && |\n| &&
               `  }` && |\n| &&
-              `</html:style>`.
+              `</style>`.
 
   ENDMETHOD.
 

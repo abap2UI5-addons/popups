@@ -38,6 +38,11 @@ CLASS z2ui5_cl_popup_show_tr DEFINITION
         VALUE(result) TYPE REF TO z2ui5_cl_popup_show_tr.
 
   PROTECTED SECTION.
+    "! the requests bus_tr_read( ) offered - the server's own copy of
+    "! mt_data: mt_data is bound to the browser, which can rewrite any of its
+    "! cells, so SELECT takes only the position of the selected row from it
+    DATA mt_data_read TYPE z2ui5_cl_popup_context=>ty_t_data.
+
     METHODS on_init.
     METHODS render_view.
     METHODS on_event.
@@ -64,7 +69,8 @@ CLASS z2ui5_cl_popup_show_tr IMPLEMENTATION.
 
   METHOD on_init.
 
-    mt_data = z2ui5_cl_popup_context=>bus_tr_read( ).
+    mt_data      = z2ui5_cl_popup_context=>bus_tr_read( ).
+    mt_data_read = mt_data.
 
   ENDMETHOD.
 
@@ -125,13 +131,20 @@ CLASS z2ui5_cl_popup_show_tr IMPLEMENTATION.
 
         CLEAR ms_transport.
         client->popup_destroy( ).
-        client->nav_app_leave( client->get_app( client->get( )-s_draft-id_prev_app_stack ) ).
+        client->nav_app_leave( ).
 
       WHEN `SELECT`.
 
-        ASSIGN mt_data[ selkz = abap_true ] TO FIELD-SYMBOL(<line>).
-        IF <line> IS ASSIGNED.
-          ms_transport = <line>.
+        " the request and task come from what bus_tr_read( ) offered, not
+        " from the bound row: a crafted request could otherwise name any
+        " task, and add_data_to_tranport( ) records on it
+        DATA(lv_index) = line_index( mt_data[ selkz = abap_true ] ).
+        IF lv_index > 0.
+          ASSIGN mt_data_read[ lv_index ] TO FIELD-SYMBOL(<line>).
+          IF <line> IS ASSIGNED.
+            ms_transport = <line>.
+            ms_transport-selkz = abap_true.
+          ENDIF.
         ENDIF.
 
         client->popup_destroy( ).

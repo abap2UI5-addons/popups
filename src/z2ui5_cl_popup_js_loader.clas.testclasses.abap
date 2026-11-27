@@ -101,16 +101,19 @@ CLASS ltcl_test_roundtrip IMPLEMENTATION.
 
   METHOD test_init_displays_script.
 
+    " i_js is not run any more (abap2UI5 has no path for raw JavaScript):
+    " no popup with a dead script element, no timer - the app leaves at
+    " once and still answers i_result
     DATA(lo_pop) = z2ui5_cl_popup_js_loader=>factory( `console.log('x');` ).
     client_create( lo_pop ).
 
     lo_pop->z2ui5_if_app~main( mi_client ).
 
-    DATA(lv_xml) = popup_xml( ).
-    cl_abap_unit_assert=>assert_true( xsdbool( lv_xml CS `script` ) ).
-    cl_abap_unit_assert=>assert_false( xsdbool( lv_xml CS `z2ui5.cc` ) ).
-    cl_abap_unit_assert=>assert_equals( exp = VALUE string_table( ( `["START_TIMER","TIMER_FINISHED","0"]` ) )
-                                        act = follow_up_actions( ) ).
+    cl_abap_unit_assert=>assert_initial( popup_xml( ) ).
+    cl_abap_unit_assert=>assert_initial( follow_up_actions( ) ).
+    cl_abap_unit_assert=>assert_bound( mo_action->ms_next-o_app_leave ).
+    cl_abap_unit_assert=>assert_equals( exp = `LOADED`
+                                        act = lo_pop->result( ) ).
 
   ENDMETHOD.
 

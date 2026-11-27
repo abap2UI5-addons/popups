@@ -125,6 +125,7 @@ CLASS ltcl_test_roundtrip DEFINITION FINAL
     METHODS test_toggle_fullscreen   FOR TESTING RAISING cx_static_check.
     METHODS test_confirm_closes      FOR TESTING RAISING cx_static_check.
     METHODS test_braces_escaped_once FOR TESTING RAISING cx_static_check.
+    METHODS test_style_in_content    FOR TESTING RAISING cx_static_check.
 
 ENDCLASS.
 
@@ -195,6 +196,22 @@ CLASS ltcl_test_roundtrip IMPLEMENTATION.
     DATA(lv_xml) = popup_xml( ).
     cl_abap_unit_assert=>assert_true( xsdbool( lv_xml CS `body \{ color: red; \}` ) ).
     cl_abap_unit_assert=>assert_false( xsdbool( lv_xml CS `\\` ) ).
+
+  ENDMETHOD.
+
+  METHOD test_style_in_content.
+
+    " the popup's CSS travels in the core:HTML content - a ZZPLAIN pseudo-tag
+    " is an element of its own for the view builder, and the CSS was lost
+    DATA(lo_pop) = z2ui5_cl_popup_demo_out=>factory( NEW lcl_output_stub( ) ).
+    client_create( lo_pop ).
+
+    lo_pop->z2ui5_if_app~main( mi_client ).
+
+    DATA(lv_xml) = popup_xml( ).
+    cl_abap_unit_assert=>assert_true( xsdbool( lv_xml CS `&lt;/style&gt;` ) ).
+    cl_abap_unit_assert=>assert_true( xsdbool( lv_xml CS `span.heading1 \{` ) ).
+    cl_abap_unit_assert=>assert_false( xsdbool( lv_xml CS `ZZPLAIN` ) ).
 
   ENDMETHOD.
 

@@ -26,6 +26,7 @@ CLASS ltcl_test DEFINITION FINAL
     METHODS test_required_stays     FOR TESTING RAISING cx_static_check.
     METHODS test_confirm_values     FOR TESTING RAISING cx_static_check.
     METHODS test_cancel             FOR TESTING RAISING cx_static_check.
+    METHODS test_client_cannot_redefine FOR TESTING RAISING cx_static_check.
 
 ENDCLASS.
 
@@ -92,6 +93,41 @@ CLASS ltcl_test IMPLEMENTATION.
 
     cl_abap_unit_assert=>assert_false( lo_pop->result( )-check_confirmed ).
     cl_abap_unit_assert=>assert_true( popup_destroyed( ) ).
+
+  ENDMETHOD.
+
+  METHOD test_client_cannot_redefine.
+
+    " mt_field is bound: a crafted request can change a read-only value,
+    " clear REQUIRED or pick a key the listbox does not offer - none of it
+    " reaches the result
+    DATA(lo_pop) = z2ui5_cl_popup_get_values=>factory(
+        i_fields  = VALUE #( ( name = `CARRID` text = `Airline` required = abap_true )
+                             ( name = `CURR` text = `Currency` value = `EUR` read_only = abap_true )
+                             ( name = `CLASS` text = `Class` kind = z2ui5_cl_popup_get_values=>cs_kind-listbox ) )
+        i_listbox = VALUE #( ( name = `CLASS` key = `Y` text = `Economy` ) ) ).
+    lo_pop->mt_field[ 1 ]-required = abap_false.
+    lo_pop->mt_field[ 2 ]-value = `USD`.
+    lo_pop->mt_field[ 2 ]-read_only = abap_false.
+    lo_pop->mt_field[ 3 ]-value = `F`.
+    roundtrip_event( io_app   = lo_pop
+                     iv_event = `BUTTON_CONFIRM` ).
+
+    cl_abap_unit_assert=>assert_false( lo_pop->result( )-check_confirmed ).
+    cl_abap_unit_assert=>assert_false( popup_destroyed( ) ).
+
+    lo_pop->mt_field[ 1 ]-value = `LH`.
+    lo_pop->mt_field[ 2 ]-value = `USD`.
+    lo_pop->mt_field[ 3 ]-value = `F`.
+    roundtrip_event( io_app   = lo_pop
+                     iv_event = `BUTTON_CONFIRM` ).
+
+    cl_abap_unit_assert=>assert_true( lo_pop->result( )-check_confirmed ).
+    cl_abap_unit_assert=>assert_equals( exp = `LH`
+                                        act = lo_pop->result_value( `CARRID` ) ).
+    cl_abap_unit_assert=>assert_equals( exp = `EUR`
+                                        act = lo_pop->result_value( `CURR` ) ).
+    cl_abap_unit_assert=>assert_initial( lo_pop->result_value( `CLASS` ) ).
 
   ENDMETHOD.
 
