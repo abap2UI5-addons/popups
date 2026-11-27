@@ -183,6 +183,7 @@ CLASS ltcl_test_roundtrip DEFINITION FINAL
     METHODS test_confirm_selected_row FOR TESTING RAISING cx_static_check.
     METHODS test_cancel               FOR TESTING RAISING cx_static_check.
     METHODS test_search_filters       FOR TESTING RAISING cx_static_check.
+    METHODS test_multi_keeps_selection FOR TESTING RAISING cx_static_check.
 
 ENDCLASS.
 
@@ -305,6 +306,43 @@ CLASS ltcl_test_roundtrip IMPLEMENTATION.
     ASSIGN lo_pop->mr_tab_popup->* TO <lt_pop>.
     cl_abap_unit_assert=>assert_equals( exp = 1
                                         act = lines( <lt_pop> ) ).
+
+  ENDMETHOD.
+
+  METHOD test_multi_keeps_selection.
+
+    " a row ticked before a search is still ticked after it, and confirmed
+    " with the one ticked in the search result
+    DATA(lt_tab) = VALUE ty_t_tab( ( name = `alpha` count = 1 )
+                                   ( name = `bravo` count = 2 )
+                                   ( name = `charlie` count = 3 ) ).
+    DATA(lo_pop) = z2ui5_cl_popup_to_select=>factory( i_tab         = lt_tab
+                                                    i_multiselect = abap_true ).
+    client_create( lo_pop ).
+    lo_pop->z2ui5_if_app~main( mi_client ).
+    mo_action->mo_app->mv_check_initialized = abap_true.
+
+    select_row( io_pop   = lo_pop
+                iv_index = 1 ).
+
+    mo_action->ms_actual-event = `SEARCH`.
+    mo_action->ms_actual-t_event_arg = VALUE #( ( `charlie` ) ).
+    lo_pop->z2ui5_if_app~main( mi_client ).
+    select_row( io_pop   = lo_pop
+                iv_index = 1 ).
+
+    mo_action->ms_actual-event = `CONFIRM`.
+    CLEAR mo_action->ms_actual-t_event_arg.
+    lo_pop->z2ui5_if_app~main( mi_client ).
+
+    DATA lt_result TYPE ty_t_tab.
+    FIELD-SYMBOLS <lt_result> TYPE STANDARD TABLE.
+    DATA(ls_result) = lo_pop->result( ).
+    ASSIGN ls_result-table->* TO <lt_result>.
+    lt_result = <lt_result>.
+    cl_abap_unit_assert=>assert_equals( exp = VALUE ty_t_tab( ( name = `alpha` count = 1 )
+                                                              ( name = `charlie` count = 3 ) )
+                                        act = lt_result ).
 
   ENDMETHOD.
 
