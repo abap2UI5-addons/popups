@@ -170,6 +170,11 @@ CLASS z2ui5_cl_popup_to_select IMPLEMENTATION.
       set_output_table( ).
       display( ).
       RETURN.
+    ELSEIF client->check_on_navigated( ).
+      " a restored draft (browser Forward, a reload): the popup went with
+      " the page - show it again
+      display( ).
+      RETURN.
     ENDIF.
 
     on_event( ).

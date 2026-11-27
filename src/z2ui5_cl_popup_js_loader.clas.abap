@@ -108,6 +108,11 @@ CLASS z2ui5_cl_popup_js_loader IMPLEMENTATION.
 
       view_display( ).
       RETURN.
+    ELSEIF client->check_on_navigated( ).
+      " a restored draft (browser Forward, a reload): the popup went with
+      " the page - show it again
+      view_display( ).
+      RETURN.
     ENDIF.
 
     IF client->get( )-event = `TIMER_FINISHED`.

@@ -312,8 +312,10 @@ CLASS z2ui5_cl_popup_shlp IMPLEMENTATION.
     DATA(layout) = z2ui5_cl_popup_value_help=>get_layout_back( client ).
     IF layout IS BOUND.
       mo_layout = layout.
-      render_view( ).
     ENDIF.
+    " back from the layout popup, or a restored draft (browser Forward, a
+    " reload) whose popup went with the page - show it (again)
+    render_view( ).
 
   ENDMETHOD.
 

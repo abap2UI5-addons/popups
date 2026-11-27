@@ -178,6 +178,11 @@ CLASS z2ui5_cl_popup_get_range IMPLEMENTATION.
 
       view_display( ).
       RETURN.
+    ELSEIF client->check_on_navigated( ).
+      " a restored draft (browser Forward, a reload): the popup went with
+      " the page - show it again
+      view_display( ).
+      RETURN.
     ENDIF.
 
     CASE client->get( )-event.

@@ -420,11 +420,18 @@ CLASS z2ui5_cl_popup_value_help IMPLEMENTATION.
 
   METHOD on_after_layout.
 
+    " only relevant when returning from another app - or on a restored draft
+    IF client->check_on_navigated( ) = abap_false OR mv_check_tab IS INITIAL.
+      RETURN.
+    ENDIF.
+
     DATA(layout) = get_layout_back( client ).
     IF layout IS BOUND.
       mo_layout = layout.
-      render_view( ).
     ENDIF.
+    " back from the layout popup, or a restored draft (browser Forward, a
+    " reload) whose popup went with the page - show it (again)
+    render_view( ).
 
   ENDMETHOD.
 
