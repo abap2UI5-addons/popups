@@ -445,10 +445,13 @@ CLASS z2ui5_cl_popup_value_help IMPLEMENTATION.
 
     DATA(class) = z2ui5_cl_popup_context=>rtti_get_classname_by_ref( me ).
 
+    " the layout belongs to the check table whose rows it shows - under the
+    " table of the field, the fields of one table with different check
+    " tables shared one layout of different columns
     mo_layout = z2ui5_cl_layo_manager=>factory( control  = z2ui5_cl_layo_manager=>m_table
                                                 data     = mt_data
                                                 handle01 = class
-                                                handle02 = mv_table
+                                                handle02 = mv_check_tab
                                                 handle03 = 'F4'  ).
 
   ENDMETHOD.

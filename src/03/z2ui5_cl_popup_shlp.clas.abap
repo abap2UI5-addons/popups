@@ -128,12 +128,19 @@ CLASS z2ui5_cl_popup_shlp IMPLEMENTATION.
     DATA(app) = z2ui5_cl_popup_context=>url_param_get( val = 'app'
                                               url = client->get( )-s_config-search ).
 
+    " opened by table and field, mv_searchhelp is empty - the layout is the
+    " one of the search help determined for the field, not one shared by
+    " every search help with a parameter of that name
+    DATA(searchhelp) = COND string( WHEN mv_searchhelp IS NOT INITIAL
+                                    THEN mv_searchhelp
+                                    ELSE ms_shlp-shlpname ).
+
     mo_layout = z2ui5_cl_layo_manager=>factory( control  = z2ui5_cl_layo_manager=>m_table
                                                 data     = mt_data
                                                 handle01 = class
                                                 handle02 = mv_shlpfield
                                                 handle03 = app
-                                                handle04 = mv_searchhelp ).
+                                                handle04 = searchhelp ).
 
   ENDMETHOD.
 
