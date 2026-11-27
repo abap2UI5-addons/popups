@@ -25,8 +25,11 @@ CLASS z2ui5_cl_popup_shlp DEFINITION
     DATA mv_table        TYPE string.
     DATA mv_fname        TYPE string.
     DATA mv_shlpfield    TYPE string.
+    " deprecated: the value of factory( i_value ) - the popup does not use
+    " it; a prefill goes into it_init (name and value)
     DATA mv_value        TYPE string.
     DATA mv_return_value TYPE string.
+    " deprecated: never read - F4IF_SELECT_VALUES reads without a row limit
     DATA mv_rows         TYPE int1 VALUE '50' ##NEEDED.
     DATA mt_data         TYPE REF TO data.
     DATA ms_data_row     TYPE REF TO data.
@@ -128,12 +131,19 @@ CLASS z2ui5_cl_popup_shlp IMPLEMENTATION.
     DATA(app) = z2ui5_cl_popup_context=>url_param_get( val = 'app'
                                               url = client->get( )-s_config-search ).
 
+    " opened by table and field, mv_searchhelp is empty - the layout is the
+    " one of the search help determined for the field, not one shared by
+    " every search help with a parameter of that name
+    DATA(searchhelp) = COND string( WHEN mv_searchhelp IS NOT INITIAL
+                                    THEN mv_searchhelp
+                                    ELSE ms_shlp-shlpname ).
+
     mo_layout = z2ui5_cl_layo_manager=>factory( control  = z2ui5_cl_layo_manager=>m_table
                                                 data     = mt_data
                                                 handle01 = class
                                                 handle02 = mv_shlpfield
                                                 handle03 = app
-                                                handle04 = mv_searchhelp ).
+                                                handle04 = searchhelp ).
 
   ENDMETHOD.
 
@@ -202,41 +212,11 @@ CLASS z2ui5_cl_popup_shlp IMPLEMENTATION.
                                                         client = client
                                                         layout = mo_layout ).
 
-    DATA(columns) = table->ele( `columns` ).
-
-    LOOP AT mo_layout->ms_layout-t_layout REFERENCE INTO DATA(layout).
-      DATA(lv_index) = sy-tabix.
-
-      columns->ele( `Column`
-          )->a( n = `visible` v = client->_bind( val       = layout->visible
-                                                        tab       = mo_layout->ms_layout-t_layout
-                                                        tab_index = lv_index )
-          )->a( n = `mergeDuplicates` v = client->_bind( val       = layout->merge
-                                                        tab       = mo_layout->ms_layout-t_layout
-                                                        tab_index = lv_index )
-          )->a( n = `minScreenWidth` v = client->_bind( val       = layout->width
-                                                        tab       = mo_layout->ms_layout-t_layout
-                                                        tab_index = lv_index )
-          )->tag( `Text`
-          )->a( n = `text` v = z2ui5_cl_popup_context=>rtti_get_data_element_text_l( layout->rollname ) ).
-
-    ENDLOOP.
-
-    DATA(cells) = columns->end(
-                      )->ele( `items`
-                      )->ele( `ColumnListItem`
-                      )->a( n = `vAlign` v = `Middle`
-                      )->a( n = `type` v = `Navigation`
-                      )->a( n = `press` v = client->_event( val   = 'SHLP_ROW_SELECT'
-                                                                    arg   = `${ROW_ID}` )
-                      )->ele( `cells` ).
-
-    LOOP AT mo_layout->ms_layout-t_layout REFERENCE INTO layout.
-
-      cells->ele( `ObjectIdentifier`
-          )->a( n = `text` v = |\{{ z2ui5_cl_ui5_view_builder=>component_path( layout->fname ) }\}| ).
-
-    ENDLOOP.
+    z2ui5_cl_popup_value_help=>render_columns( table             = table
+                                               client            = client
+                                               layout            = mo_layout
+                                               event             = `SHLP_ROW_SELECT`
+                                               label_by_rollname = abap_true ).
 
     client->popup_display( popup->stringify( ) ).
 
@@ -244,7 +224,8 @@ CLASS z2ui5_cl_popup_shlp IMPLEMENTATION.
 
   METHOD on_event.
 
-    FIELD-SYMBOLS <tab> TYPE STANDARD TABLE.
+    DATA lv_value TYPE string.
+    DATA lv_found TYPE abap_bool.
 
     CASE client->get( )-event.
 
@@ -256,27 +237,16 @@ CLASS z2ui5_cl_popup_shlp IMPLEMENTATION.
 
       WHEN `SHLP_ROW_SELECT`.
 
-        DATA(lt_arg) = client->get( )-t_event_arg.
-        " an event without the row index raised CX_SY_ITAB_LINE_NOT_FOUND
-        IF lt_arg IS INITIAL.
+        z2ui5_cl_popup_value_help=>read_row_value( EXPORTING data  = mt_data
+                                                             t_arg = client->get( )-t_event_arg
+                                                             fname = mv_shlpfield
+                                                   IMPORTING value = lv_value
+                                                             found = lv_found ).
+        IF lv_found = abap_false.
           RETURN.
         ENDIF.
 
-        ASSIGN mt_data->* TO <tab>.
-
-        ASSIGN <tab>[ lt_arg[ 1 ] ] TO FIELD-SYMBOL(<row>).
-        " the index comes from the client - a row that is not there must not
-        " reach ASSIGN COMPONENT on an unassigned field symbol
-        IF <row> IS NOT ASSIGNED.
-          RETURN.
-        ENDIF.
-
-        ASSIGN COMPONENT mv_shlpfield OF STRUCTURE <row> TO FIELD-SYMBOL(<value>).
-        IF sy-subrc <> 0.
-          RETURN.
-        ENDIF.
-
-        mv_return_value = <value>.
+        mv_return_value = lv_value.
         mv_check_confirmed = abap_true.
 
         client->popup_destroy( ).
@@ -335,14 +305,14 @@ CLASS z2ui5_cl_popup_shlp IMPLEMENTATION.
   METHOD on_after_layout.
 
     " only relevant when returning from another app
-    IF client->check_on_navigated( ).
-      TRY.
-          DATA(app) = CAST z2ui5_cl_layo_pop( client->get_app( client->get( )-s_draft-id_prev_app ) ).
-          mo_layout = app->mo_layout.
-          render_view( ).
+    IF client->check_on_navigated( ) = abap_false.
+      RETURN.
+    ENDIF.
 
-        CATCH cx_root ##NO_HANDLER.
-      ENDTRY.
+    DATA(layout) = z2ui5_cl_popup_value_help=>get_layout_back( client ).
+    IF layout IS BOUND.
+      mo_layout = layout.
+      render_view( ).
     ENDIF.
 
   ENDMETHOD.

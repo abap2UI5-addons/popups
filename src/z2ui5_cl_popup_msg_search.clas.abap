@@ -6,7 +6,10 @@
 "! T100 is reached by name only (dynamic FROM), so the class also compiles on
 "! ABAP Cloud, where it is not released - there the popup shows that the
 "! search is not available.
-CLASS z2ui5_cl_popup_msg_search DEFINITION PUBLIC.
+CLASS z2ui5_cl_popup_msg_search DEFINITION PUBLIC
+  " z2ui5_cl_popup_dtel_srch is the same popup over data elements - it takes
+  " the languages and the LIKE pattern from the static helpers below
+  GLOBAL FRIENDS z2ui5_cl_popup_dtel_srch.
 
   PUBLIC SECTION.
     " abap2ui5lint-disable unbound-public-attribute -- a popup's attributes are its interface to the app that called it, which reads them once the popup returns
@@ -157,6 +160,31 @@ CLASS z2ui5_cl_popup_msg_search DEFINITION PUBLIC.
         VALUE(result) TYPE string.
 
   PRIVATE SECTION.
+    "! T002T in the logon language and the installed languages (T002C) -
+    "! both empty when not readable
+    CLASS-METHODS read_t002
+      EXPORTING
+        t002t     TYPE ty_t_t002t
+        installed TYPE string_table.
+
+    "! get_language_list( ) for the languages chosen
+    CLASS-METHODS language_list
+      IMPORTING
+        t002t         TYPE ty_t_t002t
+        installed     TYPE string_table
+        langu         TYPE string
+        langu2        TYPE string
+      RETURNING
+        VALUE(result) TYPE ty_t_langu.
+
+    "! get_like_pattern( )
+    CLASS-METHODS like_pattern
+      IMPORTING
+        val           TYPE string
+        contains      TYPE abap_bool DEFAULT abap_true
+      RETURNING
+        VALUE(result) TYPE string.
+
 ENDCLASS.
 
 
@@ -306,8 +334,20 @@ CLASS z2ui5_cl_popup_msg_search IMPLEMENTATION.
 
   METHOD read_languages.
 
-    DATA lt_t002t TYPE ty_t_t002t.
+    DATA lt_t002t     TYPE ty_t_t002t.
     DATA lt_installed TYPE string_table.
+
+    read_t002( IMPORTING t002t     = lt_t002t
+                         installed = lt_installed ).
+
+    mt_langu = get_language_list( t002t     = lt_t002t
+                                  installed = lt_installed ).
+
+  ENDMETHOD.
+
+  METHOD read_t002.
+
+    CLEAR: t002t, installed.
 
     TRY.
         DATA(lv_tabname) = `T002T`.
@@ -315,7 +355,7 @@ CLASS z2ui5_cl_popup_msg_search IMPLEMENTATION.
           FROM (lv_tabname)
           WHERE spras = @sy-langu
           ORDER BY sprsl
-          INTO CORRESPONDING FIELDS OF TABLE @lt_t002t.
+          INTO CORRESPONDING FIELDS OF TABLE @t002t.
       CATCH cx_root ##NO_HANDLER.
         " T002T not readable - get_language_list( ) falls back to its texts
     ENDTRY.
@@ -337,20 +377,26 @@ CLASS z2ui5_cl_popup_msg_search IMPLEMENTATION.
       CATCH cx_root ##NO_HANDLER.
         " T002C not readable - no filter
     ENDTRY.
-    lt_installed = VALUE #( FOR t002c IN lt_t002c ( CONV string( t002c-spras ) ) ).
-
-    mt_langu = get_language_list( t002t     = lt_t002t
-                                  installed = lt_installed ).
+    installed = VALUE #( FOR t002c IN lt_t002c ( CONV string( t002c-spras ) ) ).
 
   ENDMETHOD.
 
   METHOD get_language_list.
 
+    result = language_list( t002t     = t002t
+                            installed = installed
+                            langu     = mv_langu
+                            langu2    = mv_langu2 ).
+
+  ENDMETHOD.
+
+  METHOD language_list.
+
     " English, German, the logon language and the languages selected now are
     " always offered, also when T002C does not flag them - the defaults are E
     " and D, and a Select needs an entry for its selectedKey
     DATA(lt_always) = VALUE string_table( ( `E` ) ( `D` ) ( CONV string( sy-langu ) )
-                                          ( mv_langu ) ( mv_langu2 ) ).
+                                          ( langu ) ( langu2 ) ).
     DATA lt_rest TYPE ty_t_langu.
     DATA lr_installed TYPE RANGE OF ty_s_t002t-sprsl.
 
@@ -563,6 +609,13 @@ CLASS z2ui5_cl_popup_msg_search IMPLEMENTATION.
   ENDMETHOD.
 
   METHOD get_like_pattern.
+
+    result = like_pattern( val      = val
+                           contains = contains ).
+
+  ENDMETHOD.
+
+  METHOD like_pattern.
 
     result = val.
     result = replace( val = result sub = `#` with = `##` occ = 0 ).

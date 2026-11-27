@@ -61,7 +61,18 @@ CLASS z2ui5_cl_popup_to_select DEFINITION PUBLIC.
     METHODS on_event_confirm.
     METHODS on_event_search.
 
+    "! the index in mr_tab_popup_backup of every row of mr_tab_popup - a
+    "! search leaves a part of the rows on screen. Protected, not private:
+    "! the draft of the app reaches no private attribute
+    DATA mt_visible TYPE STANDARD TABLE OF i WITH EMPTY KEY.
+
   PRIVATE SECTION.
+    "! mt_visible for the rows on screen, after mr_tab_popup was set anew
+    METHODS set_visible.
+
+    "! the selection of the rows on screen into mr_tab_popup_backup
+    METHODS sync_selection.
+
 ENDCLASS.
 
 
@@ -110,8 +121,8 @@ CLASS z2ui5_cl_popup_to_select IMPLEMENTATION.
                     )->a( n = `search` v = client->_event(
                                val   = `SEARCH`
                                t_arg = VALUE #( ( `${$parameters>/value}` ) ( `${$parameters>/clearButtonPressed}` ) ) )
-                    )->a( n = `confirm` v = client->_event( val   = `CONFIRM`
-                                           arg   = `${$parameters>/selectedContexts[0]/sPath}` )
+                    " the selection comes with the model (ZZSELKZ), not as an argument
+                    )->a( n = `confirm` v = client->_event( `CONFIRM` )
                     )->a( n = `growing` b = abap_true
                     )->a( n = `contentWidth` v = content_width
                     )->a( n = `contentHeight` v = content_height
@@ -229,6 +240,7 @@ CLASS z2ui5_cl_popup_to_select IMPLEMENTATION.
     ENDLOOP.
 
     <tab_out2> = <tab_out>.
+    set_visible( ).
 
   ENDMETHOD.
 
@@ -241,7 +253,11 @@ CLASS z2ui5_cl_popup_to_select IMPLEMENTATION.
     FIELD-SYMBOLS <row_result>          TYPE any.
     FIELD-SYMBOLS <table_line_selected> TYPE any.
 
-    ASSIGN mr_tab_popup->* TO <tab>.
+    " the rows of the backup - a selection made before a search hid its
+    " row counts as well
+    sync_selection( ).
+
+    ASSIGN mr_tab_popup_backup->* TO <tab>.
     ASSIGN ms_result-table->* TO <table_result>.
     ASSIGN ms_result-row->* TO <row_result>.
 
@@ -283,6 +299,10 @@ CLASS z2ui5_cl_popup_to_select IMPLEMENTATION.
     FIELD-SYMBOLS <tab_out>        TYPE STANDARD TABLE.
     FIELD-SYMBOLS <tab_out_backup> TYPE STANDARD TABLE.
 
+    " keep what was selected before the rows are filtered anew - the
+    " backup had the selection of the start, every search lost the ticks
+    sync_selection( ).
+
     ASSIGN mr_tab_popup->* TO <tab_out>.
     ASSIGN mr_tab_popup_backup->* TO <tab_out_backup>.
 
@@ -291,6 +311,75 @@ CLASS z2ui5_cl_popup_to_select IMPLEMENTATION.
     z2ui5_cl_popup_context=>itab_filter_by_val( EXPORTING val = client->get_event_arg( )
                                                  ignore_case     = abap_true
                                        CHANGING  tab             = <tab_out> ).
+
+    set_visible( ).
+
+  ENDMETHOD.
+
+  METHOD set_visible.
+
+    FIELD-SYMBOLS <tab_out>    TYPE STANDARD TABLE.
+    FIELD-SYMBOLS <tab_backup> TYPE STANDARD TABLE.
+    FIELD-SYMBOLS <row>        TYPE any.
+    FIELD-SYMBOLS <row_backup> TYPE any.
+
+    ASSIGN mr_tab_popup->* TO <tab_out>.
+    ASSIGN mr_tab_popup_backup->* TO <tab_backup>.
+
+    " the rows on screen are the rows of the backup the search left, in the
+    " order of the backup - each one is the next equal row there
+    CLEAR mt_visible.
+    DATA(lv_from) = 1.
+    LOOP AT <tab_out> ASSIGNING <row>.
+      LOOP AT <tab_backup> ASSIGNING <row_backup> FROM lv_from.
+        DATA(lv_index) = sy-tabix.
+        lv_from = lv_index + 1.
+        IF <row_backup> = <row>.
+          INSERT lv_index INTO TABLE mt_visible.
+          EXIT.
+        ENDIF.
+      ENDLOOP.
+    ENDLOOP.
+
+  ENDMETHOD.
+
+  METHOD sync_selection.
+
+    FIELD-SYMBOLS <tab_out>      TYPE STANDARD TABLE.
+    FIELD-SYMBOLS <tab_backup>   TYPE STANDARD TABLE.
+    FIELD-SYMBOLS <row>          TYPE any.
+    FIELD-SYMBOLS <row_backup>   TYPE any.
+    FIELD-SYMBOLS <selkz>        TYPE any.
+    FIELD-SYMBOLS <selkz_backup> TYPE any.
+
+    ASSIGN mr_tab_popup->* TO <tab_out>.
+    ASSIGN mr_tab_popup_backup->* TO <tab_backup>.
+
+    " a single selection replaces one hidden by a search
+    IF multiselect = abap_false.
+      LOOP AT <tab_backup> ASSIGNING <row_backup>.
+        ASSIGN COMPONENT `ZZSELKZ` OF STRUCTURE <row_backup> TO <selkz_backup>.
+        ASSERT sy-subrc = 0.
+        CLEAR <selkz_backup>.
+      ENDLOOP.
+    ENDIF.
+
+    LOOP AT <tab_out> ASSIGNING <row>.
+      DATA(lv_index) = VALUE i( mt_visible[ sy-tabix ] OPTIONAL ).
+      IF lv_index <= 0.
+        CONTINUE.
+      ENDIF.
+      UNASSIGN <row_backup>.
+      ASSIGN <tab_backup>[ lv_index ] TO <row_backup>.
+      IF <row_backup> IS NOT ASSIGNED.
+        CONTINUE.
+      ENDIF.
+      ASSIGN COMPONENT `ZZSELKZ` OF STRUCTURE <row> TO <selkz>.
+      ASSERT sy-subrc = 0.
+      ASSIGN COMPONENT `ZZSELKZ` OF STRUCTURE <row_backup> TO <selkz_backup>.
+      ASSERT sy-subrc = 0.
+      <selkz_backup> = <selkz>.
+    ENDLOOP.
 
   ENDMETHOD.
 

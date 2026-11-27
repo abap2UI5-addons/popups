@@ -112,7 +112,10 @@ CLASS z2ui5_cl_popup_image_edit IMPLEMENTATION.
                       )->a( n = `contentHeight` v = `80%`
                       )->a( n = `contentWidth` v = `80%`
                       )->a( n = `verticalScrolling` b = abap_false
-                      )->a( n = `horizontalScrolling` b = abap_false ).
+                      )->a( n = `horizontalScrolling` b = abap_false
+                      " Esc closes the dialog in the browser - without the
+                      " event the screen stayed on a closed popup
+                      )->a( n = `afterClose` v = client->_event( `CANCEL` ) ).
 
     popup->ele( n = `ImageEditorContainer` ns = `ie`
         )->a( n = `enabledButtons` t = mv_enabledbuttons

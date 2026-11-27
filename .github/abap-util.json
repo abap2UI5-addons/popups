@@ -1,6 +1,6 @@
 {
   "master": "abap-util/abap-util",
-  "commit": "88df8a57bd25e1f886ad4ed628294c3923fff5a9",
+  "commit": "9e2ba2a8a334b6b3c953082afc61ea0751224623",
   "rename": [
     ["z2ui5_cl_popup_context", "zabaputil_cl_util_context"],
     ["z2ui5_cx_popup_error", "zabaputil_cx_util_error"]
@@ -9,7 +9,11 @@
     {
       "copy": "src/00/z2ui5_cl_popup_context.clas.abap",
       "master": "src/zabaputil_cl_util_context.clas.abap",
-      "trimmed": true
+      "trimmed": true,
+      "settled": {
+        "rtti_get_t_attri_on_cloud": "the master has a doubled period (abap_false..), which this repository's empty_statement rule refuses; to be synced back",
+        "bus_search_help_read": "error_message = 4 and OTHERS = 4 overlap, which this repository's classic_exceptions_overlap rule refuses - OTHERS = 5 here; to be synced back"
+      }
     },
     {
       "copy": "src/00/z2ui5_cx_popup_error.clas.abap",

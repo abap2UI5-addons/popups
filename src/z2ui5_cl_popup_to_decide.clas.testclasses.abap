@@ -87,6 +87,14 @@ CLASS ltcl_test IMPLEMENTATION.
                                         act = lo_pop->result( ) ).
     cl_abap_unit_assert=>assert_false( popup_destroyed( ) ).
 
+    " a number beyond any integer - no CX_SY_CONVERSION_OVERFLOW
+    roundtrip_event( io_app   = lo_pop
+                     iv_event = `OPTION_99999999999999999999` ).
+
+    cl_abap_unit_assert=>assert_equals( exp = z2ui5_cl_popup_to_decide=>cs_answer-cancel
+                                        act = lo_pop->result( ) ).
+    cl_abap_unit_assert=>assert_false( popup_destroyed( ) ).
+
   ENDMETHOD.
 
   METHOD client_create.
