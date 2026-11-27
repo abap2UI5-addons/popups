@@ -182,6 +182,7 @@ CLASS z2ui5_cl_popup_demo_out IMPLEMENTATION.
     " old xml_view is rendered as an element of its own, so the CSS never
     " reached the page)
     result = `<style type="text/css">` && |\n| &&
+              " abap2ui5lint-disable-next-line unescaped-brace-in-style -- plain CSS: render_popup( ) and render_page( ) pass it through `t =`, which escapes every brace
               `  body {` && |\n| &&
               `    font-family: Arial;` && |\n| &&
               `    font-size: 90%;` && |\n| &&
