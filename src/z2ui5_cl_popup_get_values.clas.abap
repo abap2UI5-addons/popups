@@ -314,15 +314,13 @@ CLASS z2ui5_cl_popup_get_values IMPLEMENTATION.
         ms_result-check_confirmed = abap_true.
         ms_result-fields = mt_field.
         client->popup_destroy( ).
-        client->nav_app_leave( app   = client->get_app_prev( )
-                               event = event_confirm ).
+        client->nav_app_leave( event = event_confirm ).
 
       WHEN `BUTTON_CANCEL`.
         ms_result-check_confirmed = abap_false.
         ms_result-fields = mt_field.
         client->popup_destroy( ).
-        client->nav_app_leave( app   = client->get_app_prev( )
-                               event = event_canceled ).
+        client->nav_app_leave( event = event_canceled ).
     ENDCASE.
 
   ENDMETHOD.

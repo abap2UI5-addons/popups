@@ -293,7 +293,7 @@ CLASS z2ui5_cl_popup_value_help IMPLEMENTATION.
 
         client->popup_destroy( ).
 
-        client->nav_app_leave( client->get_app( client->get( )-s_draft-id_prev_app_stack ) ).
+        client->nav_app_leave( ).
 
       WHEN `F4_ROW_SELECT`.
 
@@ -311,7 +311,7 @@ CLASS z2ui5_cl_popup_value_help IMPLEMENTATION.
 
         client->popup_destroy( ).
 
-        client->nav_app_leave( client->get_app( client->get( )-s_draft-id_prev_app_stack ) ).
+        client->nav_app_leave( ).
 
       WHEN 'F4_INPUT_DONE'.
 
@@ -367,7 +367,7 @@ CLASS z2ui5_cl_popup_value_help IMPLEMENTATION.
     IF <dfies> IS NOT ASSIGNED.
 
       client->popup_destroy( ).
-      client->nav_app_leave( client->get_app( client->get( )-s_draft-id_prev_app_stack ) ).
+      client->nav_app_leave( ).
       RETURN.
 
     ENDIF.
@@ -376,7 +376,7 @@ CLASS z2ui5_cl_popup_value_help IMPLEMENTATION.
     " caller, as for an unknown field: staying here without a view left the
     " caller's screen on display with every event routed to this popup
     IF <dfies>-checktable IS INITIAL.
-      client->nav_app_leave( client->get_app( client->get( )-s_draft-id_prev_app_stack ) ).
+      client->nav_app_leave( ).
       RETURN.
     ENDIF.
 

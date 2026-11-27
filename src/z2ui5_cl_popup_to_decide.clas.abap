@@ -140,8 +140,7 @@ CLASS z2ui5_cl_popup_to_decide IMPLEMENTATION.
       WHEN `BUTTON_CANCEL`.
         answer = cs_answer-cancel.
         client->popup_destroy( ).
-        client->nav_app_leave( app   = client->get_app_prev( )
-                               event = event_canceled ).
+        client->nav_app_leave( event = event_canceled ).
 
       WHEN OTHERS.
         IF strlen( lv_event ) <= strlen( cv_event_option ) OR lv_event NP |{ cv_event_option }*|.
@@ -159,8 +158,7 @@ CLASS z2ui5_cl_popup_to_decide IMPLEMENTATION.
         ENDIF.
         answer = lv_number.
         client->popup_destroy( ).
-        client->nav_app_leave( app   = client->get_app_prev( )
-                               event = event_decided ).
+        client->nav_app_leave( event = event_decided ).
     ENDCASE.
 
   ENDMETHOD.
