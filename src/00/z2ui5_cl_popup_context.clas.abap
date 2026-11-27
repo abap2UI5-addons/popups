@@ -340,6 +340,26 @@ CLASS z2ui5_cl_popup_context DEFINITION
       RETURNING
         VALUE(result) TYPE xstring.
 
+    TYPES:
+      BEGIN OF ty_s_data_uri,
+        mime_type TYPE string,
+        content   TYPE xstring,
+      END OF ty_s_data_uri.
+
+    "! A data URI (RFC 2397, data:[mime][;charset=...][;base64],payload) as
+    "! MIME type and content: the payload base64-decoded when the header
+    "! says `;base64`, otherwise percent-decoded to its bytes (text between
+    "! the escapes as UTF-8). The MIME type is lower case; when the URI
+    "! names none, or only application/octet-stream, it is taken from
+    "! file_name (file_get_mimetype) if one is given. A bare base64 payload
+    "! without the `data:...,` prefix is decoded as base64.
+    CLASS-METHODS conv_get_file_by_data_uri
+      IMPORTING
+        val           TYPE clike
+        file_name     TYPE clike OPTIONAL
+      RETURNING
+        VALUE(result) TYPE ty_s_data_uri.
+
     CLASS-METHODS rtti_check_clike
       IMPORTING
         val           TYPE any
@@ -731,6 +751,12 @@ CLASS z2ui5_cl_popup_context DEFINITION
         mt_data        TYPE REF TO data
         ms_data_row    TYPE REF TO data.
 
+    CLASS-METHODS file_get_mimetype
+      IMPORTING
+        val           TYPE clike
+      RETURNING
+        VALUE(result) TYPE string.
+
     " abap_true when one component of a row holds the search text - the
     " per-field half of itab_filter_by_val. A component that is not printable
     " (a table of children, a reference) holds no text and answers false
@@ -1031,6 +1057,24 @@ CLASS z2ui5_cl_popup_context DEFINITION
       EXPORTING
         result   TYPE string
         invalid  TYPE abap_bool.
+
+    " the text half of itab_filter_check_field: abap_true when text holds
+    " search - upper case already when ignore_case is set
+    CLASS-METHODS itab_filter_check_text
+      IMPORTING
+        !text         TYPE string
+        search        TYPE string
+        ignore_case   TYPE abap_bool
+      RETURNING
+        VALUE(result) TYPE abap_bool.
+
+    " the bytes of a percent-encoded text (a data URI payload): an escape is
+    " its byte, the text between escapes its UTF-8 bytes; `+` is a plus
+    CLASS-METHODS conv_get_xstring_by_percent
+      IMPORTING
+        val           TYPE string
+      RETURNING
+        VALUE(result) TYPE xstring.
 ENDCLASS.
 
 
@@ -1137,18 +1181,96 @@ CLASS z2ui5_cl_popup_context IMPLEMENTATION.
 
   METHOD conv_get_xstring_by_data_uri.
 
-    DATA lv_metadata TYPE string ##NEEDED.
-    DATA lv_base64   TYPE string.
+    result = conv_get_file_by_data_uri( val )-content.
 
-    IF val CS `,`.
-      SPLIT val AT `,` INTO lv_metadata lv_base64.
-    ELSE.
+  ENDMETHOD.
+
+  METHOD conv_get_file_by_data_uri.
+
+    DATA lv_header TYPE string.
+    DATA lv_data   TYPE string.
+
+    DATA(lv_val) = CONV string( val ).
+    IF lv_val NS `,`.
       " a bare base64 payload, without the `data:...;base64,` prefix - the
       " SPLIT put the whole value into the metadata half and the payload
       " decoded to an empty xstring without a word
-      lv_base64 = val.
+      result-content = conv_decode_x_base64( lv_val ).
+      RETURN.
     ENDIF.
-    result = conv_decode_x_base64( lv_base64 ).
+    SPLIT lv_val AT `,` INTO lv_header lv_data.
+
+    " data:[<mime type>][;charset=...][;base64] - the payload used to be
+    " base64-decoded whatever the header said, so a percent-encoded one
+    " (`data:text/plain,a%20b`) came out as garbage
+    DATA(lv_base64) = abap_true.
+    IF strlen( lv_header ) >= 5 AND to_lower( lv_header(5) ) = `data:`.
+      lv_base64 = abap_false.
+      SPLIT substring( val = lv_header
+                       off = 5 ) AT `;` INTO TABLE DATA(lt_part).
+      LOOP AT lt_part REFERENCE INTO DATA(lr_part).
+        DATA(lv_part) = to_lower( c_trim( lr_part->* ) ).
+        IF sy-tabix = 1.
+          result-mime_type = lv_part.
+        ELSEIF lv_part = `base64`.
+          lv_base64 = abap_true.
+        ENDIF.
+      ENDLOOP.
+    ENDIF.
+
+    IF lv_base64 = abap_true.
+      result-content = conv_decode_x_base64( lv_data ).
+    ELSE.
+      result-content = conv_get_xstring_by_percent( lv_data ).
+    ENDIF.
+
+    IF ( result-mime_type IS INITIAL OR result-mime_type = `application/octet-stream` )
+        AND file_name IS NOT INITIAL.
+      result-mime_type = file_get_mimetype( file_name ).
+    ENDIF.
+
+  ENDMETHOD.
+
+  METHOD conv_get_xstring_by_percent.
+
+    " the bytes as hex digits, converted in one step at the end - a byte
+    " string has no expression that appends to it (see url_decode)
+    DATA lv_hex TYPE string.
+    DATA lv_run TYPE string.
+    DATA lv_x   TYPE x LENGTH 1.
+
+    DATA(lv_len) = strlen( val ).
+    DATA(lv_pos) = 0.
+    WHILE lv_pos < lv_len.
+      DATA(lv_char) = substring( val = val
+                                 off = lv_pos
+                                 len = 1 ).
+      DATA(lv_code) = ``.
+      IF lv_char = `%` AND lv_pos + 2 < lv_len.
+        lv_code = to_upper( substring( val = val
+                                       off = lv_pos + 1
+                                       len = 2 ) ).
+      ENDIF.
+      IF lv_code IS NOT INITIAL AND lv_code CO `0123456789ABCDEF`.
+        IF lv_run IS NOT INITIAL.
+          DATA(lv_run_x) = conv_get_xstring_by_string( lv_run ).
+          lv_hex = |{ lv_hex }{ lv_run_x }|.
+          CLEAR lv_run.
+        ENDIF.
+        lv_x = lv_code.
+        lv_hex = |{ lv_hex }{ lv_x }|.
+        lv_pos = lv_pos + 3.
+        CONTINUE.
+      ENDIF.
+      lv_run = lv_run && lv_char.
+      lv_pos = lv_pos + 1.
+    ENDWHILE.
+    IF lv_run IS NOT INITIAL.
+      lv_run_x = conv_get_xstring_by_string( lv_run ).
+      lv_hex = |{ lv_hex }{ lv_run_x }|.
+    ENDIF.
+
+    result = lv_hex.
 
   ENDMETHOD.
 
@@ -1217,6 +1339,13 @@ CLASS z2ui5_cl_popup_context IMPLEMENTATION.
     ENDIF.
 
     result-sign = `I`.
+
+    " the empty-value token of filter_get_token_range_mapping - read as `<`
+    " it was LT `leer>`
+    IF lv_value = `<leer>`.
+      result-option = `EQ`.
+      RETURN.
+    ENDIF.
 
     IF lv_length >= 2 AND ( lv_value(2) = `<=` OR lv_value(2) = `>=` ).
       result-option = COND #( WHEN lv_value(1) = `<` THEN `LE` ELSE `GE` ).
@@ -1365,6 +1494,13 @@ CLASS z2ui5_cl_popup_context IMPLEMENTATION.
     " uses find( ) for a genuinely case-sensitive match (JS: plain includes()).
     FIELD-SYMBOLS <row>   TYPE any.
     FIELD-SYMBOLS <field> TYPE any.
+    FIELD-SYMBOLS <kept>  TYPE STANDARD TABLE.
+    " the components that hold text: by position without a field list, by
+    " name with one
+    DATA lt_index TYPE STANDARD TABLE OF i WITH EMPTY KEY.
+    DATA lt_name  TYPE string_table.
+    DATA lv_whole_row TYPE abap_bool.
+    DATA lr_kept TYPE REF TO data.
 
     DATA(lv_search) = COND string( WHEN ignore_case = abap_true
                                    THEN to_upper( val )
@@ -1377,52 +1513,83 @@ CLASS z2ui5_cl_popup_context IMPLEMENTATION.
     IF lv_search IS INITIAL.
       RETURN.
     ENDIF.
-    DATA(lv_field_count) = lines( fields ).
+
+    " Which component holds text is a property of the line type: decided
+    " once, on the first row, instead of describing every cell of every
+    " row - this runs on every search keystroke over the whole table. A
+    " table, a deep structure or a reference cannot go into a string
+    " template - such a component holds no text to match
+    ASSIGN tab[ 1 ] TO <row>.
+    IF sy-subrc <> 0.
+      RETURN.
+    ENDIF.
+    IF fields IS INITIAL.
+      DATA(lv_index) = 1.
+      DO.
+        ASSIGN COMPONENT lv_index OF STRUCTURE <row> TO <field>.
+        IF sy-subrc <> 0.
+          EXIT.
+        ENDIF.
+        IF rtti_check_printable( <field> ) = abap_true.
+          INSERT lv_index INTO TABLE lt_index.
+        ENDIF.
+        lv_index = lv_index + 1.
+      ENDDO.
+      " elementary line type (e.g. string_table) has no components -
+      " match against the whole line instead of deleting every row
+      IF lv_index = 1.
+        lv_whole_row = rtti_check_printable( <row> ).
+      ENDIF.
+    ELSE.
+      LOOP AT fields REFERENCE INTO DATA(lr_field).
+        ASSIGN COMPONENT lr_field->* OF STRUCTURE <row> TO <field>.
+        IF sy-subrc = 0 AND rtti_check_printable( <field> ) = abap_true.
+          INSERT lr_field->* INTO TABLE lt_name.
+        ENDIF.
+      ENDLOOP.
+    ENDIF.
+
+    " the matching rows go into a copy - a DELETE ... INDEX per dropped row
+    " shifted the rest of the table every time
+    CREATE DATA lr_kept LIKE tab.
+    ASSIGN lr_kept->* TO <kept>.
 
     LOOP AT tab ASSIGNING <row>.
 
-      DATA(lv_tabix) = sy-tabix.
       DATA(lv_check_found) = abap_false.
-      DATA(lv_index) = 1.
-      DO.
-        IF fields IS INITIAL.
-          ASSIGN COMPONENT lv_index OF STRUCTURE <row> TO <field>.
-          IF sy-subrc <> 0.
-            IF lv_index = 1.
-              " elementary line type (e.g. string_table) has no components -
-              " match against the whole line instead of deleting every row
-              ASSIGN <row> TO <field>.
-            ELSE.
-              EXIT.
-            ENDIF.
-          ENDIF.
-        ELSE.
-          IF lv_index > lv_field_count.
-            EXIT.
-          ENDIF.
-          DATA(lv_name) = fields[ lv_index ].
-          ASSIGN COMPONENT lv_name OF STRUCTURE <row> TO <field>.
-          IF sy-subrc <> 0.
-            lv_index = lv_index + 1.
-            CONTINUE.
-          ENDIF.
-        ENDIF.
-
-        IF itab_filter_check_field( field       = <field>
-                                    search      = lv_search
-                                    ignore_case = ignore_case ) = abap_true.
+      IF lv_whole_row = abap_true.
+        lv_check_found = itab_filter_check_text( text        = |{ <row> }|
+                                                 search      = lv_search
+                                                 ignore_case = ignore_case ).
+      ENDIF.
+      LOOP AT lt_index REFERENCE INTO DATA(lr_index).
+        ASSIGN COMPONENT lr_index->* OF STRUCTURE <row> TO <field>.
+        IF itab_filter_check_text( text        = |{ <field> }|
+                                   search      = lv_search
+                                   ignore_case = ignore_case ) = abap_true.
           lv_check_found = abap_true.
           EXIT.
         ENDIF.
+      ENDLOOP.
+      LOOP AT lt_name REFERENCE INTO DATA(lr_name).
+        ASSIGN COMPONENT lr_name->* OF STRUCTURE <row> TO <field>.
+        IF itab_filter_check_text( text        = |{ <field> }|
+                                   search      = lv_search
+                                   ignore_case = ignore_case ) = abap_true.
+          lv_check_found = abap_true.
+          EXIT.
+        ENDIF.
+      ENDLOOP.
 
-        lv_index = lv_index + 1.
-      ENDDO.
-
-      IF lv_check_found = abap_false.
-        DELETE tab INDEX lv_tabix.
+      IF lv_check_found = abap_true.
+        INSERT <row> INTO TABLE <kept>.
       ENDIF.
 
     ENDLOOP.
+
+    IF lines( <kept> ) <> lines( tab ).
+      tab = <kept>.
+    ENDIF.
 
   ENDMETHOD.
 
@@ -4060,6 +4227,78 @@ CLASS z2ui5_cl_popup_context IMPLEMENTATION.
 
   ENDMETHOD.
 
+  METHOD file_get_mimetype.
+
+    DATA(lv_name) = to_lower( c_trim( val ) ).
+    SPLIT lv_name AT `.` INTO TABLE DATA(lt_parts).
+    " no name, no extension - an empty name splits into no part at all
+    IF lt_parts IS INITIAL.
+      result = `application/octet-stream`.
+      RETURN.
+    ENDIF.
+    DATA(lv_ext) = lt_parts[ lines( lt_parts ) ].
+
+    CASE lv_ext.
+      WHEN `txt` OR `text` OR `log` OR `md`.
+        result = `text/plain`.
+      WHEN `html` OR `htm`.
+        result = `text/html`.
+      WHEN `css`.
+        result = `text/css`.
+      WHEN `csv`.
+        result = `text/csv`.
+      WHEN `js` OR `mjs`.
+        result = `text/javascript`.
+      WHEN `json`.
+        result = `application/json`.
+      WHEN `xml`.
+        result = `application/xml`.
+      WHEN `pdf`.
+        result = `application/pdf`.
+      WHEN `zip`.
+        result = `application/zip`.
+      WHEN `png`.
+        result = `image/png`.
+      WHEN `jpg` OR `jpeg`.
+        result = `image/jpeg`.
+      WHEN `gif`.
+        result = `image/gif`.
+      WHEN `svg`.
+        result = `image/svg+xml`.
+      WHEN `webp`.
+        result = `image/webp`.
+      WHEN `ico`.
+        result = `image/x-icon`.
+      WHEN `mp3`.
+        result = `audio/mpeg`.
+      WHEN `mp4`.
+        result = `video/mp4`.
+      WHEN `woff`.
+        result = `font/woff`.
+      WHEN `woff2`.
+        result = `font/woff2`.
+      WHEN `ttf`.
+        result = `font/ttf`.
+      WHEN `otf`.
+        result = `font/otf`.
+      WHEN `xlsx`.
+        result = `application/vnd.openxmlformats-officedocument.spreadsheetml.sheet`.
+      WHEN `xls`.
+        result = `application/vnd.ms-excel`.
+      WHEN `docx`.
+        result = `application/vnd.openxmlformats-officedocument.wordprocessingml.document`.
+      WHEN `doc`.
+        result = `application/msword`.
+      WHEN `pptx`.
+        result = `application/vnd.openxmlformats-officedocument.presentationml.presentation`.
+      WHEN `ppt`.
+        result = `application/vnd.ms-powerpoint`.
+      WHEN OTHERS.
+        result = `application/octet-stream`.
+    ENDCASE.
+
+  ENDMETHOD.
+
   METHOD check_msg_container.
 
     DATA(lv_kind) = rtti_get_type_kind( val ).
@@ -4110,13 +4349,19 @@ CLASS z2ui5_cl_popup_context IMPLEMENTATION.
       RETURN.
     ENDIF.
 
-    DATA(lv_value) = |{ field }|.
+    result = itab_filter_check_text( text        = |{ field }|
+                                     search      = search
+                                     ignore_case = ignore_case ).
+
+  ENDMETHOD.
+
+  METHOD itab_filter_check_text.
+
     IF ignore_case = abap_true.
-      lv_value = to_upper( lv_value ).
-      IF lv_value CS search.
+      IF to_upper( text ) CS search.
         result = abap_true.
       ENDIF.
-    ELSEIF find( val = lv_value
+    ELSEIF find( val = text
                  sub = search ) >= 0.
       result = abap_true.
     ENDIF.
