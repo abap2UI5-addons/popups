@@ -398,7 +398,7 @@ ENDTRY.
 
 The value-help and search-help popups read the DDIC check table the user selects, without an authorization check of their own. Before using them beyond a development system, add your own authorization checks and restrict which tables may be browsed.
 
-## Limitations & Todo
+## Limitations
 
 * Transports currently only work in On-Premise
 * Search-Help not yet running on Cloud Stack
