@@ -136,6 +136,8 @@ CLASS ltcl_test_roundtrip IMPLEMENTATION.
                                         act = lines( lo_pop->mt_msg ) ).
     cl_abap_unit_assert=>assert_equals( exp = `first message`
                                         act = lo_pop->mt_msg[ 1 ]-title ).
+    " a message without a message class has no subtitle - no ` 000`
+    cl_abap_unit_assert=>assert_initial( lo_pop->mt_msg[ 1 ]-subtitle ).
 
   ENDMETHOD.
 

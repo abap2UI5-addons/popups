@@ -47,12 +47,12 @@ CLASS z2ui5_cl_popup_messages IMPLEMENTATION.
   METHOD factory.
 
     r_result = NEW #( ).
-    LOOP AT z2ui5_cl_popup_context=>msg_get_t( i_messages ) REFERENCE INTO DATA(lr_row).
-      INSERT VALUE ty_s_msg(
-        type     = z2ui5_cl_popup_context=>ui5_get_msg_type( lr_row->type )
-        title    = lr_row->text
-        subtitle = |{ lr_row->id } { lr_row->no }|
-        ) INTO TABLE r_result->mt_msg.
+    " the items of the message popover - a message without a message class
+    " has no subtitle there, here it showed ` 000`
+    LOOP AT z2ui5_cl_popup_msgpopover=>msg_get_t( i_messages ) REFERENCE INTO DATA(lr_row).
+      INSERT VALUE ty_s_msg( type     = lr_row->type
+                             title    = lr_row->title
+                             subtitle = lr_row->subtitle ) INTO TABLE r_result->mt_msg.
     ENDLOOP.
 
     r_result->title = i_title.
