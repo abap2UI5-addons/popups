@@ -18,7 +18,9 @@ CLASS z2ui5_cl_popup_value_help DEFINITION
     DATA mv_field        TYPE string.
     DATA mv_value        TYPE string.
     DATA mv_return_value TYPE string.
-    DATA mv_rows         TYPE int1 VALUE '50'.
+    " the number of rows read - typed in the dialog, cut to 1 to
+    " cv_max_rows when read (an INT1 overflowed above 255, 0 read all rows)
+    DATA mv_rows         TYPE i VALUE 50.
     DATA mt_dfies        TYPE z2ui5_cl_popup_context=>ty_t_dfies.
 
     CLASS-METHODS factory
@@ -31,6 +33,8 @@ CLASS z2ui5_cl_popup_value_help DEFINITION
     " abap2ui5lint-enable unbound-public-attribute
 
   PROTECTED SECTION.
+    CONSTANTS cv_max_rows TYPE i VALUE 999.
+
     DATA client             TYPE REF TO z2ui5_if_client.
     DATA mv_check_tab_field TYPE string.
     DATA mv_check_tab       TYPE string.
@@ -73,6 +77,8 @@ CLASS z2ui5_cl_popup_value_help IMPLEMENTATION.
         RETURN.
       ENDIF.
       render_view( ).
+      " the first roundtrip has no event - it reached the layout events
+      RETURN.
 
     ENDIF.
 
@@ -130,6 +136,12 @@ CLASS z2ui5_cl_popup_value_help IMPLEMENTATION.
   METHOD get_data.
 
     FIELD-SYMBOLS <table> TYPE STANDARD TABLE.
+
+    IF mv_rows < 1.
+      mv_rows = 1.
+    ELSEIF mv_rows > cv_max_rows.
+      mv_rows = cv_max_rows.
+    ENDIF.
 
     TRY.
         ASSIGN mt_data->* TO <table>.
