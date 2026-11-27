@@ -84,6 +84,8 @@ CLASS ltcl_test_roundtrip IMPLEMENTATION.
 
     DATA(lv_xml) = popup_xml( ).
     cl_abap_unit_assert=>assert_true( xsdbool( lv_xml CS `Image Title` ) ).
+    " Esc closes the dialog - it has to raise CANCEL as the button does
+    cl_abap_unit_assert=>assert_true( xsdbool( lv_xml CS `afterClose` ) ).
 
   ENDMETHOD.
 
