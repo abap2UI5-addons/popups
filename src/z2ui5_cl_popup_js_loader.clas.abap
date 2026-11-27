@@ -9,6 +9,13 @@ CLASS z2ui5_cl_popup_js_loader DEFINITION PUBLIC.
     " factory_check_open_ui5 the UI5 runtime (ui5_gav)
     INTERFACES z2ui5_if_popup_result.
 
+    "! DEPRECATED - i_js is NOT run. abap2UI5 removed every path for raw
+    "! JavaScript (no script element in a view, no JavaScript in
+    "! follow_up_action( )); frontend code of an app's own ships as a custom
+    "! control in the customer frontend BSP (z2ui5_ccc). The popup leaves at
+    "! once and result( ) still returns i_result, so an existing caller goes
+    "! on as before - but nothing has been loaded. Kept for compatibility;
+    "! factory_check_open_ui5( ) is unaffected.
     CLASS-METHODS factory
       IMPORTING
         i_js            TYPE string
@@ -63,31 +70,11 @@ CLASS z2ui5_cl_popup_js_loader IMPLEMENTATION.
 
   METHOD view_display.
 
-    DATA(popup) = z2ui5_cl_ui5_view_builder=>factory(
-                      )->ele( n = `FragmentDefinition` ns = `core`
-                      )->a( n = `xmlns` v = `sap.m`
-                      )->a( n = `xmlns:core` v = `sap.ui.core`
-                      )->a( n = `xmlns:html` v = `http://www.w3.org/1999/xhtml`
-                      )->ele( `Dialog`
-                      )->a( n = `title` v = `Setup UI...`
-                      )->ele( `content` ).
-
-    IF js IS NOT INITIAL.
-      popup->ele( n = `script` ns = `html`
-          )->tag( n = `ZZPLAIN` ns = `html`
-          " abap2ui5lint-disable-next-line unescaped-text-in-attribute -- raw JavaScript for the script tag; escaping its braces would change the code
-          )->a( n = `VALUE` v = js ).
-    ENDIF.
-
-    client->popup_display( popup->stringify( ) ).
-
-    IF js IS NOT INITIAL.
-      " closes the popup in the roundtrip the client timer fires once the
-      " popup with the script has rendered
-      client->follow_up_action( val   = z2ui5_if_client=>cs_event-start_timer
-                                t_arg = VALUE #( ( `TIMER_FINISHED` )
-                                                 ( `0` ) ) ).
-    ENDIF.
+    " i_js is not run (see factory( )): the script element this popup used
+    " to render through the ZZPLAIN pseudo-tag of the old xml_view reached
+    " the browser as an empty element, and abap2UI5 has no other path for
+    " raw JavaScript - so there is no popup to show, the app leaves at once
+    client->nav_app_leave( ).
 
   ENDMETHOD.
 
@@ -109,12 +96,12 @@ CLASS z2ui5_cl_popup_js_loader IMPLEMENTATION.
       view_display( ).
       RETURN.
     ELSEIF client->check_on_navigated( ).
-      " a restored draft (browser Forward, a reload): the popup went with
-      " the page - show it again
+      " a restored draft (browser Forward, a reload)
       view_display( ).
       RETURN.
     ENDIF.
 
+    " a popup still open from before i_js was given up: its timer fires
     IF client->get( )-event = `TIMER_FINISHED`.
       client->popup_destroy( ).
       client->nav_app_leave( ).
