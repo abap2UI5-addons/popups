@@ -25,8 +25,11 @@ CLASS z2ui5_cl_popup_shlp DEFINITION
     DATA mv_table        TYPE string.
     DATA mv_fname        TYPE string.
     DATA mv_shlpfield    TYPE string.
+    " deprecated: the value of factory( i_value ) - the popup does not use
+    " it; a prefill goes into it_init (name and value)
     DATA mv_value        TYPE string.
     DATA mv_return_value TYPE string.
+    " deprecated: never read - F4IF_SELECT_VALUES reads without a row limit
     DATA mv_rows         TYPE int1 VALUE '50' ##NEEDED.
     DATA mt_data         TYPE REF TO data.
     DATA ms_data_row     TYPE REF TO data.
