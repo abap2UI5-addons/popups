@@ -37,7 +37,7 @@ in other repositories read them.
 
 **How the copy is maintained:**
 
-1. **Nothing from the core's frozen `src/99/01`.** `z2ui5_cl_util*` and `z2ui5_cx_util_error` are kept in abap2UI5 for compatibility only; every utility call goes through `z2ui5_cl_popup_context`, every utility exception is `z2ui5_cx_popup_error` (a renamed copy of `zabaputil_cx_util_error`, copied as-is).
+1. **Nothing of abap2UI5-ext.** `z2ui5_cl_util*` and `z2ui5_cx_util_error` left the core with its `src/99/01` for abap2UI5-ext; every utility call goes through `z2ui5_cl_popup_context`, every utility exception is `z2ui5_cx_popup_error` (a renamed copy of `zabaputil_cx_util_error`, copied as-is).
 2. **Method-level trimming:** the copy carries only the methods the popup apps use, including the private helpers those methods need. (Method-level trimming applies to the context class only — any other class vendored from abap-util is copied as-is.)
 3. **New methods are added locally.** When a popup needs a utility method the copy doesn't have yet, write it directly into `z2ui5_cl_popup_context`. If the method already exists in abap-util, copy it from there (with its private helpers) instead of re-implementing it. Do not add a dependency on another project's copy.
 4. **Periodic AI sync-back:** every few weeks an AI compares abap-util with all consumers and merges methods that were added locally back into abap-util, so the master catalog stays the superset of all methods and other projects can reuse them.
