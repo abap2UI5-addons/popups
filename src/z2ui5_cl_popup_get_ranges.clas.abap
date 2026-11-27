@@ -34,6 +34,9 @@ CLASS z2ui5_cl_popup_get_ranges DEFINITION PUBLIC.
     METHODS init.
 
   PRIVATE SECTION.
+    "! back from another app - the range popup's result into its filter
+    METHODS on_navigated.
+
 ENDCLASS.
 
 
@@ -123,6 +126,9 @@ CLASS z2ui5_cl_popup_get_ranges IMPLEMENTATION.
   ENDMETHOD.
 
   METHOD z2ui5_if_app~main.
+
+    FIELD-SYMBOLS <tab> LIKE LINE OF ms_result-t_filter.
+
     me->client = client.
 
     IF client->check_on_init( ).
@@ -133,15 +139,7 @@ CLASS z2ui5_cl_popup_get_ranges IMPLEMENTATION.
     DATA(ls_get) = client->get( ).
 
     IF ls_get-check_on_navigated = abap_true.
-
-      DATA(ls_popup_result) = CAST z2ui5_cl_popup_get_range( client->get_app_prev( ) )->result( ).
-      IF ls_popup_result-check_confirmed = abap_true.
-        ASSIGN ms_result-t_filter[ name = mv_popup_name ] TO FIELD-SYMBOL(<tab>).
-        <tab>-t_range = ls_popup_result-t_range.
-        <tab>-t_token = z2ui5_cl_popup_context=>filter_get_token_t_by_range_t( <tab>-t_range ).
-      ENDIF.
-      popup_display( ).
-
+      on_navigated( ).
     ENDIF.
 
     CASE ls_get-event.
@@ -157,9 +155,14 @@ CLASS z2ui5_cl_popup_get_ranges IMPLEMENTATION.
         CLEAR <tab>-t_range.
 
       WHEN `LIST_OPEN`.
-        mv_popup_name = client->get_event_arg( ).
-        client->nav_app_call( z2ui5_cl_popup_get_range=>factory(
-            ms_result-t_filter[ name = mv_popup_name ]-t_range ) ).
+        UNASSIGN <tab>.
+        ASSIGN ms_result-t_filter[ name = client->get_event_arg( ) ] TO <tab>.
+        " the name comes from the client - an unknown one is ignored
+        IF <tab> IS NOT ASSIGNED.
+          RETURN.
+        ENDIF.
+        mv_popup_name = <tab>-name.
+        client->nav_app_call( z2ui5_cl_popup_get_range=>factory( <tab>-t_range ) ).
 
       WHEN `BUTTON_CONFIRM`.
         ms_result-check_confirmed = abap_true.
@@ -177,6 +180,28 @@ CLASS z2ui5_cl_popup_get_ranges IMPLEMENTATION.
         ENDLOOP.
 
     ENDCASE.
+  ENDMETHOD.
+
+  METHOD on_navigated.
+
+    FIELD-SYMBOLS <tab> LIKE LINE OF ms_result-t_filter.
+
+    " back from the range popup - any other previous app (a restored
+    " draft) only puts this popup on screen again
+    TRY.
+        DATA(ls_popup_result) = CAST z2ui5_cl_popup_get_range( client->get_app_prev( ) )->result( ).
+        IF ls_popup_result-check_confirmed = abap_true.
+          ASSIGN ms_result-t_filter[ name = mv_popup_name ] TO <tab>.
+          IF <tab> IS ASSIGNED.
+            <tab>-t_range = ls_popup_result-t_range.
+            <tab>-t_token = z2ui5_cl_popup_context=>filter_get_token_t_by_range_t( <tab>-t_range ).
+          ENDIF.
+        ENDIF.
+      CATCH cx_root ##NO_HANDLER.
+    ENDTRY.
+
+    popup_display( ).
+
   ENDMETHOD.
 
   METHOD z2ui5_if_popup_result~check_confirmed.

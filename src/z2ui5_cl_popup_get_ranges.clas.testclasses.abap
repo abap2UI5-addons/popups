@@ -62,6 +62,7 @@ CLASS ltcl_test_roundtrip DEFINITION FINAL
     METHODS test_confirm             FOR TESTING RAISING cx_static_check.
     METHODS test_list_open_calls_pop FOR TESTING RAISING cx_static_check.
     METHODS test_delete_all          FOR TESTING RAISING cx_static_check.
+    METHODS test_list_open_unknown   FOR TESTING RAISING cx_static_check.
 
 ENDCLASS.
 
@@ -117,6 +118,20 @@ CLASS ltcl_test_roundtrip IMPLEMENTATION.
 
     DATA(lo_range_pop) = CAST z2ui5_cl_popup_get_range( mo_action->ms_next-o_app_call ).
     cl_abap_unit_assert=>assert_bound( lo_range_pop ).
+
+  ENDMETHOD.
+
+  METHOD test_list_open_unknown.
+
+    " the name comes from the client - one that is no filter calls nothing
+    " instead of raising CX_SY_ITAB_LINE_NOT_FOUND
+    DATA(lo_pop) = popup_create( ).
+
+    mo_action->ms_actual-event = `LIST_OPEN`.
+    mo_action->ms_actual-t_event_arg = VALUE #( ( `UNKNOWN` ) ).
+    lo_pop->z2ui5_if_app~main( mi_client ).
+
+    cl_abap_unit_assert=>assert_not_bound( mo_action->ms_next-o_app_call ).
 
   ENDMETHOD.
 
