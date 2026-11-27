@@ -1125,66 +1125,49 @@ CLASS z2ui5_cl_popup_context IMPLEMENTATION.
   ENDMETHOD.
 
   METHOD filter_get_range_by_token.
-
     DATA(lv_value) = val.
     IF lv_value IS INITIAL.
       RETURN.
     ENDIF.
-    DATA(lv_length) = strlen( lv_value ) - 1.
+    DATA(lv_length) = strlen( lv_value ).
 
-    CASE lv_value(1).
+    result-sign = `I`.
 
-      WHEN `=`.
-        result = VALUE #( sign   = `I`
-                          option = `EQ`
-                          low    = lv_value+1 ).
-      WHEN `<`.
-        IF lv_value+1(1) = `=`.
-          result = VALUE #( sign   = `I`
-                            option = `LE`
-                            low    = lv_value+2 ).
-        ELSE.
-          result = VALUE #( sign   = `I`
-                            option = `LT`
-                            low    = lv_value+1 ).
-        ENDIF.
-      WHEN `>`.
-        IF lv_value+1(1) = `=`.
-          result = VALUE #( sign   = `I`
-                            option = `GE`
-                            low    = lv_value+2 ).
-        ELSE.
-          result = VALUE #( sign   = `I`
-                            option = `GT`
-                            low    = lv_value+1 ).
-        ENDIF.
+    IF lv_length >= 2 AND ( lv_value(2) = `<=` OR lv_value(2) = `>=` ).
+      result-option = COND #( WHEN lv_value(1) = `<` THEN `LE` ELSE `GE` ).
+      result-low    = substring( val = lv_value
+                                 off = 2 ).
 
-      WHEN `*`.
-        IF lv_length > 0 AND lv_value+lv_length(1) = `*`.
-          lv_value = substring( val = lv_value off = 1 len = lv_length - 1 ).
-          result = VALUE #( sign   = `I`
-                            option = `CP`
-                            low    = lv_value ).
-        ELSEIF lv_length = 0.
-          " Single '*' means contains-pattern with empty value
-          result = VALUE #( sign   = `I`
-                            option = `CP`
-                            low    = `` ).
-        ENDIF.
+    ELSEIF lv_value(1) = `=`.
+      result-option = `EQ`.
+      result-low    = substring( val = lv_value
+                                 off = 1 ).
 
-      WHEN OTHERS.
-        IF lv_value CS `...`.
-          SPLIT lv_value AT `...` INTO result-low result-high.
-          result-sign   = `I`.
-          result-option = `BT`.
-        ELSE.
-          result = VALUE #( sign   = `I`
-                            option = `EQ`
-                            low    = lv_value ).
-        ENDIF.
+    ELSEIF lv_value(1) = `<`.
+      result-option = `LT`.
+      result-low    = substring( val = lv_value
+                                 off = 1 ).
 
-    ENDCASE.
+    ELSEIF lv_value(1) = `>`.
+      result-option = `GT`.
+      result-low    = substring( val = lv_value
+                                 off = 1 ).
 
+    ELSEIF lv_value CA `*`.
+      " the pattern as it was typed: `*abc*` contains, `abc*` starts with,
+      " `*abc` ends with. LOW keeps the asterisks - they are what makes a CP
+      " row a pattern, for IN as well as for the LIKE built from it
+      result-option = `CP`.
+      result-low    = lv_value.
+
+    ELSEIF lv_value CS `...`.
+      SPLIT lv_value AT `...` INTO result-low result-high.
+      result-option = `BT`.
+
+    ELSE.
+      result-option = `EQ`.
+      result-low    = lv_value.
+    ENDIF.
   ENDMETHOD.
 
   METHOD filter_get_range_t_by_token_t.
@@ -1264,9 +1247,16 @@ CLASS z2ui5_cl_popup_context IMPLEMENTATION.
       IF lv_value IS INITIAL.
         lv_value = lt_mapping[ n = `EQ` ]-v. "#EC CI_SORTSEQ
       ENDIF.
-      lv_value = filter_token_fill( template = lv_value
-                                    low      = lr_row->low
-                                    high     = lr_row->high ).
+      IF ( lv_option = `CP` OR lv_option = `NP` ) AND lr_row->low CA `*`.
+        " LOW is a pattern already - wrapping it in the template's asterisks
+        " would turn `abc*` into `*abc**`
+        lv_value = COND #( WHEN lv_option = `CP` THEN lr_row->low
+                           ELSE |!({ lr_row->low })| ).
+      ELSE.
+        lv_value = filter_token_fill( template = lv_value
+                                      low      = lr_row->low
+                                      high     = lr_row->high ).
+      ENDIF.
 
       " an excluding row must not render like its including twin - negate the
       " token so the MultiInput shows the filter's real meaning
