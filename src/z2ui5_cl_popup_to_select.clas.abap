@@ -18,9 +18,9 @@ CLASS z2ui5_cl_popup_to_select DEFINITION PUBLIC.
       END OF ty_s_result.
 
     DATA ms_result           TYPE ty_s_result.
-    "! the caller's table - until the popup has started: it is cleared once
-    "! mr_tab_popup and its backup are built from it, since every attribute
-    "! is written to the draft on every roundtrip and nothing reads it later
+    "! the caller's table, as factory( ) received it. It stays filled after
+    "! the popup has returned: callers read it next to the result, e.g. to
+    "! tell which of the offered rows were left unticked
     DATA mr_tab              TYPE REF TO data.
     DATA mr_tab_popup        TYPE REF TO data.
     DATA mr_tab_popup_backup TYPE REF TO data.
@@ -171,7 +171,6 @@ CLASS z2ui5_cl_popup_to_select IMPLEMENTATION.
 
     IF client->check_on_init( ).
       set_output_table( ).
-      CLEAR mr_tab.
       display( ).
       RETURN.
     ELSEIF client->check_on_navigated( ).
