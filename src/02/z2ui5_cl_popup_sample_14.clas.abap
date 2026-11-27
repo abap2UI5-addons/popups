@@ -141,24 +141,24 @@ CLASS z2ui5_cl_popup_sample_14 IMPLEMENTATION.
       mt_filter = z2ui5_cl_popup_context=>filter_get_multi_by_data( mt_table ).
       DELETE mt_filter WHERE name = `SELKZ`.
       view_display( ).
-      RETURN.
-    ENDIF.
 
-    IF client->get( )-check_on_navigated = abap_true.
-      TRY.
-          DATA(lo_value_help) = CAST z2ui5_cl_popup_get_ranges( client->get_app( client->get( )-s_draft-id_prev_app ) ).
+    ELSEIF client->check_on_nav_back( ).
 
-          IF lo_value_help->result( )-check_confirmed = abap_true.
+      " back from the filter popup: every popup hands its result over through
+      " z2ui5_if_popup_result, value( ) is a reference to the ranges per field
+      DATA(popup) = CAST z2ui5_if_popup_result( client->get_app_prev( ) ).
+      IF popup->check_confirmed( ) = abap_true.
+        DATA(lr_filter) = CAST z2ui5_cl_popup_context=>ty_t_filter_multi( popup->value( ) ).
+        mt_filter = lr_filter->*.
+        set_data( ).
+      ENDIF.
+      view_display( ).
 
-            mt_filter = lo_value_help->result( )-t_filter.
-            set_data( ).
-          ENDIF.
-        CATCH cx_root ##NO_HANDLER.
-      ENDTRY.
-      RETURN.
-    ENDIF.
+    ELSEIF client->check_on_navigated( ).
+      " a restored draft - the view is shown again
+      view_display( ).
 
-    IF client->get( )-event IS NOT INITIAL.
+    ELSEIF client->get( )-event IS NOT INITIAL.
       on_event( ).
     ENDIF.
 

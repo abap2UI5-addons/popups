@@ -27,7 +27,7 @@ CLASS z2ui5_cl_popup_sample_01 IMPLEMENTATION.
     CASE client->get( )-event.
 
       WHEN 'BACK'.
-        client->nav_app_leave( client->get_app( client->get( )-s_draft-id_prev_app_stack ) ).
+        client->nav_app_leave( ).
 
       WHEN `CALL_POPUP_F4`.
         call_f4( ).
@@ -57,7 +57,7 @@ CLASS z2ui5_cl_popup_sample_01 IMPLEMENTATION.
                      )->ele( `Page`
                      )->a( n = `title` v = `Value-Help`
                      )->a( n = `navButtonPress` v = client->_event( 'BACK' )
-                     )->a( n = `showNavButton` b = xsdbool( client->get( )-s_draft-id_prev_app_stack IS NOT INITIAL )
+                     )->a( n = `showNavButton` b = client->check_app_prev_stack( )
                      )->a( n = `class` v = `sapUiContentPadding` ).
 
     page->ele( n = `SimpleForm` ns = `form`
@@ -83,10 +83,19 @@ CLASS z2ui5_cl_popup_sample_01 IMPLEMENTATION.
 
     IF client->check_on_init( ).
       on_init( ).
-    ENDIF.
 
-    on_event( ).
-    on_after_f4( ).
+    ELSEIF client->check_on_nav_back( ).
+      " back from the value help: read its result, then show the view again
+      on_after_f4( ).
+      render_main( ).
+
+    ELSEIF client->check_on_navigated( ).
+      " a restored draft - the view is shown again
+      render_main( ).
+
+    ELSE.
+      on_event( ).
+    ENDIF.
 
   ENDMETHOD.
 
@@ -96,35 +105,30 @@ CLASS z2ui5_cl_popup_sample_01 IMPLEMENTATION.
     DATA(f4_field) = VALUE string( lt_arg[ 1 ] ).
     DATA(f4_table) = VALUE string( lt_arg[ 2 ] ).
 
-    client->nav_app_call( z2ui5_cl_popup_value_help=>factory( i_table = f4_table
-                                                            i_fname = f4_field
-                                                            i_value = mv_arbgb ) ).
+    " the tag names the field the value help is for - get_nav_tag( ) returns
+    " it when the popup has left
+    client->nav_app_call( app = z2ui5_cl_popup_value_help=>factory( i_table = f4_table
+                                                                  i_fname = f4_field
+                                                                  i_value = mv_arbgb )
+                          tag = f4_field ).
 
   ENDMETHOD.
 
   METHOD on_after_f4.
 
-    IF client->get( )-check_on_navigated = abap_false.
+    " every popup hands its result over through z2ui5_if_popup_result
+    DATA(popup) = CAST z2ui5_if_popup_result( client->get_app_prev( ) ).
+    IF popup->check_confirmed( ) = abap_false.
       RETURN.
     ENDIF.
 
-    TRY.
-        DATA(app) = CAST z2ui5_cl_popup_value_help( client->get_app( client->get( )-s_draft-id_prev_app ) ).
+    CASE client->get_nav_tag( ).
+      WHEN `ARBGB`.
+        mv_arbgb = popup->value_string( ).
 
-        IF app->mv_return_value IS NOT INITIAL.
+      WHEN OTHERS.
 
-          CASE app->mv_field.
-            WHEN `ARBGB`.
-              mv_arbgb = app->mv_return_value.
-
-            WHEN OTHERS.
-
-          ENDCASE.
-
-        ENDIF.
-
-      CATCH cx_root ##NO_HANDLER.
-    ENDTRY.
+    ENDCASE.
 
   ENDMETHOD.
 

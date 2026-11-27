@@ -61,10 +61,13 @@ CLASS z2ui5_cl_popup_sample_03 IMPLEMENTATION.
 
     me->client = client.
 
-    IF client->get( )-check_on_navigated = abap_true.
-
+    IF client->check_on_navigated( ).
       view_display( ).
-      on_navigation( ).
+      " true only on the way back from the popup - not on the first start
+      " or on a restore, where get_app_prev( ) is no popup
+      IF client->check_on_nav_back( ).
+        on_navigation( ).
+      ENDIF.
       RETURN.
     ENDIF.
 
@@ -75,15 +78,12 @@ CLASS z2ui5_cl_popup_sample_03 IMPLEMENTATION.
 
   METHOD on_navigation.
 
-    TRY.
-        DATA(lo_prev) = client->get_app( client->get( )-s_draft-id_prev_app ).
-        DATA(ls_result) = CAST z2ui5_cl_popup_image_edit( lo_prev )->result( ).
-        IF ls_result-check_confirmed = abap_true AND ls_result-image IS NOT INITIAL.
-          mv_image = ls_result-image.
-          client->message_toast_display( `image saved` ).
-        ENDIF.
-      CATCH cx_root ##NO_HANDLER.
-    ENDTRY.
+    " every popup hands its result over through z2ui5_if_popup_result
+    DATA(popup) = CAST z2ui5_if_popup_result( client->get_app_prev( ) ).
+    IF popup->check_confirmed( ) = abap_true AND popup->value_string( ) IS NOT INITIAL.
+      mv_image = popup->value_string( ).
+      client->message_toast_display( `image saved` ).
+    ENDIF.
 
   ENDMETHOD.
 

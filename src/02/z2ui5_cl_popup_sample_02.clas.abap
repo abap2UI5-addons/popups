@@ -58,7 +58,7 @@ CLASS z2ui5_cl_popup_sample_02 IMPLEMENTATION.
                      )->ele( `Page`
                      )->a( n = `title` v = `Search-Help`
                      )->a( n = `navButtonPress` v = client->_event( 'BACK' )
-                     )->a( n = `showNavButton` b = xsdbool( client->get( )-s_draft-id_prev_app_stack IS NOT INITIAL )
+                     )->a( n = `showNavButton` b = client->check_app_prev_stack( )
                      )->a( n = `class` v = `sapUiContentPadding` ).
 
     page->ele( n = `SimpleForm` ns = `form`
@@ -84,10 +84,19 @@ CLASS z2ui5_cl_popup_sample_02 IMPLEMENTATION.
 
     IF client->check_on_init( ).
       on_init( ).
-    ENDIF.
 
-    on_event( ).
-    on_after_search( ).
+    ELSEIF client->check_on_nav_back( ).
+      " back from the search help: read its result, then show the view again
+      on_after_search( ).
+      render_main( ).
+
+    ELSEIF client->check_on_navigated( ).
+      " a restored draft - the view is shown again
+      render_main( ).
+
+    ELSE.
+      on_event( ).
+    ENDIF.
 
   ENDMETHOD.
 
@@ -106,21 +115,11 @@ CLASS z2ui5_cl_popup_sample_02 IMPLEMENTATION.
 
   METHOD on_after_search.
 
-    IF client->get( )-check_on_navigated = abap_false.
-      RETURN.
+    " every popup hands its result over through z2ui5_if_popup_result
+    DATA(popup) = CAST z2ui5_if_popup_result( client->get_app_prev( ) ).
+    IF popup->check_confirmed( ) = abap_true.
+      ms_usr01-spld = popup->value_string( ).
     ENDIF.
-
-    TRY.
-        DATA(app) = CAST z2ui5_cl_popup_shlp( client->get_app( client->get( )-s_draft-id_prev_app ) ).
-
-        IF app->mv_return_value IS NOT INITIAL.
-
-          ms_usr01-spld = app->mv_return_value.
-
-        ENDIF.
-
-      CATCH cx_root ##NO_HANDLER.
-    ENDTRY.
 
   ENDMETHOD.
 
