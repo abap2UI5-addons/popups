@@ -43,6 +43,13 @@ in other repositories read them.
 4. **Periodic AI sync-back:** every few weeks an AI compares abap-util with all consumers and merges methods that were added locally back into abap-util, so the master catalog stays the superset of all methods and other projects can reuse them.
 5. **Popup-specific logic does not belong in the context class.** Keep it in the popup class; only generic, reusable utilities live in the vendored copy (they will be harvested into abap-util by the sync).
 
+`.github/abap-util.json` names the copies and their masters for abap-util's
+`sync-check`: with abap-util checked out next to this repository,
+`node ../abap-util/.github/scripts/sync-check.mjs --consumer . --report`
+lists every method whose body or declaration differs from the master and
+every method only this copy has. No commit is pinned yet - the copies were
+taken before the manifest existed.
+
 ## Dependencies
 
 Installed alongside via abapGit; declared in the abaplint configs:
