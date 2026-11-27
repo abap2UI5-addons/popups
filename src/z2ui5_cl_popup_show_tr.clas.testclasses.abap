@@ -1,3 +1,5 @@
+CLASS ltcl_popup_result DEFINITION DEFERRED.
+CLASS z2ui5_cl_popup_show_tr DEFINITION LOCAL FRIENDS ltcl_popup_result.
 CLASS ltcl_popup_result DEFINITION FINAL
   FOR TESTING RISK LEVEL HARMLESS DURATION SHORT.
 
@@ -15,6 +17,7 @@ CLASS ltcl_popup_result DEFINITION FINAL
     METHODS test_cancelled             FOR TESTING RAISING cx_static_check.
     METHODS test_no_transport          FOR TESTING RAISING cx_static_check.
     METHODS test_select_without_row    FOR TESTING RAISING cx_static_check.
+    METHODS test_select_ignores_client FOR TESTING RAISING cx_static_check.
 
 ENDCLASS.
 
@@ -46,8 +49,10 @@ CLASS ltcl_popup_result IMPLEMENTATION.
   METHOD test_confirmed.
 
     DATA(lo_pop) = z2ui5_cl_popup_show_tr=>factory( ).
-    lo_pop->mt_data = VALUE #( ( transport = `DEVK900000` )
-                               ( transport = `DEVK900001` selkz = abap_true ) ).
+    lo_pop->mt_data_read = VALUE #( ( transport = `DEVK900000` )
+                                    ( transport = `DEVK900001` ) ).
+    lo_pop->mt_data = lo_pop->mt_data_read.
+    lo_pop->mt_data[ 2 ]-selkz = abap_true.
     roundtrip( io_app   = lo_pop
                iv_event = `SELECT` ).
     DATA(li_result) = CAST z2ui5_if_popup_result( lo_pop ).
@@ -89,12 +94,30 @@ CLASS ltcl_popup_result IMPLEMENTATION.
   METHOD test_select_without_row.
 
     DATA(lo_pop) = z2ui5_cl_popup_show_tr=>factory( ).
-    lo_pop->mt_data = VALUE #( ( transport = `DEVK900000` ) ).
+    lo_pop->mt_data_read = VALUE #( ( transport = `DEVK900000` ) ).
+    lo_pop->mt_data = lo_pop->mt_data_read.
     roundtrip( io_app   = lo_pop
                iv_event = `SELECT` ).
     DATA(li_result) = CAST z2ui5_if_popup_result( lo_pop ).
 
     cl_abap_unit_assert=>assert_false( li_result->check_confirmed( ) ).
+
+  ENDMETHOD.
+
+  METHOD test_select_ignores_client.
+
+    " mt_data is bound: a crafted request can rewrite the selected row's
+    " request and task - the popup returns what bus_tr_read( ) offered
+    DATA(lo_pop) = z2ui5_cl_popup_show_tr=>factory( ).
+    lo_pop->mt_data_read = VALUE #( ( transport = `DEVK900000` task = `DEVK900002` ) ).
+    lo_pop->mt_data = VALUE #( ( transport = `PRDK900099` task = `PRDK900098` selkz = abap_true ) ).
+    roundtrip( io_app   = lo_pop
+               iv_event = `SELECT` ).
+
+    cl_abap_unit_assert=>assert_equals( exp = `DEVK900000`
+                                        act = lo_pop->ms_transport-transport ).
+    cl_abap_unit_assert=>assert_equals( exp = `DEVK900002`
+                                        act = lo_pop->ms_transport-task ).
 
   ENDMETHOD.
 
