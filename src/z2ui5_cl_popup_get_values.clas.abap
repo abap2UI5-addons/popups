@@ -106,6 +106,11 @@ CLASS z2ui5_cl_popup_get_values DEFINITION PUBLIC.
     DATA ms_result           TYPE ty_s_result.
     "! the message of a required field left empty
     DATA mv_error            TYPE string.
+    "! the fields as the caller defined them - the server's own copy of
+    "! mt_field, taken at the start: mt_field is bound to the browser, which
+    "! can rewrite any of its cells, so a field's definition (name, kind,
+    "! required, read-only) and the value of a read-only field come from here
+    DATA mt_field_def        TYPE ty_t_field.
 
     METHODS view_display.
 
@@ -117,6 +122,11 @@ CLASS z2ui5_cl_popup_get_values DEFINITION PUBLIC.
     METHODS check_required
       RETURNING
         VALUE(result) TYPE abap_bool.
+
+    "! mt_field rebuilt from mt_field_def with only what the user may change
+    "! taken from the browser: the value of an editable field, of the kind
+    "! its control binds, and for a listbox only one of its keys
+    METHODS restore_field_definitions.
 
   PRIVATE SECTION.
 ENDCLASS.
@@ -146,6 +156,7 @@ CLASS z2ui5_cl_popup_get_values IMPLEMENTATION.
     LOOP AT r_result->listbox REFERENCE INTO DATA(lr_listbox).
       lr_listbox->name = to_upper( lr_listbox->name ).
     ENDLOOP.
+    r_result->mt_field_def = r_result->mt_field.
 
   ENDMETHOD.
 
@@ -179,6 +190,48 @@ CLASS z2ui5_cl_popup_get_values IMPLEMENTATION.
         result = abap_false.
         RETURN.
       ENDIF.
+    ENDLOOP.
+
+  ENDMETHOD.
+
+  METHOD restore_field_definitions.
+
+    FIELD-SYMBOLS <ls_input> TYPE ty_s_field.
+
+    DATA(lt_input) = mt_field.
+    mt_field = mt_field_def.
+
+    LOOP AT mt_field REFERENCE INTO DATA(lr_field) WHERE read_only = abap_false.
+      DATA(lv_index) = sy-tabix.
+      UNASSIGN <ls_input>.
+      ASSIGN lt_input[ lv_index ] TO <ls_input>.
+      IF <ls_input> IS NOT ASSIGNED.
+        CONTINUE.
+      ENDIF.
+
+      CASE lr_field->kind.
+        WHEN cs_kind-checkbox.
+          lr_field->flag = xsdbool( <ls_input>-flag IS NOT INITIAL ).
+
+        WHEN cs_kind-multi.
+          CLEAR lr_field->keys.
+          LOOP AT <ls_input>-keys INTO DATA(lv_key).
+            IF line_exists( listbox[ name = lr_field->name
+                                     key  = lv_key ] ).
+              INSERT lv_key INTO TABLE lr_field->keys.
+            ENDIF.
+          ENDLOOP.
+
+        WHEN cs_kind-listbox.
+          IF <ls_input>-value IS INITIAL
+             OR line_exists( listbox[ name = lr_field->name
+                                      key  = <ls_input>-value ] ).
+            lr_field->value = <ls_input>-value.
+          ENDIF.
+
+        WHEN OTHERS.
+          lr_field->value = <ls_input>-value.
+      ENDCASE.
     ENDLOOP.
 
   ENDMETHOD.
@@ -300,11 +353,19 @@ CLASS z2ui5_cl_popup_get_values IMPLEMENTATION.
     me->client = client.
 
     IF client->check_on_init( ).
+      " the caller may have changed the public mt_field after factory( )
+      mt_field_def = mt_field.
+      view_display( ).
+      RETURN.
+    ELSEIF client->check_on_navigated( ).
+      " a restored draft (browser Forward, a reload): the popup went with
+      " the page - show it again
       view_display( ).
       RETURN.
     ENDIF.
 
     CLEAR mv_error.
+    restore_field_definitions( ).
     CASE client->get( )-event.
       WHEN `BUTTON_CONFIRM`.
         IF check_required( ) = abap_false.
