@@ -324,38 +324,11 @@ CLASS z2ui5_cl_popup_dtel_srch IMPLEMENTATION.
 
   METHOD read_languages.
 
-    DATA lt_t002t TYPE ty_t_t002t.
+    DATA lt_t002t     TYPE ty_t_t002t.
     DATA lt_installed TYPE string_table.
 
-    TRY.
-        DATA(lv_tabname) = `T002T`.
-        SELECT sprsl, sptxt
-          FROM (lv_tabname)
-          WHERE spras = @sy-langu
-          ORDER BY sprsl
-          INTO CORRESPONDING FIELDS OF TABLE @lt_t002t.
-      CATCH cx_root ##NO_HANDLER.
-        " T002T not readable - get_language_list( ) falls back to its texts
-    ENDTRY.
-
-    " the languages installed on the system (T002C-LAINST); if T002C cannot
-    " be read, every language of T002T stays
-    TYPES:
-      BEGIN OF ty_s_t002c,
-        spras TYPE c LENGTH 1,
-      END OF ty_s_t002c.
-    DATA lt_t002c TYPE STANDARD TABLE OF ty_s_t002c WITH EMPTY KEY.
-    TRY.
-        DATA(lv_tabname_c) = `T002C`.
-        SELECT spras
-          FROM (lv_tabname_c)
-          WHERE lainst = @abap_true
-          ORDER BY spras
-          INTO CORRESPONDING FIELDS OF TABLE @lt_t002c.
-      CATCH cx_root ##NO_HANDLER.
-        " T002C not readable - no filter
-    ENDTRY.
-    lt_installed = VALUE #( FOR t002c IN lt_t002c ( CONV string( t002c-spras ) ) ).
+    z2ui5_cl_popup_msg_search=>read_t002( IMPORTING t002t     = lt_t002t
+                                                    installed = lt_installed ).
 
     mt_langu = get_language_list( t002t     = lt_t002t
                                   installed = lt_installed ).
@@ -364,56 +337,11 @@ CLASS z2ui5_cl_popup_dtel_srch IMPLEMENTATION.
 
   METHOD get_language_list.
 
-    " English, German, the logon language and the languages selected now are
-    " always offered, also when T002C does not flag them - the defaults are E
-    " and D, and a Select needs an entry for its selectedKey
-    DATA(lt_always) = VALUE string_table( ( `E` ) ( `D` ) ( CONV string( sy-langu ) )
-                                          ( mv_langu ) ( mv_langu2 ) ).
-    DATA lt_rest TYPE ty_t_langu.
-    DATA lr_installed TYPE RANGE OF ty_s_t002t-sprsl.
-
-    " only the installed languages - by a range: a DELETE TABLE ... FROM on
-    " this table WITH EMPTY KEY removed the first line each time, not the
-    " one of the loop
-    DATA(lt_t002t) = t002t.
-    IF installed IS NOT INITIAL.
-      lr_installed = VALUE #( FOR inst IN installed ( sign = `I` option = `EQ` low = inst ) ).
-      lr_installed = VALUE #( BASE lr_installed
-                              FOR always IN lt_always WHERE ( table_line IS NOT INITIAL )
-                              ( sign = `I` option = `EQ` low = always ) ).
-      DELETE lt_t002t WHERE sprsl NOT IN lr_installed.
-    ENDIF.
-
-    LOOP AT lt_t002t INTO DATA(ls_t002t).
-      DATA(lv_key) = CONV string( ls_t002t-sprsl ).
-      IF lv_key IS INITIAL OR lv_key = `E` OR lv_key = `D`.
-        CONTINUE.
-      ENDIF.
-      IF line_exists( lt_rest[ key = lv_key ] ).
-        CONTINUE.
-      ENDIF.
-      INSERT VALUE #( key = lv_key text = |{ ls_t002t-sptxt } ({ lv_key })| ) INTO TABLE lt_rest.
-    ENDLOOP.
-
-    " a language that must be offered but has no text in T002T
-    LOOP AT lt_always INTO lv_key.
-      IF lv_key IS INITIAL OR lv_key = `E` OR lv_key = `D` OR line_exists( lt_rest[ key = lv_key ] ).
-        CONTINUE.
-      ENDIF.
-      INSERT VALUE #( key = lv_key text = |Language ({ lv_key })| ) INTO TABLE lt_rest.
-    ENDLOOP.
-
-    SORT lt_rest BY text.
-
-    " English and German first, then the rest alphabetically
-    LOOP AT VALUE string_table( ( `E` ) ( `D` ) ) INTO lv_key.
-      DATA(lv_text) = VALUE #( t002t[ sprsl = lv_key ]-sptxt OPTIONAL ).
-      IF lv_text IS INITIAL.
-        lv_text = COND #( WHEN lv_key = `E` THEN `English` ELSE `German` ).
-      ENDIF.
-      INSERT VALUE #( key = lv_key text = |{ lv_text } ({ lv_key })| ) INTO TABLE result.
-    ENDLOOP.
-    INSERT LINES OF lt_rest INTO TABLE result.
+    " the same list as the message search - see there
+    result = z2ui5_cl_popup_msg_search=>language_list( t002t     = t002t
+                                                       installed = installed
+                                                       langu     = mv_langu
+                                                       langu2    = mv_langu2 ).
 
   ENDMETHOD.
 
@@ -569,15 +497,8 @@ CLASS z2ui5_cl_popup_dtel_srch IMPLEMENTATION.
 
   METHOD get_like_pattern.
 
-    result = val.
-    result = replace( val = result sub = `#` with = `##` occ = 0 ).
-    result = replace( val = result sub = `%` with = `#%` occ = 0 ).
-    result = replace( val = result sub = `_` with = `#_` occ = 0 ).
-    result = replace( val = result sub = `*` with = `%` occ = 0 ).
-
-    IF contains = abap_true.
-      result = |%{ result }%|.
-    ENDIF.
+    result = z2ui5_cl_popup_msg_search=>like_pattern( val      = val
+                                                      contains = contains ).
 
   ENDMETHOD.
 
