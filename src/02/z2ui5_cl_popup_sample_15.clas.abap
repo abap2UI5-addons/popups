@@ -123,19 +123,18 @@ CLASS z2ui5_cl_popup_sample_15 IMPLEMENTATION.
 
       set_data( ).
       view_display( ).
-      RETURN.
-    ENDIF.
 
-    IF client->get( )-check_on_navigated = abap_true.
-      TRY.
-          DATA(lo_popup_table) = CAST z2ui5_cl_popup_table( client->get_app( client->get( )-s_draft-id_prev_app ) ) ##NEEDED.
-          set_data( ).
-        CATCH cx_root ##NO_HANDLER.
-      ENDTRY.
-      RETURN.
-    ENDIF.
+    ELSEIF client->check_on_nav_back( ).
 
-    IF client->get( )-event IS NOT INITIAL.
+      " back from the table popup, which only shows the rows
+      set_data( ).
+      view_display( ).
+
+    ELSEIF client->check_on_navigated( ).
+      " a restored draft - the view is shown again
+      view_display( ).
+
+    ELSEIF client->get( )-event IS NOT INITIAL.
       on_event( ).
     ENDIF.
 

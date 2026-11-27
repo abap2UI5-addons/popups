@@ -115,21 +115,26 @@ same way whichever popup you called. When control comes back to your app:
 " open
 client->nav_app_call( z2ui5_cl_popup_input_val=>factory( `Enter a name` ) ).
 
-" back in your app
+" back in your app - check_on_nav_back( ) is true only on the roundtrip on
+" which the popup has left, so get_app_prev( ) is the popup there
+IF client->check_on_nav_back( ).
+  DATA(popup) = CAST z2ui5_if_popup_result( client->get_app_prev( ) ).
+  IF popup->check_confirmed( ) = abap_true.
+    DATA(name) = popup->value_string( ).
+    " a table or structure: CAST to the type the popup documents
+    " DATA(range) = CAST z2ui5_cl_popup_context=>ty_t_range( popup->value( ) ).
+    " LOOP AT range->* INTO DATA(row). ...
+  ENDIF.
+ENDIF.
+
 IF client->check_on_navigated( ).
-  TRY.
-      DATA(popup) = CAST z2ui5_if_popup_result( client->get_app_prev( ) ).
-      IF popup->check_confirmed( ).
-        DATA(name) = popup->value_string( ).
-        " a table or structure: CAST to the type the popup documents
-        " DATA(range) = CAST z2ui5_cl_popup_context=>ty_t_range( popup->value( ) ).
-        " LOOP AT range->* INTO DATA(row). ...
-      ENDIF.
-    CATCH cx_sy_move_cast_error.
-      " the previous app was no popup
-  ENDTRY.
+  " show the view - on the first start, on a restore and after the popup
 ENDIF.
 ```
+
+An app that opens several popups tells their returns apart by a tag:
+``client->nav_app_call( app = <popup> tag = `PICK_UNIT` )``, and back in the
+app `CASE client->get_nav_tag( ).` (samples 01, 07 and 20).
 
 - `check_confirmed( )` - `abap_true` when the user confirmed (OK, Save, a
   chosen row, an option, a transport), `abap_false` when the popup was

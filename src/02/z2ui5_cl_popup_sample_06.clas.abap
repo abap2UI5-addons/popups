@@ -52,10 +52,13 @@ CLASS z2ui5_cl_popup_sample_06 IMPLEMENTATION.
 
     me->client = client.
 
-    IF client->get( )-check_on_navigated = abap_true.
-
+    IF client->check_on_navigated( ).
       view_display( ).
-      on_navigation( ).
+      " true only on the way back from the popup - not on the first start
+      " or on a restore, where get_app_prev( ) is no popup
+      IF client->check_on_nav_back( ).
+        on_navigation( ).
+      ENDIF.
       RETURN.
     ENDIF.
 
@@ -66,12 +69,8 @@ CLASS z2ui5_cl_popup_sample_06 IMPLEMENTATION.
 
   METHOD on_navigation.
 
-    TRY.
-        DATA(lo_prev) = client->get_app( client->get( )-s_draft-id_prev_app ).
-        DATA(lo_dummy) = CAST z2ui5_cl_popup_to_inform( lo_prev ) ##NEEDED.
-        client->message_box_display( `callback after popup to inform` ).
-      CATCH cx_root ##NO_HANDLER.
-    ENDTRY.
+    " the popup only informs - it has no value to read
+    client->message_box_display( `callback after popup to inform` ).
 
   ENDMETHOD.
 

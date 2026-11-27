@@ -22,14 +22,11 @@ CLASS z2ui5_cl_popup_sample_16 IMPLEMENTATION.
 
   METHOD on_navigation.
 
-    TRY.
-        DATA(lo_prev) = client->get_app( client->get( )-s_draft-id_prev_app ).
-
-        IF CAST z2ui5_cl_popup_file_dl( lo_prev )->result( ).
-          client->message_box_display( `the input is downloaded` ).
-        ENDIF.
-      CATCH cx_root ##NO_HANDLER.
-    ENDTRY.
+    " every popup hands its result over through z2ui5_if_popup_result -
+    " the download popup is confirmed once the file was downloaded
+    IF CAST z2ui5_if_popup_result( client->get_app_prev( ) )->check_confirmed( ) = abap_true.
+      client->message_box_display( `the input is downloaded` ).
+    ENDIF.
 
   ENDMETHOD.
 
@@ -70,10 +67,13 @@ CLASS z2ui5_cl_popup_sample_16 IMPLEMENTATION.
 
     me->client = client.
 
-    IF client->get( )-check_on_navigated = abap_true.
-
+    IF client->check_on_navigated( ).
       view_display( ).
-      on_navigation( ).
+      " true only on the way back from the popup - not on the first start
+      " or on a restore, where get_app_prev( ) is no popup
+      IF client->check_on_nav_back( ).
+        on_navigation( ).
+      ENDIF.
       RETURN.
     ENDIF.
 

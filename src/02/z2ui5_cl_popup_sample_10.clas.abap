@@ -19,13 +19,10 @@ CLASS z2ui5_cl_popup_sample_10 IMPLEMENTATION.
   METHOD on_navigation.
 
     " every popup hands its result over through z2ui5_if_popup_result
-    TRY.
-        DATA(popup) = CAST z2ui5_if_popup_result( client->get_app_prev( ) ).
-        IF popup->check_confirmed( ).
-          client->message_box_display( |the input is { popup->value_string( ) }| ).
-        ENDIF.
-      CATCH cx_root ##NO_HANDLER.
-    ENDTRY.
+    DATA(popup) = CAST z2ui5_if_popup_result( client->get_app_prev( ) ).
+    IF popup->check_confirmed( ) = abap_true.
+      client->message_box_display( |the input is { popup->value_string( ) }| ).
+    ENDIF.
 
   ENDMETHOD.
 
@@ -66,10 +63,13 @@ CLASS z2ui5_cl_popup_sample_10 IMPLEMENTATION.
 
     me->client = client.
 
-    IF client->get( )-check_on_navigated = abap_true.
-
+    IF client->check_on_navigated( ).
       view_display( ).
-      on_navigation( ).
+      " true only on the way back from the popup - not on the first start
+      " or on a restore, where get_app_prev( ) is no popup
+      IF client->check_on_nav_back( ).
+        on_navigation( ).
+      ENDIF.
       RETURN.
     ENDIF.
 

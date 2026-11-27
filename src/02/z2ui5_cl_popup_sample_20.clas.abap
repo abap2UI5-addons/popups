@@ -12,9 +12,6 @@ CLASS z2ui5_cl_popup_sample_20 DEFINITION
   PROTECTED SECTION.
     DATA client TYPE REF TO z2ui5_if_client.
 
-    " the field the open search help returns its value to
-    DATA mv_target TYPE string.
-
     METHODS on_init.
     METHODS on_event.
     METHODS render_main.
@@ -32,10 +29,19 @@ CLASS z2ui5_cl_popup_sample_20 IMPLEMENTATION.
 
     IF client->check_on_init( ).
       on_init( ).
-    ENDIF.
 
-    on_event( ).
-    on_after_search( ).
+    ELSEIF client->check_on_nav_back( ).
+      " back from a search help: read its result, then show the view again
+      on_after_search( ).
+      render_main( ).
+
+    ELSEIF client->check_on_navigated( ).
+      " a restored draft - the view is shown again
+      render_main( ).
+
+    ELSE.
+      on_event( ).
+    ENDIF.
 
   ENDMETHOD.
 
@@ -54,19 +60,20 @@ CLASS z2ui5_cl_popup_sample_20 IMPLEMENTATION.
         client->nav_app_leave( ).
 
       WHEN `CALL_SHLP_BY_NAME`.
-        " search help H_T002 (languages), returning its parameter SPRAS
-        mv_target = `LANGUAGE`.
-        client->nav_app_call( z2ui5_cl_popup_shlp=>factory_by_searchhelp( i_searchhelp = `H_T002`
-                                                                          i_fname      = `SPRAS` ) ).
+        " search help H_T002 (languages), returning its parameter SPRAS - the
+        " tag names the field the value goes to, get_nav_tag( ) returns it
+        client->nav_app_call( app = z2ui5_cl_popup_shlp=>factory_by_searchhelp( i_searchhelp = `H_T002`
+                                                                                i_fname      = `SPRAS` )
+                              tag = `LANGUAGE` ).
 
       WHEN `CALL_SHLP_PREFILLED`.
         " search help of field USR01-BNAME, its user field prefilled
-        mv_target = `USER`.
-        client->nav_app_call( z2ui5_cl_popup_shlp=>factory(
-                                  i_table = `USR01`
-                                  i_fname = `BNAME`
-                                  i_value = mv_user
-                                  it_init = VALUE #( ( name = `BNAME` value = mv_prefill ) ) ) ).
+        client->nav_app_call( app = z2ui5_cl_popup_shlp=>factory(
+                                        i_table = `USR01`
+                                        i_fname = `BNAME`
+                                        i_value = mv_user
+                                        it_init = VALUE #( ( name = `BNAME` value = mv_prefill ) ) )
+                              tag = `USER` ).
 
       WHEN OTHERS.
 
@@ -87,7 +94,7 @@ CLASS z2ui5_cl_popup_sample_20 IMPLEMENTATION.
                      )->ele( `Page`
                      )->a( n = `title` v = `Search-Help by Name and Prefill`
                      )->a( n = `navButtonPress` v = client->_event( `BACK` )
-                     )->a( n = `showNavButton` b = xsdbool( client->get( )-s_draft-id_prev_app_stack IS NOT INITIAL )
+                     )->a( n = `showNavButton` b = client->check_app_prev_stack( )
                      )->a( n = `class` v = `sapUiContentPadding` ).
 
     page->ele( n = `SimpleForm` ns = `form`
@@ -126,26 +133,18 @@ CLASS z2ui5_cl_popup_sample_20 IMPLEMENTATION.
 
   METHOD on_after_search.
 
-    IF client->get( )-check_on_navigated = abap_false.
+    " every popup hands its result over through z2ui5_if_popup_result
+    DATA(popup) = CAST z2ui5_if_popup_result( client->get_app_prev( ) ).
+    IF popup->check_confirmed( ) = abap_false.
       RETURN.
     ENDIF.
 
-    TRY.
-        DATA(popup) = CAST z2ui5_if_popup_result( client->get_app_prev( ) ).
-
-        IF popup->check_confirmed( ) = abap_false.
-          RETURN.
-        ENDIF.
-
-        CASE mv_target.
-          WHEN `LANGUAGE`.
-            mv_language = popup->value_string( ).
-          WHEN `USER`.
-            mv_user = popup->value_string( ).
-        ENDCASE.
-
-      CATCH cx_root ##NO_HANDLER.
-    ENDTRY.
+    CASE client->get_nav_tag( ).
+      WHEN `LANGUAGE`.
+        mv_language = popup->value_string( ).
+      WHEN `USER`.
+        mv_user = popup->value_string( ).
+    ENDCASE.
 
   ENDMETHOD.
 

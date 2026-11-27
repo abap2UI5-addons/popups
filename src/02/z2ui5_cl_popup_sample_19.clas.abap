@@ -176,30 +176,24 @@ CLASS z2ui5_cl_popup_sample_19 IMPLEMENTATION.
 
     me->client = client.
 
-    IF client->check_on_init( ).
+    IF client->check_on_nav_back( ).
 
+      " back from the range popup: every popup hands its result over through
+      " z2ui5_if_popup_result, value( ) is a reference to the range
+      DATA(popup) = CAST z2ui5_if_popup_result( client->get_app_prev( ) ).
+      IF popup->check_confirmed( ) = abap_true.
+        DATA(lr_range) = CAST z2ui5_cl_popup_context=>ty_t_range( popup->value( ) ).
+        mt_range = lr_range->*.
+        mt_token = z2ui5_cl_popup_context=>filter_get_token_t_by_range_t( mt_range ).
+        set_data( ).
+      ENDIF.
       view_display( ).
-      RETURN.
-    ENDIF.
 
-    IF client->get( )-check_on_navigated = abap_true.
-      TRY.
-          DATA(lo_value_help) = CAST z2ui5_cl_popup_get_range( client->get_app( client->get( )-s_draft-id_prev_app ) ).
+    ELSEIF client->check_on_navigated( ).
+      " the first start, or a restored draft
+      view_display( ).
 
-          IF lo_value_help->result( )-check_confirmed = abap_false.
-            RETURN.
-          ENDIF.
-
-          mt_range = lo_value_help->result( )-t_range.
-          mt_token = z2ui5_cl_popup_context=>filter_get_token_t_by_range_t( mt_range ).
-          set_data( ).
-
-        CATCH cx_root ##NO_HANDLER.
-      ENDTRY.
-      RETURN.
-    ENDIF.
-
-    IF client->get( )-event IS NOT INITIAL.
+    ELSEIF client->get( )-event IS NOT INITIAL.
       on_event( ).
     ENDIF.
 

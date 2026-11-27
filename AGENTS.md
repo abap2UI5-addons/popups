@@ -62,7 +62,8 @@ Installed alongside via abapGit; declared in the abaplint configs:
   release and not against the framework's `main`. Three abaplint configs carry
   the pin (`abaplint.jsonc`, `.github/abaplint/abap_cloud.jsonc` and the
   downported `<tag>-702` form in `.github/abaplint/abap_702.jsonc`; the
-  namespace rename clones the core at the pin of `abaplint.jsonc`); read and
+  namespace rename clones the core at the pin of `abaplint.jsonc`), and so
+  does the unit runner (`.github/scripts/unit.mjs`); read and
   move them only with
   `scripts/core-pin.mjs` (`get` fails when they disagree). `bump-deps.yaml`
   moves the pin monthly to the newest release, in its one pull request whose
@@ -110,10 +111,13 @@ pinned by commit in the `uses:` lines and moved by `bump-deps`):
   views (`abap2ui5lint.jsonc`); `unit` - the ABAP Unit tests on abap2UI5's
   transpiled Node runtime, the way abap2UI5 tests itself: `npm run unit`
   (`.github/scripts/unit.mjs`) copies the packages into a checkout of
-  abap2UI5's `main` (layout-management beside it),
-  downports, transpiles and runs the tests of this repository's classes;
-  `rename` - the namespace-rename check (`npm run rename`,
-  `.github/scripts/rename.mjs`)
+  abap2UI5 at the release pin (`main` in the weekly canary), with
+  layout-management beside it, downports, transpiles and runs the tests of
+  this repository's classes; `rename` - the namespace-rename check (`npm run
+  rename`, `.github/scripts/rename.mjs`); `npm run check:702` - the 7.02 gate
+  of a pull request: `.github/scripts/check-702.sh` downports a scratch copy
+  of `src/` in `build/702` and lints it with `.github/abaplint/abap_702.jsonc`
+  (`src/` itself is never rewritten)
 * `ci-702` — writes the downported `702` branch on every push to `main`
   (`npm run auto_downport`: `abaplint --fix` against
   `.github/abaplint/abap_702.jsonc`) and lints it
