@@ -29,8 +29,8 @@ CLASS z2ui5_cl_popup_shlp DEFINITION
     " it; a prefill goes into it_init (name and value)
     DATA mv_value        TYPE string.
     DATA mv_return_value TYPE string.
-    " deprecated: never read - F4IF_SELECT_VALUES reads without a row limit
-    DATA mv_rows         TYPE int1 VALUE '50' ##NEEDED.
+    " the most rows F4IF_SELECT_VALUES reads (0 reads all)
+    DATA mv_rows         TYPE int1 VALUE '50'.
     DATA mt_data         TYPE REF TO data.
     DATA ms_data_row     TYPE REF TO data.
     DATA mo_layout       TYPE REF TO z2ui5_cl_layo_manager.
@@ -350,14 +350,15 @@ CLASS z2ui5_cl_popup_shlp IMPLEMENTATION.
 
   METHOD read_search_help.
 
-    z2ui5_cl_popup_context=>bus_search_help_read( CHANGING ms_shlp        = ms_shlp
-                                                      mv_fname       = mv_fname
-                                                      mv_table       = mv_table
-                                                      mr_data        = mr_data
-                                                      mt_result_desc = mt_result_desc
-                                                      mv_shlpfield   = mv_shlpfield
-                                                      mt_data        = mt_data
-                                                      ms_data_row    = ms_data_row ).
+    z2ui5_cl_popup_context=>bus_search_help_read( EXPORTING iv_max_rows    = mv_rows
+                                                  CHANGING  ms_shlp        = ms_shlp
+                                                            mv_fname       = mv_fname
+                                                            mv_table       = mv_table
+                                                            mr_data        = mr_data
+                                                            mt_result_desc = mt_result_desc
+                                                            mv_shlpfield   = mv_shlpfield
+                                                            mt_data        = mt_data
+                                                            ms_data_row    = ms_data_row ).
 
   ENDMETHOD.
 

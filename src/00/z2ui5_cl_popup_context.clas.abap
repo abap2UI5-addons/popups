@@ -716,7 +716,11 @@ CLASS z2ui5_cl_popup_context DEFINITION
         is_transport TYPE ty_s_transport
         iv_commit    TYPE abap_bool DEFAULT abap_true.
 
+    "! iv_max_rows - at most this many rows (F4IF_SELECT_VALUES-MAXRECORDS);
+    "! 0 reads all of them, as before the parameter existed
     CLASS-METHODS bus_search_help_read
+      IMPORTING
+        iv_max_rows    TYPE i DEFAULT 0
       CHANGING
         ms_shlp        TYPE ty_shlp_descr
         mv_fname       TYPE string
@@ -3376,6 +3380,7 @@ CLASS z2ui5_cl_popup_context IMPLEMENTATION.
     CALL FUNCTION lv_fm
       EXPORTING
         shlp           = <shlp>
+        maxrecords     = iv_max_rows
         sort           = space
         call_shlp_exit = abap_true
       TABLES
