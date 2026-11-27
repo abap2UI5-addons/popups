@@ -26,6 +26,7 @@ CLASS ltcl_test DEFINITION FINAL
     METHODS test_option_answers     FOR TESTING RAISING cx_static_check.
     METHODS test_cancel             FOR TESTING RAISING cx_static_check.
     METHODS test_unknown_option     FOR TESTING RAISING cx_static_check.
+    METHODS test_no_cancel_reopens FOR TESTING RAISING cx_static_check.
 
 ENDCLASS.
 
@@ -94,6 +95,22 @@ CLASS ltcl_test IMPLEMENTATION.
     cl_abap_unit_assert=>assert_equals( exp = z2ui5_cl_popup_to_decide=>cs_answer-cancel
                                         act = lo_pop->result( ) ).
     cl_abap_unit_assert=>assert_false( popup_destroyed( ) ).
+
+  ENDMETHOD.
+
+  METHOD test_no_cancel_reopens.
+
+    " without a Cancel button the dialog still closes on Escape and raises
+    " BUTTON_CANCEL - the popup opens again instead of answering cancel
+    DATA(lo_pop) = z2ui5_cl_popup_to_decide=>factory( i_question_text = `Q`
+                                                      i_options       = VALUE #( ( `A` ) )
+                                                      i_cancel        = abap_false ).
+    roundtrip_event( io_app   = lo_pop
+                     iv_event = `BUTTON_CANCEL` ).
+
+    cl_abap_unit_assert=>assert_false( popup_destroyed( ) ).
+    cl_abap_unit_assert=>assert_not_bound( mo_action->ms_next-o_app_leave ).
+    cl_abap_unit_assert=>assert_true( xsdbool( popup_xml( ) CS `OPTION_1` ) ).
 
   ENDMETHOD.
 
