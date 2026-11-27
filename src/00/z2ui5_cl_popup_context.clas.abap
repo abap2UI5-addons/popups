@@ -322,6 +322,12 @@ CLASS z2ui5_cl_popup_context DEFINITION
       RETURNING
         VALUE(result) TYPE ty_t_name_value.
 
+    CLASS-METHODS itab_filter_by_t_range
+      IMPORTING
+        val  TYPE ty_t_filter_multi
+      CHANGING
+        !tab TYPE STANDARD TABLE.
+
     CLASS-METHODS conv_copy_ref_data
       IMPORTING
         !from         TYPE any
@@ -363,6 +369,29 @@ CLASS z2ui5_cl_popup_context DEFINITION
     CLASS-METHODS check_abap_cloud
       RETURNING
         VALUE(result) TYPE abap_bool.
+
+    " the system fields sy_get hands out, in the types SYST gives them
+    TYPES:
+      BEGIN OF ty_s_sy,
+        datum TYPE d,
+        uzeit TYPE t,
+        uname TYPE c LENGTH 12,
+        sysid TYPE c LENGTH 8,
+        saprl TYPE c LENGTH 4,
+      END OF ty_s_sy.
+
+    " THE one place that reads a system field for its VALUE - date, time,
+    " user, system id, release. Every other class asks here
+    " (sy_get( )-uname), for two reasons: ABAP for Cloud Development reports
+    " the old system fields on every statement that names one ("The old
+    " variant of SY-DATUM should not be used ..."), so one reader is one
+    " finding per field instead of one per use; and the day one of them
+    " has to come from another API, it changes here and nowhere else.
+    " Not meant: sy-subrc, sy-tabix and sy-index - those are the result of
+    " the statement before them and have to be read where it stands
+    CLASS-METHODS sy_get
+      RETURNING
+        VALUE(result) TYPE ty_s_sy.
 
     CLASS-METHODS uuid_get_c32
       RETURNING
@@ -898,6 +927,15 @@ CLASS z2ui5_cl_popup_context DEFINITION
 
   PRIVATE SECTION.
 
+    " whether a type kind is a number: i, int1, int2, int8, p, f,
+    " decfloat16, decfloat34 - the one list the number checks share. int8
+    " by its value `8`, a constant lower releases do not have
+    CLASS-METHODS rtti_check_typekind_number
+      IMPORTING
+        val           TYPE clike
+      RETURNING
+        VALUE(result) TYPE abap_bool.
+
     CLASS-METHODS rtti_get_dtel_texts_by_ddic
       IMPORTING
         name        TYPE string
@@ -968,6 +1006,27 @@ CLASS z2ui5_cl_popup_context DEFINITION
         it_tab        TYPE ANY TABLE
       RETURNING
         VALUE(result) TYPE ty_t_msg.
+
+    " A value as an Open SQL character literal for a dynamic WHERE: in
+    " single quotes, a quote inside doubled.
+    CLASS-METHODS filter_sql_quote
+      IMPORTING
+        val           TYPE clike
+      RETURNING
+        VALUE(result) TYPE string.
+
+    " codepage: the IANA name CL_ABAP_CONV_CODEPAGE takes; encoding: the
+    " name or SAP code page number CL_ABAP_CONV_IN_CE takes. invalid is set
+    " when a converter ran and rejected the bytes; no converter at all
+    " raises UNSUPPORTED_CODEPAGE_API.
+    CLASS-METHODS conv_get_string_by_xstring_cp
+      IMPORTING
+        val      TYPE xstring
+        codepage TYPE string
+        encoding TYPE string
+      EXPORTING
+        result   TYPE string
+        invalid  TYPE abap_bool.
 ENDCLASS.
 
 
@@ -1119,24 +1178,10 @@ CLASS z2ui5_cl_popup_context IMPLEMENTATION.
 
   METHOD filter_itab.
 
-    DATA ref TYPE REF TO data.
-
-    LOOP AT val REFERENCE INTO ref.
-
-      LOOP AT filter INTO DATA(ls_filter).
-
-        ASSIGN ref->(ls_filter-name) TO FIELD-SYMBOL(<field>).
-        IF sy-subrc <> 0.
-          CONTINUE.
-        ENDIF.
-        IF <field> NOT IN ls_filter-t_range.
-          DELETE val.
-          EXIT.
-        ENDIF.
-
-      ENDLOOP.
-
-    ENDLOOP.
+    " the same filter as itab_filter_by_t_range - a field whose range is
+    " empty keeps every row there too
+    itab_filter_by_t_range( EXPORTING val = filter
+                            CHANGING  tab = val ).
 
   ENDMETHOD.
 
@@ -1154,6 +1199,18 @@ CLASS z2ui5_cl_popup_context IMPLEMENTATION.
       RETURN.
     ENDIF.
     DATA(lv_length) = strlen( lv_value ).
+
+    " `!(...)`: the negated token filter_get_token_t_by_range_t renders for
+    " an excluding row and for NE / NB / NP - the inner token with the sign
+    " flipped (I NE x comes back as the equivalent E EQ x, E NE x as I EQ x)
+    IF lv_length > 3 AND lv_value(2) = `!(` AND substring( val = lv_value
+                                                           off = lv_length - 1 ) = `)`.
+      result = filter_get_range_by_token( substring( val = lv_value
+                                                     off = 2
+                                                     len = lv_length - 3 ) ).
+      result-sign = COND #( WHEN result-sign = `E` THEN `I` ELSE `E` ).
+      RETURN.
+    ENDIF.
 
     result-sign = `I`.
 
@@ -1241,8 +1298,9 @@ CLASS z2ui5_cl_popup_context IMPLEMENTATION.
       DATA(lv_index) = 0.
       LOOP AT <lt_source> ASSIGNING FIELD-SYMBOL(<ls_source>).
         lv_index = lv_index + 1.
+        UNASSIGN <ls_range>.
         ASSIGN lt_tab[ lv_index ] TO <ls_range>.
-        IF sy-subrc <> 0.
+        IF <ls_range> IS NOT ASSIGNED.
           EXIT.
         ENDIF.
         UNASSIGN <lv_part>.
@@ -1466,16 +1524,21 @@ CLASS z2ui5_cl_popup_context IMPLEMENTATION.
 
   METHOD rtti_get_t_attri_by_oref.
 
+    DATA lo_descr TYPE REF TO cl_abap_typedescr.
+
     " describe_by_object_ref raises the classic exception REFERENCE_IS_INITIAL
     " for an initial reference - called functionally that is a runtime error no
-    " CATCH reaches. The open-abap runtime of the transpiled build declares no
-    " EXCEPTIONS for describe_by_data_ref, so the reference is tested here instead
-    IF val IS INITIAL.
+    " CATCH reaches
+    cl_abap_objectdescr=>describe_by_object_ref( EXPORTING  p_object_ref         = val
+                                                 RECEIVING p_descr_ref           = lo_descr
+                                                 EXCEPTIONS reference_is_initial = 1
+                                                            OTHERS               = 2 ).
+    IF sy-subrc <> 0.
       RAISE EXCEPTION TYPE z2ui5_cx_popup_error
         EXPORTING
           val = `RTTI_REFERENCE_IS_INITIAL`.
     ENDIF.
-    result = CAST cl_abap_classdescr( cl_abap_objectdescr=>describe_by_object_ref( val ) )->attributes.
+    result = CAST cl_abap_classdescr( lo_descr )->attributes.
 
   ENDMETHOD.
 
@@ -1493,14 +1556,16 @@ CLASS z2ui5_cl_popup_context IMPLEMENTATION.
     " a data object is no type name
     lo_type = cl_abap_typedescr=>describe_by_data( val ).
     IF lo_type->kind = cl_abap_typedescr=>kind_ref.
-      " an initial reference would be REFERENCE_IS_INITIAL, a runtime error -
-      " see rtti_get_t_attri_by_oref
-      IF val IS INITIAL.
+      " REFERENCE_IS_INITIAL - see rtti_get_t_attri_by_oref
+      cl_abap_typedescr=>describe_by_data_ref( EXPORTING  p_data_ref           = val
+                                               RECEIVING p_descr_ref           = lo_type
+                                               EXCEPTIONS reference_is_initial = 1
+                                                          OTHERS               = 2 ).
+      IF sy-subrc <> 0.
         RAISE EXCEPTION TYPE z2ui5_cx_popup_error
           EXPORTING
             val = `RTTI_REFERENCE_IS_INITIAL`.
       ENDIF.
-      lo_type = cl_abap_typedescr=>describe_by_data_ref( val ).
     ENDIF.
 
     CASE lo_type->kind.
@@ -1625,58 +1690,42 @@ CLASS z2ui5_cl_popup_context IMPLEMENTATION.
 
   METHOD rtti_get_t_attri_by_table_name.
 
+    DATA lo_obj    TYPE REF TO cl_abap_typedescr.
+    DATA lo_struct TYPE REF TO cl_abap_structdescr.
+
     IF table_name IS INITIAL.
       RAISE EXCEPTION TYPE z2ui5_cx_popup_error
         EXPORTING
           val = `TABLE_NAME_INITIAL_ERROR`.
     ENDIF.
 
+    cl_abap_typedescr=>describe_by_name( EXPORTING  p_name         = table_name
+                                         RECEIVING  p_descr_ref    = lo_obj
+                                         EXCEPTIONS type_not_found = 1
+                                                    OTHERS         = 2 ).
+    IF sy-subrc <> 0.
+      " an unknown name has no columns - the result stays empty, as it always
+      " did (the former TABLE_NOT_FOUND raise sat inside its own CATCH cx_root)
+      RETURN.
+    ENDIF.
+
+    " one describe: a structure (DDIC table, structure, view) or a table
+    " type, whose line type is the structure. Anything else has no columns
     TRY.
-        cl_abap_structdescr=>describe_by_name( EXPORTING  p_name         = table_name
-                                               RECEIVING  p_descr_ref    = DATA(lo_obj)
-                                               EXCEPTIONS type_not_found = 1
-                                                          OTHERS         = 2
-            ).
-
-        IF sy-subrc <> 0.
-          RAISE EXCEPTION TYPE z2ui5_cx_popup_error
-            EXPORTING
-              val = |TABLE_NOT_FOUND_NAME___{ table_name }|.
-        ENDIF.
-        DATA(lo_struct) = CAST cl_abap_structdescr( lo_obj ).
-
-      CATCH cx_root.
-
-        TRY.
-            cl_abap_structdescr=>describe_by_name( EXPORTING  p_name         = table_name
-                                                   RECEIVING  p_descr_ref    = lo_obj
-                                                   EXCEPTIONS type_not_found = 1
-                                                              OTHERS         = 2
-            ).
-            IF sy-subrc <> 0.
-              RAISE EXCEPTION TYPE z2ui5_cx_popup_error
-                EXPORTING
-                  val = |TABLE_NOT_FOUND_NAME___{ table_name }|.
-            ENDIF.
-
-            DATA(lo_tab) = CAST cl_abap_tabledescr( lo_obj ).
-            lo_struct = CAST cl_abap_structdescr( lo_tab->get_table_line_type( ) ).
-          CATCH cx_root.
+        CASE lo_obj->kind.
+          WHEN cl_abap_typedescr=>kind_struct.
+            lo_struct = CAST #( lo_obj ).
+          WHEN cl_abap_typedescr=>kind_table.
+            lo_struct = CAST #( CAST cl_abap_tabledescr( lo_obj )->get_table_line_type( ) ).
+          WHEN OTHERS.
             RETURN.
-        ENDTRY.
-
+        ENDCASE.
+      CATCH cx_sy_move_cast_error.
+        RETURN.
     ENDTRY.
 
-    DATA(lt_comps) = lo_struct->get_components( ).
-
-    LOOP AT lt_comps REFERENCE INTO DATA(lr_comp).
-      IF lr_comp->as_include = abap_true.
-        DATA(lt_attri) = rtti_get_t_attri_by_include( lr_comp->type ).
-        INSERT LINES OF lt_attri INTO TABLE result.
-      ELSE.
-        INSERT lr_comp->* INTO TABLE result.
-      ENDIF.
-    ENDLOOP.
+    " expand_components also applies the RENAMING WITH SUFFIX of an include
+    result = expand_components( lo_struct->get_components( ) ).
 
   ENDMETHOD.
 
@@ -1726,6 +1775,31 @@ CLASS z2ui5_cl_popup_context IMPLEMENTATION.
 
   ENDMETHOD.
 
+  METHOD itab_filter_by_t_range.
+
+    DATA ref TYPE REF TO data.
+
+    LOOP AT tab REFERENCE INTO ref.
+      LOOP AT val INTO DATA(ls_filter).
+
+        IF ls_filter-t_range IS INITIAL.
+          CONTINUE.
+        ENDIF.
+
+        ASSIGN ref->(ls_filter-name) TO FIELD-SYMBOL(<field>).
+        IF sy-subrc <> 0.
+          CONTINUE.
+        ENDIF.
+        IF <field> NOT IN ls_filter-t_range.
+          DELETE tab.
+          EXIT.
+        ENDIF.
+
+      ENDLOOP.
+    ENDLOOP.
+
+  ENDMETHOD.
+
   METHOD msg_get_t.
 
     result = msg_get_internal( val ).
@@ -1758,19 +1832,9 @@ CLASS z2ui5_cl_popup_context IMPLEMENTATION.
       RETURN.
     ENDIF.
 
-    CASE rtti_get_type_kind( val ).
-      WHEN cl_abap_datadescr=>typekind_int OR
-          cl_abap_datadescr=>typekind_int1 OR
-          cl_abap_datadescr=>typekind_int2 OR
-          cl_abap_datadescr=>typekind_packed OR
-          cl_abap_datadescr=>typekind_float OR
-          cl_abap_datadescr=>typekind_decfloat16 OR
-          cl_abap_datadescr=>typekind_decfloat34 OR
-          cl_abap_datadescr=>typekind_hex OR
-          `8`.
-        " `8`: typekind_int8, a constant lower releases do not have
-        result = abap_true.
-    ENDCASE.
+    DATA(lv_type_kind) = rtti_get_type_kind( val ).
+    result = xsdbool( lv_type_kind = cl_abap_datadescr=>typekind_hex
+                      OR rtti_check_typekind_number( lv_type_kind ) = abap_true ).
 
   ENDMETHOD.
 
@@ -1877,6 +1941,22 @@ CLASS z2ui5_cl_popup_context IMPLEMENTATION.
 
   ENDMETHOD.
 
+  METHOD rtti_check_typekind_number.
+
+    CASE val.
+      WHEN cl_abap_typedescr=>typekind_int
+          OR cl_abap_typedescr=>typekind_int1
+          OR cl_abap_typedescr=>typekind_int2
+          OR cl_abap_typedescr=>typekind_packed
+          OR cl_abap_typedescr=>typekind_float
+          OR cl_abap_typedescr=>typekind_decfloat16
+          OR cl_abap_typedescr=>typekind_decfloat34
+          OR `8`.
+        result = abap_true.
+    ENDCASE.
+
+  ENDMETHOD.
+
   METHOD data_get_string.
 
     " the plain assignment is what turns an elementary value into its text
@@ -1885,20 +1965,11 @@ CLASS z2ui5_cl_popup_context IMPLEMENTATION.
     TRY.
         " a number through a string template: the assignment puts the sign
         " BEHIND it - -5 came out as `5-`, a packed -12.50 as `12.50-`
-        CASE rtti_get_type_kind( val ).
-          WHEN cl_abap_datadescr=>typekind_int OR
-              cl_abap_datadescr=>typekind_int1 OR
-              cl_abap_datadescr=>typekind_int2 OR
-              cl_abap_datadescr=>typekind_packed OR
-              cl_abap_datadescr=>typekind_float OR
-              cl_abap_datadescr=>typekind_decfloat16 OR
-              cl_abap_datadescr=>typekind_decfloat34 OR
-              `8`.
-            " `8`: typekind_int8, a constant lower releases do not have
-            result = |{ val }|.
-          WHEN OTHERS.
-            result = val.
-        ENDCASE.
+        IF rtti_check_typekind_number( rtti_get_type_kind( val ) ) = abap_true.
+          result = |{ val }|.
+        ELSE.
+          result = val.
+        ENDIF.
       CATCH cx_root ##NO_HANDLER.
     ENDTRY.
 
@@ -1924,6 +1995,16 @@ CLASS z2ui5_cl_popup_context IMPLEMENTATION.
     ENDTRY.
     gv_check_cloud_cached = abap_true.
     result = gv_check_cloud.
+
+  ENDMETHOD.
+
+  METHOD sy_get.
+
+    result-datum = sy-datum.
+    result-uzeit = sy-uzeit.
+    result-uname = sy-uname.
+    result-sysid = sy-sysid.
+    result-saprl = sy-saprl.
 
   ENDMETHOD.
 
@@ -2004,64 +2085,20 @@ CLASS z2ui5_cl_popup_context IMPLEMENTATION.
 
   METHOD conv_get_string_by_xstring.
 
-    DATA conv          TYPE REF TO object.
-    DATA conv_codepage TYPE c LENGTH 21.
-    DATA conv_in_class TYPE c LENGTH 18.
-    DATA lx_first      TYPE REF TO cx_root.
+    DATA lv_invalid TYPE abap_bool.
 
-    TRY.
-
-        conv_codepage = `CL_ABAP_CONV_CODEPAGE`.
-        CALL METHOD (conv_codepage)=>create_in
-          RECEIVING
-            instance = conv.
-
-        CALL METHOD conv->(`IF_ABAP_CONV_IN~CONVERT`)
-          EXPORTING
-            source = val
-          RECEIVING
-            result = result.
-        RETURN.
-
-      CATCH cx_root INTO lx_first ##NO_HANDLER.
-        " deliberate: capturing the cause IS the handling - it is chained into
-        " UNSUPPORTED_CODEPAGE_API below if the classic API fails too. Falling
-        " through is the point; the modern class is absent on older releases,
-        " which is the whole reason both paths exist
-    ENDTRY.
-
-    " The classic API. Guarded by its own TRY since 2026-09: it used to be the
-    " BODY of the CATCH above, so when it failed too the dynamic-call
-    " exception left this method raw. On a release that has neither class -
-    " and in any runtime that is not an SAP system, where a dynamic
-    " CALL METHOD resolves nothing - that reached the caller as
-    " CX_SY_DYN_CALL_ILLEGAL_CLASS, which nothing here catches by name.
-    " The view builder is one of those callers and builds its
-    " control-character set through this method, so a missing codepage class
-    " took down every view render with an exception that named a kernel
-    " class rather than the framework.
-    TRY.
-
-        conv_in_class = `CL_ABAP_CONV_IN_CE`.
-        CALL METHOD (conv_in_class)=>create
-          EXPORTING
-            encoding = `UTF-8`
-          RECEIVING
-            conv     = conv.
-
-        CALL METHOD conv->(`CONVERT`)
-          EXPORTING
-            input = val
-          IMPORTING
-            data  = result.
-
-      CATCH cx_root.
-        RAISE EXCEPTION TYPE z2ui5_cx_popup_error
-          EXPORTING
-            val      = |UNSUPPORTED_CODEPAGE_API - neither CL_ABAP_CONV_CODEPAGE | &&
-                       |nor CL_ABAP_CONV_IN_CE could convert here|
-            previous = lx_first.
-    ENDTRY.
+    " UTF-8 through the code-page method: one implementation of the two
+    " conversion APIs and their fallback, not two
+    conv_get_string_by_xstring_cp( EXPORTING val      = val
+                                             codepage = `UTF-8`
+                                             encoding = `UTF-8`
+                                   IMPORTING result   = result
+                                             invalid  = lv_invalid ).
+    IF lv_invalid = abap_true.
+      RAISE EXCEPTION TYPE z2ui5_cx_popup_error
+        EXPORTING
+          val = `INVALID_UTF8 - the bytes are no valid UTF-8`.
+    ENDIF.
 
   ENDMETHOD.
 
@@ -2194,7 +2231,7 @@ CLASS z2ui5_cl_popup_context IMPLEMENTATION.
       RETURN.
     ENDIF.
 
-    ddic = CORRESPONDING #( BASE ( ddic ) <ddic> ).
+    MOVE-CORRESPONDING <ddic> TO ddic.
     texts-header = ddic-reptext.
     texts-short  = ddic-scrtext_s.
     texts-medium = ddic-scrtext_m.
@@ -2736,10 +2773,7 @@ CLASS z2ui5_cl_popup_context IMPLEMENTATION.
         CONTINUE.
       ENDIF.
       ASSIGN COMPONENT ls_attri->name OF STRUCTURE val TO FIELD-SYMBOL(<flag>).
-      IF sy-subrc <> 0.
-        CONTINUE.
-      ENDIF.
-      IF <flag> IS INITIAL.
+      IF sy-subrc <> 0 OR <flag> IS INITIAL.
         CONTINUE.
       ENDIF.
       INSERT ls_attri->name+lv_len INTO TABLE result.
@@ -2915,6 +2949,88 @@ CLASS z2ui5_cl_popup_context IMPLEMENTATION.
 
   ENDMETHOD.
 
+  METHOD conv_get_string_by_xstring_cp.
+
+    DATA conv          TYPE REF TO object.
+    DATA conv_codepage TYPE c LENGTH 21.
+    DATA conv_in_class TYPE c LENGTH 18.
+    DATA lv_encoding   TYPE c LENGTH 20.
+    DATA lx_first      TYPE REF TO cx_root.
+
+    CLEAR result.
+    invalid = abap_false.
+
+    TRY.
+
+        conv_codepage = `CL_ABAP_CONV_CODEPAGE`.
+        CALL METHOD (conv_codepage)=>create_in
+          EXPORTING
+            codepage = codepage
+          RECEIVING
+            instance = conv.
+
+        CALL METHOD conv->(`IF_ABAP_CONV_IN~CONVERT`)
+          EXPORTING
+            source = val
+          RECEIVING
+            result = result.
+        RETURN.
+
+      CATCH cx_sy_conversion_codepage.
+        " the API is there and the bytes are not valid in this code page -
+        " the classic API would reject them too
+        CLEAR result.
+        invalid = abap_true.
+        RETURN.
+
+      CATCH cx_root INTO lx_first ##NO_HANDLER.
+        " deliberate: capturing the cause IS the handling - it is chained into
+        " UNSUPPORTED_CODEPAGE_API below if the classic API fails too. Falling
+        " through is the point; the modern class is absent on older releases,
+        " which is the whole reason both paths exist. A code page the modern
+        " class does not know (CX_PARAMETER_INVALID_RANGE) falls through too
+    ENDTRY.
+
+    " The classic API. Guarded by its own TRY since 2026-09: it used to be the
+    " BODY of the CATCH above, so when it failed too the dynamic-call
+    " exception left this method raw. On a release that has neither class -
+    " and in any runtime that is not an SAP system, where a dynamic
+    " CALL METHOD resolves nothing - that reached the caller as
+    " CX_SY_DYN_CALL_ILLEGAL_CLASS, which nothing here catches by name.
+    " The view builder is one of those callers and builds its
+    " control-character set through this method, so a missing codepage class
+    " took down every view render with an exception that named a kernel
+    " class rather than the framework.
+    TRY.
+
+        conv_in_class = `CL_ABAP_CONV_IN_CE`.
+        lv_encoding = encoding.
+        CALL METHOD (conv_in_class)=>create
+          EXPORTING
+            encoding = lv_encoding
+          RECEIVING
+            conv     = conv.
+
+        CALL METHOD conv->(`CONVERT`)
+          EXPORTING
+            input = val
+          IMPORTING
+            data  = result.
+
+      CATCH cx_sy_conversion_codepage.
+        CLEAR result.
+        invalid = abap_true.
+
+      CATCH cx_root.
+        RAISE EXCEPTION TYPE z2ui5_cx_popup_error
+          EXPORTING
+            val      = |UNSUPPORTED_CODEPAGE_API - neither CL_ABAP_CONV_CODEPAGE | &&
+                       |nor CL_ABAP_CONV_IN_CE could convert here|
+            previous = lx_first.
+    ENDTRY.
+
+  ENDMETHOD.
+
   METHOD rtti_get_t_attri_on_prem.
 
     DATA structdescr TYPE REF TO cl_abap_structdescr.
@@ -3049,7 +3165,9 @@ CLASS z2ui5_cl_popup_context IMPLEMENTATION.
     ENDTRY.
 
 
-    DATA(lt_comp)  =  rtti_get_t_attri_by_any( tabname ).
+    " by NAME: rtti_get_t_attri_by_any( tabname ) described the string
+    " holding the name, and the cast to a structure failed every time
+    DATA(lt_comp) = rtti_get_t_attri_by_table_name( tabname ).
     LOOP AT lt_comp REFERENCE INTO DATA(lr_comp).
 
       DATA(lv_check_key) = abap_false.
@@ -3153,7 +3271,8 @@ CLASS z2ui5_cl_popup_context IMPLEMENTATION.
           field_not_found   = 1
           no_help_for_field = 2
           inconsistent_help = 3
-          OTHERS            = 4.
+          error_message     = 4
+          OTHERS            = 5.
       IF sy-subrc <> 0.
         RAISE EXCEPTION TYPE z2ui5_cx_popup_error
           EXPORTING
@@ -3175,9 +3294,14 @@ CLASS z2ui5_cl_popup_context IMPLEMENTATION.
         " function module called by name wants the exact type
         CALL FUNCTION lv_fm
           EXPORTING
-            shlp_top = <shlp>
+            shlp_top      = <shlp>
           IMPORTING
-            shlp_tab = <shlp2>.
+            shlp_tab      = <shlp2>
+          EXCEPTIONS
+            " a MESSAGE TYPE E would end the request - on failure <shlp2>
+            " stays empty and the collective help is used as it is
+            error_message = 1
+            OTHERS        = 2.
 
         FIELD-SYMBOLS <row2> TYPE any.
         ASSIGN <shlp2>[ 1 ] TO <row2>.
@@ -3256,7 +3380,17 @@ CLASS z2ui5_cl_popup_context IMPLEMENTATION.
         call_shlp_exit = abap_true
       TABLES
         record_tab     = lt_result_tab
-        recdescr_tab   = mt_result_desc.
+        recdescr_tab   = mt_result_desc
+      EXCEPTIONS
+        " a search help exit may send MESSAGE TYPE E - without this the
+        " request ends there
+        error_message  = 1
+        OTHERS         = 2.
+    IF sy-subrc <> 0.
+      RAISE EXCEPTION TYPE z2ui5_cx_popup_error
+        EXPORTING
+          val = |F4IF_SELECT_VALUES failed for { ms_shlp-shlpname }|.
+    ENDIF.
 
     SORT ms_shlp-fieldprop BY shlplispos ASCENDING.
 
@@ -3415,7 +3549,6 @@ CLASS z2ui5_cl_popup_context IMPLEMENTATION.
     DATA lv_tabkey     TYPE c LENGTH 999.
     DATA lv_tabkey_len TYPE i.
     DATA lv_field_len  TYPE i.
-    DATA lv_offset     TYPE i.
 
     LOOP AT dfies INTO DATA(s_dfies) WHERE keyflag = abap_true.
 
@@ -3426,37 +3559,31 @@ CLASS z2ui5_cl_popup_context IMPLEMENTATION.
         CONTINUE.
       ENDIF.
 
-      lv_type = cl_abap_typedescr=>describe_by_data( <value> )->type_kind.
+      DATA(lo_value_type) = cl_abap_typedescr=>describe_by_data( <value> ).
+      lv_type = lo_value_type->type_kind.
 
       IF lv_type NA 'CDNT'.
         lv_tabkey+lv_tabkey_len = '*'.
         rv_tabkey = lv_tabkey.
         RETURN.
-      ELSE.
-        lv_field_len = cl_abap_typedescr=>describe_by_data( <value> )->length / cv_char_util_charsize.
       ENDIF.
 
-      lv_field_len = cl_abap_typedescr=>describe_by_data( <value> )->length / cv_char_util_charsize.
+      lv_field_len = lo_value_type->length / cv_char_util_charsize.
       lv_tabkey+lv_tabkey_len(lv_field_len) = <value>.
       lv_tabkey_len = lv_tabkey_len + lv_field_len.
 
     ENDLOOP.
 
+    " TABKEY is CHAR120: a longer key becomes generic at its last position.
+    " Cutting at the first `_` anywhere in the key put the `*` outside the
+    " 120 characters when that `_` came late, and the key was not generic
     IF lv_tabkey_len > 119.
-
-      IF lv_tabkey CS '_'.
-        lv_offset = sy-fdpos.
-        lv_tabkey+lv_offset = '*'.
-      ELSE.
-        lv_tabkey+119 = '*'.
-      ENDIF.
-
+      lv_tabkey+119 = '*'.
     ENDIF.
     rv_tabkey = lv_tabkey.
   ENDMETHOD.
 
   METHOD bus_tr_add.
-
     IF check_abap_cloud( ).
 
     ELSE.
@@ -3485,7 +3612,8 @@ CLASS z2ui5_cl_popup_context IMPLEMENTATION.
       DATA(fb1) = 'TR_APPEND_TO_COMM_OBJS_KEYS'.
       CALL FUNCTION fb1
         EXPORTING
-          wi_trkorr     = is_transport-transport
+          " the task: the keys belong to it, E071/E071K carry its number
+          wi_trkorr     = is_transport-task
           iv_dialog     = abap_false
         TABLES
           wt_e071       = <t_e071>
@@ -3515,7 +3643,6 @@ CLASS z2ui5_cl_popup_context IMPLEMENTATION.
       ENDIF.
 
     ENDIF.
-
   ENDMETHOD.
 
   METHOD _set_e071k.
@@ -3738,7 +3865,13 @@ CLASS z2ui5_cl_popup_context IMPLEMENTATION.
         ENDIF.
       CATCH cx_root ##NO_HANDLER.
     ENDTRY.
+    IF <table> IS NOT ASSIGNED.
+      RETURN.
+    ENDIF.
 
+    " the rows are TASKS (TRFUNCTION Q): TRKORR is the task, STRKORR the
+    " request it belongs to - the other way round, as it was, bus_tr_add
+    " wrote the keys under the request number
     LOOP AT <table> INTO <line>.
 
       UNASSIGN <value>.
@@ -3746,7 +3879,7 @@ CLASS z2ui5_cl_popup_context IMPLEMENTATION.
       IF <value> IS NOT ASSIGNED.
         CONTINUE.
       ELSE.
-        ls_data-transport = <value>.
+        ls_data-task = <value>.
       ENDIF.
 
       UNASSIGN <value>.
@@ -3755,7 +3888,7 @@ CLASS z2ui5_cl_popup_context IMPLEMENTATION.
       IF <value> IS NOT ASSIGNED.
         CONTINUE.
       ELSE.
-        ls_data-task = <value>.
+        ls_data-transport = <value>.
       ENDIF.
 
       UNASSIGN <value>.
@@ -3814,6 +3947,10 @@ CLASS z2ui5_cl_popup_context IMPLEMENTATION.
       FIELD-SYMBOLS <value> TYPE any.
 
       _read_e070( CHANGING mt_data = mt_data ).
+      " no task - an empty dynamic WHERE would read every text of E07T
+      IF mt_data IS INITIAL.
+        RETURN.
+      ENDIF.
 
       DATA(table_name) = 'E07T'.
 
@@ -3833,12 +3970,13 @@ CLASS z2ui5_cl_popup_context IMPLEMENTATION.
 
           DATA(index) = 0.
 
+          " the description shown is the one of the request
           LOOP AT mt_data INTO DATA(line).
             index = index + 1.
             IF index = 1.
-              DATA(where) = |TRKORR EQ '{ line-task }'|.
+              DATA(where) = |TRKORR EQ { filter_sql_quote( line-transport ) }|.
             ELSE.
-              where = |{ where } OR TRKORR EQ '{ line-task }'|.
+              where = |{ where } OR TRKORR EQ { filter_sql_quote( line-transport ) }|.
             ENDIF.
             where = |( { where } )|.
           ENDLOOP.
@@ -3856,30 +3994,36 @@ CLASS z2ui5_cl_popup_context IMPLEMENTATION.
         CATCH cx_root ##NO_HANDLER.
       ENDTRY.
 
+      IF <table> IS NOT ASSIGNED.
+        RETURN.
+      ENDIF.
+
+      " every task of a request gets its text - the logon language wins,
+      " another language only fills a text that is still empty
       LOOP AT <table> INTO <line>.
 
         UNASSIGN <value>.
         ASSIGN COMPONENT 'TRKORR' OF STRUCTURE <line> TO <value>.
         IF <value> IS NOT ASSIGNED.
           CONTINUE.
-        ELSE.
-
-          ASSIGN mt_data[ task = <value> ] TO FIELD-SYMBOL(<ls_data>).
-          IF sy-subrc = 0.
-
-            UNASSIGN <value>.
-            ASSIGN COMPONENT 'AS4TEXT' OF STRUCTURE <line> TO <value>.
-            IF <value> IS NOT ASSIGNED.
-              CONTINUE.
-            ELSE.
-
-              <ls_data>-short_description = <value>.
-
-            ENDIF.
-
-          ENDIF.
-
         ENDIF.
+        DATA(lv_trkorr) = CONV sxco_transport( <value> ).
+
+        UNASSIGN <value>.
+        ASSIGN COMPONENT 'LANGU' OF STRUCTURE <line> TO <value>.
+        DATA(lv_logon_langu) = xsdbool( <value> IS ASSIGNED AND <value> = sy-langu ).
+
+        UNASSIGN <value>.
+        ASSIGN COMPONENT 'AS4TEXT' OF STRUCTURE <line> TO <value>.
+        IF <value> IS NOT ASSIGNED.
+          CONTINUE.
+        ENDIF.
+
+        LOOP AT mt_data ASSIGNING FIELD-SYMBOL(<ls_data>) WHERE transport = lv_trkorr.
+          IF <ls_data>-short_description IS INITIAL OR lv_logon_langu = abap_true.
+            <ls_data>-short_description = <value>.
+          ENDIF.
+        ENDLOOP.
 
       ENDLOOP.
 
@@ -4026,6 +4170,15 @@ CLASS z2ui5_cl_popup_context IMPLEMENTATION.
 
   ENDMETHOD.
 
+  METHOD filter_sql_quote.
+
+    result = |'{ replace( val  = CONV string( val )
+                          sub  = `'`
+                          with = `''`
+                          occ  = 0 ) }'|.
+
+  ENDMETHOD.
+
   METHOD error_get_attributes.
 
     " declared, NOT `DATA(lv_name) = CONV string( lr_attri->name )`: a CONV
@@ -4101,7 +4254,7 @@ CLASS z2ui5_cl_popup_context IMPLEMENTATION.
     " exception, so the TRY below cannot intercept it and the caller would go
     " down instead of reporting the error it was diagnosing. sy-saprl is
     " `OPEN` on that runtime and a real release everywhere else.
-    IF sy-saprl = `OPEN`.
+    IF sy_get( )-saprl = `OPEN`.
       RETURN.
     ENDIF.
 
