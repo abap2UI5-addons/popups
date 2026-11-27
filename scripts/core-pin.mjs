@@ -16,6 +16,10 @@
  *   node scripts/core-pin.mjs set <ref>     pin a tag (or `main` for the canary)
  *   node scripts/core-pin.mjs latest        print the newest release tag
  *
+ * The unit tests build in a checkout of the same release
+ * (.github/scripts/unit.mjs, its `ref:` next to the core URL), so they move
+ * with the configs; its canary run (DEPS_TIP=1) takes `main` by itself.
+ *
  * The 7.02 configs carry the downported tag of the same release (`1.146.0`
  * there is `1.146.0-702`, `main` there is `702`), so one repository stays on
  * one framework version. `set main` is what a weekly canary run does in its
@@ -26,13 +30,16 @@ import { readFileSync, writeFileSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 
 const CORE = 'https://github.com/abap2UI5/abap2UI5';
-// every abaplint config that resolves the core, and whether it takes the
-// downported (-702) form of the tag. The namespace rename has none of its own:
-// .github/scripts/rename.mjs clones the core at the pin of abaplint.jsonc
+// every file that resolves the core, and whether it takes the downported
+// (-702) form of the tag: the abaplint configs and the unit runner, whose
+// entry names its own anchor and pin syntax. The namespace rename has none of
+// its own: .github/scripts/rename.mjs clones the core at the pin of
+// abaplint.jsonc
 const FILES = [
   { file: 'abaplint.jsonc', downport: false },
   { file: '.github/abaplint/abap_cloud.jsonc', downport: false },
   { file: '.github/abaplint/abap_702.jsonc', downport: true },
+  { file: '.github/scripts/unit.mjs', downport: false, anchor: `url: "${CORE}"`, pin: /(ref:\s*")([^"]+)(")/ },
 ];
 // the one line the pin lives on - kept on its own line next to the core URL
 const PIN = /("branch":\s*")([^"]+)(")/;
@@ -43,11 +50,11 @@ const from702 = (ref) => (ref === '702' ? 'main' : ref.replace(/-702$/, ''));
 function read(entry) {
   const file = new URL(`../${entry.file}`, import.meta.url);
   const text = readFileSync(file, 'utf8');
-  const at = text.indexOf(`"url": "${CORE}"`);
+  const at = text.indexOf(entry.anchor ?? `"url": "${CORE}"`);
   if (at < 0) throw new Error(`${entry.file}: no dependency on ${CORE}`);
   const block = text.slice(at, text.indexOf('}', at));
-  const m = block.match(PIN);
-  if (!m) throw new Error(`${entry.file}: the core dependency has no "branch" key`);
+  const m = block.match(entry.pin ?? PIN);
+  if (!m) throw new Error(`${entry.file}: the core dependency has no pin`);
   const ref = entry.downport ? from702(m[2]) : m[2];
   return { file, text, at, block, ref };
 }
@@ -67,7 +74,7 @@ if (cmd === 'get') {
   for (const entry of FILES) {
     const { file, text, at, block } = read(entry);
     const ref = entry.downport ? to702(arg) : arg;
-    const next = block.replace(PIN, `$1${ref}$3`);
+    const next = block.replace(entry.pin ?? PIN, `$1${ref}$3`);
     writeFileSync(file, text.slice(0, at) + next + text.slice(at + block.length));
     console.log(`${entry.file}: core pinned to ${ref}`);
   }

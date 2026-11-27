@@ -24,7 +24,8 @@
  *   UNIT_FILTER     run only the tests whose "OBJECT: class->method" contains it
  *   UNIT_NO_FETCH=1 use the checkouts under UNIT_DIR as they are
  *   DEPS_TIP=1      the sibling addons at the tip of their branch instead of
- *                   the commit .github/deps.json pins - the scheduled canary
+ *                   the commit .github/deps.json pins, and abap2UI5 at main
+ *                   instead of its release pin - the scheduled canary
  *
  * Never commit the work folder. A green transpiled run is not a substitute
  * for a run on a system (abap2UI5's abap-check skill lists what the
@@ -45,7 +46,9 @@ const CONFIG = {
   // checkouts under WORK; the first one is the abap2UI5 tree everything is
   // built in, the others are what this repository builds on
   repos: [
-    { name: "abap2UI5", url: "https://github.com/abap2UI5/abap2UI5", ref: "main" },
+    // the release the abaplint configs pin, moved with them by
+    // scripts/core-pin.mjs (abap2UI5 CONVENTIONS §9)
+    { name: "abap2UI5", url: "https://github.com/abap2UI5/abap2UI5", ref: "1.151.0" },
     { name: "layout-management", url: "https://github.com/abap2UI5-addons/layout-management", ref: "main" },
   ],
   // copied into <abap2UI5>/src/<into>/: entries relative to <from>/src
@@ -59,7 +62,9 @@ const CONFIG = {
 // the abaplint and rename checks of CI use (the shared CI template of
 // abap2UI5-addons, rap-ext .github/ci/README.md)
 const DEPS = path.join(ROOT, ".github", "deps.json");
-if (fs.existsSync(DEPS) && process.env.DEPS_TIP !== "1") {
+if (process.env.DEPS_TIP === "1") {
+  CONFIG.repos[0].ref = "main";
+} else if (fs.existsSync(DEPS)) {
   const pins = JSON.parse(fs.readFileSync(DEPS, "utf8"));
   for (const repo of CONFIG.repos) {
     const key = Object.keys(pins).find((k) => repo.url.toLowerCase().endsWith(`/${k.toLowerCase()}`));
