@@ -30,7 +30,7 @@ CLASS z2ui5_cl_popup_shlp DEFINITION
     DATA mv_value        TYPE string.
     DATA mv_return_value TYPE string.
     " the most rows F4IF_SELECT_VALUES reads (0 reads all)
-    DATA mv_rows         TYPE int1 VALUE '50'.
+    DATA mv_rows         TYPE i VALUE 50.
     DATA mt_data         TYPE REF TO data.
     DATA ms_data_row     TYPE REF TO data.
     DATA mo_layout       TYPE REF TO z2ui5_cl_layo_manager.
