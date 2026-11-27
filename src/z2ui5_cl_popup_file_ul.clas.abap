@@ -1,7 +1,6 @@
 CLASS z2ui5_cl_popup_file_ul DEFINITION PUBLIC.
 
   PUBLIC SECTION.
-    " abap2ui5lint-disable unbound-public-attribute -- a popup's attributes are its interface to the app that called it, which reads them once the popup returns
     INTERFACES z2ui5_if_app.
     " check_confirmed( ) - OK pressed; value( ) - REF TO ty_s_result, the
     " picked files with name, bytes and text (ms_result); value_string( ) -
@@ -57,7 +56,6 @@ CLASS z2ui5_cl_popup_file_ul DEFINITION PUBLIC.
     METHODS result
       RETURNING
         VALUE(result) TYPE ty_s_result.
-    " abap2ui5lint-enable unbound-public-attribute
 
   PROTECTED SECTION.
     DATA client              TYPE REF TO z2ui5_if_client.
