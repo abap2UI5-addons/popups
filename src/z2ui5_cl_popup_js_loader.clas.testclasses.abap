@@ -61,7 +61,7 @@ CLASS ltcl_test_roundtrip DEFINITION FINAL
       RETURNING
         VALUE(result) TYPE string_table
       RAISING
-        z2ui5_cx_ajson_error.
+        cx_static_check.
 
     METHODS client_create
       IMPORTING
