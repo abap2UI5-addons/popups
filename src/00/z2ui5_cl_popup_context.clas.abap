@@ -68,17 +68,6 @@ CLASS z2ui5_cl_popup_context DEFINITION
     TYPES ty_t_name_value TYPE STANDARD TABLE OF ty_s_name_value WITH EMPTY KEY.
 
     TYPES:
-      BEGIN OF ty_s_token,
-        key      TYPE string,
-        text     TYPE string,
-        visible  TYPE abap_bool,
-        selkz    TYPE abap_bool,
-        editable TYPE abap_bool,
-      END OF ty_s_token.
-
-    TYPES ty_t_token TYPE STANDARD TABLE OF ty_s_token WITH EMPTY KEY.
-
-    TYPES:
       BEGIN OF ty_s_range,
         sign   TYPE c LENGTH 1,
         option TYPE c LENGTH 2,
@@ -87,17 +76,6 @@ CLASS z2ui5_cl_popup_context DEFINITION
       END OF ty_s_range.
 
     TYPES ty_t_range TYPE STANDARD TABLE OF ty_s_range WITH EMPTY KEY.
-
-    TYPES:
-      BEGIN OF ty_s_filter_multi,
-        name            TYPE string,
-        t_range         TYPE ty_t_range,
-        t_token         TYPE ty_t_token,
-        t_token_added   TYPE ty_t_token,
-        t_token_removed TYPE ty_t_token,
-      END OF ty_s_filter_multi.
-
-    TYPES ty_t_filter_multi TYPE STANDARD TABLE OF ty_s_filter_multi WITH EMPTY KEY.
 
     TYPES:
       BEGIN OF ty_s_msg,
@@ -185,18 +163,6 @@ CLASS z2ui5_cl_popup_context DEFINITION
       RETURNING
         VALUE(result) TYPE abap_component_tab.
 
-    CLASS-METHODS filter_itab
-      IMPORTING
-        filter TYPE ty_t_filter_multi
-      CHANGING
-        val     TYPE STANDARD TABLE.
-
-    CLASS-METHODS filter_get_multi_by_data
-      IMPORTING
-        val           TYPE data
-      RETURNING
-        VALUE(result) TYPE ty_t_filter_multi.
-
     CLASS-METHODS url_param_get
       IMPORTING
         val           TYPE clike
@@ -280,28 +246,6 @@ CLASS z2ui5_cl_popup_context DEFINITION
       RETURNING
         VALUE(result) TYPE abap_bool.
 
-    CLASS-METHODS filter_get_range_t_by_token_t
-      IMPORTING
-        val           TYPE ty_t_token
-      RETURNING
-        VALUE(result) TYPE ty_t_range.
-
-    CLASS-METHODS filter_get_range_by_token
-      IMPORTING
-        val           TYPE string
-      RETURNING
-        VALUE(result) TYPE ty_s_range.
-
-    CLASS-METHODS filter_get_token_t_by_range_t
-      IMPORTING
-        val           TYPE ANY TABLE
-      RETURNING
-        VALUE(result) TYPE ty_t_token ##NEEDED.
-
-    CLASS-METHODS filter_get_token_range_mapping
-      RETURNING
-        VALUE(result) TYPE ty_t_name_value.
-
     CLASS-METHODS itab_corresponding
       IMPORTING
         val  TYPE STANDARD TABLE
@@ -321,12 +265,6 @@ CLASS z2ui5_cl_popup_context DEFINITION
         val           TYPE any
       RETURNING
         VALUE(result) TYPE ty_t_name_value.
-
-    CLASS-METHODS itab_filter_by_t_range
-      IMPORTING
-        val  TYPE ty_t_filter_multi
-      CHANGING
-        !tab TYPE STANDARD TABLE.
 
     CLASS-METHODS conv_copy_ref_data
       IMPORTING
@@ -1011,16 +949,6 @@ CLASS z2ui5_cl_popup_context DEFINITION
       RETURNING
         VALUE(result) TYPE abap_bool.
 
-    " a token template of filter_get_token_range_mapping with {LOW} and
-    " {HIGH} filled in as written
-    CLASS-METHODS filter_token_fill
-      IMPORTING
-        template      TYPE string
-        low           TYPE string
-        high          TYPE string
-      RETURNING
-        VALUE(result) TYPE string.
-
     "! the public attributes of an object that carry a message part (TEXT,
     "! TYPE, MSGV1 ...), mapped over is_msg - see msg_map
     CLASS-METHODS msg_get_by_oref_attri
@@ -1299,191 +1227,6 @@ CLASS z2ui5_cl_popup_context IMPLEMENTATION.
   METHOD c_trim_lower.
 
     result = to_lower( c_trim( val ) ).
-
-  ENDMETHOD.
-
-  METHOD filter_itab.
-
-    " the same filter as itab_filter_by_t_range - a field whose range is
-    " empty keeps every row there too
-    itab_filter_by_t_range( EXPORTING val = filter
-                            CHANGING  tab = val ).
-
-  ENDMETHOD.
-
-  METHOD filter_get_multi_by_data.
-
-    LOOP AT rtti_get_t_attri_by_any( val ) REFERENCE INTO DATA(lr_comp).
-      INSERT VALUE #( name = lr_comp->name ) INTO TABLE result.
-    ENDLOOP.
-
-  ENDMETHOD.
-
-  METHOD filter_get_range_by_token.
-    DATA(lv_value) = val.
-    IF lv_value IS INITIAL.
-      RETURN.
-    ENDIF.
-    DATA(lv_length) = strlen( lv_value ).
-
-    " `!(...)`: the negated token filter_get_token_t_by_range_t renders for
-    " an excluding row and for NE / NB / NP - the inner token with the sign
-    " flipped (I NE x comes back as the equivalent E EQ x, E NE x as I EQ x)
-    IF lv_length > 3 AND lv_value(2) = `!(` AND substring( val = lv_value
-                                                           off = lv_length - 1 ) = `)`.
-      result = filter_get_range_by_token( substring( val = lv_value
-                                                     off = 2
-                                                     len = lv_length - 3 ) ).
-      result-sign = COND #( WHEN result-sign = `E` THEN `I` ELSE `E` ).
-      RETURN.
-    ENDIF.
-
-    result-sign = `I`.
-
-    " the empty-value token of filter_get_token_range_mapping - read as `<`
-    " it was LT `leer>`
-    IF lv_value = `<leer>`.
-      result-option = `EQ`.
-      RETURN.
-    ENDIF.
-
-    IF lv_length >= 2 AND ( lv_value(2) = `<=` OR lv_value(2) = `>=` ).
-      result-option = COND #( WHEN lv_value(1) = `<` THEN `LE` ELSE `GE` ).
-      result-low    = substring( val = lv_value
-                                 off = 2 ).
-
-    ELSEIF lv_value(1) = `=`.
-      result-option = `EQ`.
-      result-low    = substring( val = lv_value
-                                 off = 1 ).
-
-    ELSEIF lv_value(1) = `<`.
-      result-option = `LT`.
-      result-low    = substring( val = lv_value
-                                 off = 1 ).
-
-    ELSEIF lv_value(1) = `>`.
-      result-option = `GT`.
-      result-low    = substring( val = lv_value
-                                 off = 1 ).
-
-    ELSEIF lv_value CA `*`.
-      " the pattern as it was typed: `*abc*` contains, `abc*` starts with,
-      " `*abc` ends with. LOW keeps the asterisks - they are what makes a CP
-      " row a pattern, for IN as well as for the LIKE built from it
-      result-option = `CP`.
-      result-low    = lv_value.
-
-    ELSEIF lv_value CS `...`.
-      SPLIT lv_value AT `...` INTO result-low result-high.
-      result-option = `BT`.
-
-    ELSE.
-      result-option = `EQ`.
-      result-low    = lv_value.
-    ENDIF.
-  ENDMETHOD.
-
-  METHOD filter_get_range_t_by_token_t.
-
-    LOOP AT val INTO DATA(ls_token).
-      INSERT filter_get_range_by_token( ls_token-text ) INTO TABLE result.
-    ENDLOOP.
-
-  ENDMETHOD.
-
-  METHOD filter_get_token_range_mapping.
-
-    result = VALUE #( (   n = `EQ`      v = `={LOW}` )
-                      (   n = `LT`      v = `<{LOW}` )
-                      (   n = `LE`      v = `<={LOW}` )
-                      (   n = `GT`      v = `>{LOW}` )
-                      (   n = `GE`      v = `>={LOW}` )
-                      (   n = `CP`      v = `*{LOW}*` )
-                      (   n = `BT`      v = `{LOW}...{HIGH}` )
-                      (   n = `NB`      v = `!({LOW}...{HIGH})` )
-                      (   n = `NE`      v = `!(={LOW})` )
-                      (   n = `NP`      v = `!(*{LOW}*)` )
-                      (   n = `!<leer>` v = `!(<leer>)` )
-                      (   n = `<leer>`  v = `<leer>` ) ).
-
-  ENDMETHOD.
-
-  METHOD filter_get_token_t_by_range_t.
-
-    DATA(lt_mapping) = filter_get_token_range_mapping( ).
-
-    DATA lt_tab TYPE ty_t_range.
-
-    itab_corresponding( EXPORTING val = val
-                        CHANGING  tab = lt_tab ).
-
-    " LOW / HIGH again from the source row, through data_get_string: the
-    " move into the string fields above wrote a number the way a MOVE does
-    " - sign behind it and padded (`5- `), so a select-option on an integer
-    " field showed `=42 ` and `5-...10 `
-    " UNASSIGN + IS ASSIGNED, not sy-subrc, in the loop (#1937)
-    FIELD-SYMBOLS <lt_source> TYPE ANY TABLE.
-    FIELD-SYMBOLS <ls_range>  TYPE ty_s_range.
-    FIELD-SYMBOLS <lv_part>   TYPE any.
-    ASSIGN val TO <lt_source>.
-    IF <lt_source> IS ASSIGNED.
-      DATA(lv_index) = 0.
-      LOOP AT <lt_source> ASSIGNING FIELD-SYMBOL(<ls_source>).
-        lv_index = lv_index + 1.
-        UNASSIGN <ls_range>.
-        ASSIGN lt_tab[ lv_index ] TO <ls_range>.
-        IF <ls_range> IS NOT ASSIGNED.
-          EXIT.
-        ENDIF.
-        UNASSIGN <lv_part>.
-        ASSIGN COMPONENT `LOW` OF STRUCTURE <ls_source> TO <lv_part>.
-        IF <lv_part> IS ASSIGNED.
-          <ls_range>-low = data_get_string( <lv_part> ).
-        ENDIF.
-        UNASSIGN <lv_part>.
-        ASSIGN COMPONENT `HIGH` OF STRUCTURE <ls_source> TO <lv_part>.
-        IF <lv_part> IS ASSIGNED.
-          <ls_range>-high = data_get_string( <lv_part> ).
-        ENDIF.
-      ENDLOOP.
-    ENDIF.
-
-    LOOP AT lt_tab REFERENCE INTO DATA(lr_row).
-
-      " an option the mapping does not know - initial (a row appended with
-      " sign and low only) or lower-case - used to raise a raw
-      " CX_SY_ITAB_LINE_NOT_FOUND out of the whole call; it renders as the
-      " equality token, which is what a range row without an option means
-      DATA lv_option TYPE string.
-      DATA lv_value  TYPE string.
-      lv_option = to_upper( lr_row->option ).
-      lv_value = VALUE #( lt_mapping[ n = lv_option ]-v OPTIONAL ). "#EC CI_SORTSEQ
-      IF lv_value IS INITIAL.
-        lv_value = lt_mapping[ n = `EQ` ]-v. "#EC CI_SORTSEQ
-      ENDIF.
-      IF ( lv_option = `CP` OR lv_option = `NP` ) AND lr_row->low CA `*`.
-        " LOW is a pattern already - wrapping it in the template's asterisks
-        " would turn `abc*` into `*abc**`
-        lv_value = COND #( WHEN lv_option = `CP` THEN lr_row->low
-                           ELSE |!({ lr_row->low })| ).
-      ELSE.
-        lv_value = filter_token_fill( template = lv_value
-                                      low      = lr_row->low
-                                      high     = lr_row->high ).
-      ENDIF.
-
-      " an excluding row must not render like its including twin - negate the
-      " token so the MultiInput shows the filter's real meaning
-      IF lr_row->sign = `E`.
-        lv_value = |!({ lv_value })|.
-      ENDIF.
-
-      INSERT VALUE #( key      = lv_value
-                      text     = lv_value
-                      visible  = abap_true
-                      editable = abap_true ) INTO TABLE result.
-    ENDLOOP.
 
   ENDMETHOD.
 
@@ -1942,31 +1685,6 @@ CLASS z2ui5_cl_popup_context IMPLEMENTATION.
             ) INTO TABLE result.
       ENDCASE.
 
-    ENDLOOP.
-
-  ENDMETHOD.
-
-  METHOD itab_filter_by_t_range.
-
-    DATA ref TYPE REF TO data.
-
-    LOOP AT tab REFERENCE INTO ref.
-      LOOP AT val INTO DATA(ls_filter).
-
-        IF ls_filter-t_range IS INITIAL.
-          CONTINUE.
-        ENDIF.
-
-        ASSIGN ref->(ls_filter-name) TO FIELD-SYMBOL(<field>).
-        IF sy-subrc <> 0.
-          CONTINUE.
-        ENDIF.
-        IF <field> NOT IN ls_filter-t_range.
-          DELETE tab.
-          EXIT.
-        ENDIF.
-
-      ENDLOOP.
     ENDLOOP.
 
   ENDMETHOD.
@@ -4306,36 +4024,6 @@ CLASS z2ui5_cl_popup_context IMPLEMENTATION.
                    OR lv_kind = cl_abap_datadescr=>typekind_struct1
                    OR lv_kind = cl_abap_datadescr=>typekind_struct2
                    OR lv_kind = cl_abap_datadescr=>typekind_oref ).
-
-  ENDMETHOD.
-
-  METHOD filter_token_fill.
-
-    " built by concatenation, not REPLACE ... WITH: LOW and HIGH are data,
-    " and the transpiled runtime reads a WITH text like a regex replacement
-    " ( `$&`, `$$`, `\{` change - backlog item runtime-replace-with-literal ).
-    " HIGH first: a LOW that spells `{HIGH}` is then never substituted a
-    " second time ( {LOW} stands before {HIGH} in every template )
-    DATA lv_off  TYPE i.
-    DATA lv_rest TYPE i.
-
-    result = template.
-    lv_off = find( val = result
-                   sub = `{HIGH}` ).
-    IF lv_off >= 0.
-      lv_rest = lv_off + 6.
-      result = substring( val = result
-                          len = lv_off ) && high && substring( val = result
-                                                               off = lv_rest ).
-    ENDIF.
-    lv_off = find( val = result
-                   sub = `{LOW}` ).
-    IF lv_off >= 0.
-      lv_rest = lv_off + 5.
-      result = substring( val = result
-                          len = lv_off ) && low && substring( val = result
-                                                              off = lv_rest ).
-    ENDIF.
 
   ENDMETHOD.
 

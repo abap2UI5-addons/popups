@@ -21,7 +21,7 @@
     {
       "url": "https://github.com/abap2UI5-addons/layout-management",
       // layout-management main - its release tag once one is cut
-      "branch": "main",
+      "branch": "DEV", // DEV: the range popups moved there (z2ui5_cl_layo_pop_range / _filter) - back to main once DEV is merged
       "folder": "/layout-management",
       "files": "/src/**/*.*"
     }

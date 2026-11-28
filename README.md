@@ -156,8 +156,6 @@ app `CASE client->get_nav_tag( ).` (samples 01, 07 and 20).
 | `z2ui5_cl_popup_input_val` | OK or Enter | `string`, the value entered | the value |
 | `z2ui5_cl_popup_textedit` | OK | `string`, the text | the text |
 | `z2ui5_cl_popup_get_values` | OK | `z2ui5_cl_popup_get_values=>ty_t_field`, the fields with their values | empty (`result_value( )` reads one field) |
-| `z2ui5_cl_popup_get_range` | OK | `z2ui5_cl_popup_context=>ty_t_range` | empty |
-| `z2ui5_cl_popup_get_ranges` | OK | `z2ui5_cl_popup_context=>ty_t_filter_multi`, the ranges per field | empty |
 | `z2ui5_cl_popup_value_help` | a row was chosen | `string`, the value of field `i_fname` of the row | the value |
 | `z2ui5_cl_popup_shlp` | a row was chosen | `string`, the value of search-help parameter `i_fname` of the row | the value |
 | `z2ui5_cl_popup_show_tr` | a transport request was selected, or No Transport | `z2ui5_cl_popup_context=>ty_s_transport` (`locl` = `abap_true` for No Transport) | the transport request, empty for No Transport |
@@ -265,7 +263,7 @@ the search reach it.
 * Text Editor, HTML & PDF display (`z2ui5_cl_popup_textedit`, `z2ui5_cl_popup_html`, `z2ui5_cl_popup_pdf`)
 * Messages, Error & Input Validation (`z2ui5_cl_popup_messages`, `z2ui5_cl_popup_error`, `z2ui5_cl_popup_input_val`)
 * Message popover - a MessagePopover with a count per type, opened by a control of your view (`z2ui5_cl_popup_msgpopover`)
-* Range Selection (`z2ui5_cl_popup_get_range`, `z2ui5_cl_popup_get_ranges`)
+* Range Selection - moved to [layout-management](https://github.com/abap2UI5-addons/layout-management) (2026-11): `z2ui5_cl_popup_get_range` is `z2ui5_cl_layo_pop_range`, `z2ui5_cl_popup_get_ranges` is `z2ui5_cl_layo_pop_filter` there, merged with the select-options of range-filter - see below
 * Image Editor & JS Loader (`z2ui5_cl_popup_image_edit`, `z2ui5_cl_popup_js_loader` - only `factory_check_open_ui5`, whether the frontend runs OpenUI5; the script of `factory( i_js )` is not run any more, since abap2UI5 has no path for raw JavaScript - ship frontend code as a custom control)
 * Value-Help & Search-Help - a search help opened by field or by name, with prefilled fields (`z2ui5_cl_popup_value_help`, `z2ui5_cl_popup_shlp`)
 * Calculator built with CSS grid (`z2ui5_cl_popup_calculator`)
@@ -290,11 +288,9 @@ the search reach it.
 | `z2ui5_cl_popup_sample_10` | Input value (`z2ui5_cl_popup_input_val`) |
 | `z2ui5_cl_popup_sample_11` | File upload (`z2ui5_cl_popup_file_ul`) |
 | `z2ui5_cl_popup_sample_12`, `_13` | PDF (`z2ui5_cl_popup_pdf`) |
-| `z2ui5_cl_popup_sample_14` | Select-options over several fields (`z2ui5_cl_popup_get_ranges`) |
 | `z2ui5_cl_popup_sample_15` | Table (`z2ui5_cl_popup_table`) |
 | `z2ui5_cl_popup_sample_16` | File download (`z2ui5_cl_popup_file_dl`) |
 | `z2ui5_cl_popup_sample_18` | `CL_DEMO_OUTPUT` (`z2ui5_cl_popup_demo_out`) |
-| `z2ui5_cl_popup_sample_19` | Range of one field (`z2ui5_cl_popup_get_range`) |
 | `z2ui5_cl_popup_sample_20` | Search-Help by name, prefilled (`z2ui5_cl_popup_shlp`) |
 | `z2ui5_cl_popup_sample_22` | Calculator (`z2ui5_cl_popup_calculator`) |
 | `z2ui5_cl_popup_sample_23` | Data element search (`z2ui5_cl_popup_dtel_srch`) |
@@ -336,6 +332,20 @@ the 30-character limit: `z2ui5_cl_popup_search_help` is now
 `z2ui5_cl_popup_get_ranges` and `z2ui5_cl_popup_demo_output` is
 `z2ui5_cl_popup_demo_out`, with the same public interface. Delete the old
 ones after the pull as well.
+
+**The range popups moved to layout-management (2026-11).**
+`z2ui5_cl_popup_get_range` and `z2ui5_cl_popup_get_ranges` existed twice -
+here and as the popups of the select-options of range-filter. They are one
+each now, in [layout-management](https://github.com/abap2UI5-addons/layout-management),
+which this addon requires anyway: `z2ui5_cl_layo_pop_range` (one field) and
+`z2ui5_cl_layo_pop_filter` (several fields, `factory( filter )` as before,
+`factory_by_data( )` with selection variants). A caller replaces the class
+name and nothing else: `factory( )`, `result( )` and its components
+`check_confirmed`, `t_filter` and `t_range` are the same; the two no longer
+implement `z2ui5_if_popup_result`, and the filter types are
+`z2ui5_cl_layo_context=>ty_t_range` / `ty_t_filter_multi`. Samples 14 and 19
+went with them (`z2ui5_cl_layo_sample_09` shows the filter popup). Delete the
+two classes and the two samples after the pull.
 
 ### Utility class - vendored copy from abap-util
 
