@@ -23,13 +23,13 @@ CLASS z2ui5_cl_popup_sample_23 IMPLEMENTATION.
 
     me->client = client.
 
-    IF client->check_on_init( ).
+    IF client->check_on_init( ) IS NOT INITIAL.
       mv_value = `material`.
       view_display( ).
       RETURN.
     ENDIF.
 
-    IF client->check_on_navigated( ).
+    IF client->check_on_navigated( ) IS NOT INITIAL.
       on_navigated( ).
       view_display( ).
       RETURN.
@@ -48,14 +48,21 @@ CLASS z2ui5_cl_popup_sample_23 IMPLEMENTATION.
   ENDMETHOD.
 
   METHOD on_navigated.
+        DATA temp1 TYPE REF TO z2ui5_cl_popup_dtel_srch.
+        DATA lo_popup LIKE temp1.
+    DATA ls_result TYPE z2ui5_cl_popup_dtel_srch=>ty_s_result.
 
     TRY.
-        DATA(lo_popup) = CAST z2ui5_cl_popup_dtel_srch( client->get_app_prev( ) ).
+
+        temp1 ?= client->get_app_prev( ).
+
+        lo_popup = temp1.
       CATCH cx_sy_move_cast_error.
         RETURN.
     ENDTRY.
 
-    DATA(ls_result) = lo_popup->result( ).
+
+    ls_result = lo_popup->result( ).
     IF ls_result-check_confirmed = abap_false.
       client->message_toast_display( `Search cancelled` ).
       RETURN.
@@ -68,7 +75,8 @@ CLASS z2ui5_cl_popup_sample_23 IMPLEMENTATION.
 
   METHOD view_display.
 
-    DATA(view) = z2ui5_cl_ui5_view_builder=>factory(
+    DATA view TYPE REF TO z2ui5_cl_ui5_view_builder.
+    view = z2ui5_cl_ui5_view_builder=>factory(
                      )->ele( n = `View` ns = `mvc`
                      )->a( n = `xmlns` v = `sap.m`
                      )->a( n = `xmlns:mvc` v = `sap.ui.core.mvc`

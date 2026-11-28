@@ -27,15 +27,15 @@ CLASS z2ui5_cl_popup_sample_20 IMPLEMENTATION.
   METHOD z2ui5_if_app~main.
     me->client = client.
 
-    IF client->check_on_init( ).
+    IF client->check_on_init( ) IS NOT INITIAL.
       on_init( ).
 
-    ELSEIF client->check_on_nav_back( ).
+    ELSEIF client->check_on_nav_back( ) IS NOT INITIAL.
       " back from a search help: read its result, then show the view again
       on_after_search( ).
       render_main( ).
 
-    ELSEIF client->check_on_navigated( ).
+    ELSEIF client->check_on_navigated( ) IS NOT INITIAL.
       " a restored draft - the view is shown again
       render_main( ).
 
@@ -53,6 +53,8 @@ CLASS z2ui5_cl_popup_sample_20 IMPLEMENTATION.
   ENDMETHOD.
 
   METHOD on_event.
+        DATA temp1 TYPE z2ui5_cl_popup_shlp=>ty_t_init.
+        DATA temp2 LIKE LINE OF temp1.
 
     CASE client->get( )-event.
 
@@ -68,11 +70,17 @@ CLASS z2ui5_cl_popup_sample_20 IMPLEMENTATION.
 
       WHEN `CALL_SHLP_PREFILLED`.
         " search help of field USR01-BNAME, its user field prefilled
+
+        CLEAR temp1.
+
+        temp2-name = `BNAME`.
+        temp2-value = mv_prefill.
+        INSERT temp2 INTO TABLE temp1.
         client->nav_app_call( app = z2ui5_cl_popup_shlp=>factory(
                                         i_table = `USR01`
                                         i_fname = `BNAME`
                                         i_value = mv_user
-                                        it_init = VALUE #( ( name = `BNAME` value = mv_prefill ) ) )
+                                        it_init = temp1 )
                               tag = `USER` ).
 
       WHEN OTHERS.
@@ -83,14 +91,17 @@ CLASS z2ui5_cl_popup_sample_20 IMPLEMENTATION.
 
   METHOD render_main.
 
-    DATA(view) = z2ui5_cl_ui5_view_builder=>factory(
+    DATA view TYPE REF TO z2ui5_cl_ui5_view_builder.
+    DATA page TYPE REF TO z2ui5_cl_ui5_view_builder.
+    view = z2ui5_cl_ui5_view_builder=>factory(
                      )->ele( n = `View` ns = `mvc`
                      )->a( n = `xmlns` v = `sap.m`
                      )->a( n = `xmlns:mvc` v = `sap.ui.core.mvc`
                      )->a( n = `xmlns:form` v = `sap.ui.layout.form`
                      )->a( n = `displayBlock` v = `true`
                      )->a( n = `height` v = `100%` ).
-    DATA(page) = view->ele( `Shell`
+
+    page = view->ele( `Shell`
                      )->ele( `Page`
                      )->a( n = `title` v = `Search-Help by Name and Prefill`
                      )->a( n = `navButtonPress` v = client->_event( `BACK` )
@@ -134,7 +145,11 @@ CLASS z2ui5_cl_popup_sample_20 IMPLEMENTATION.
   METHOD on_after_search.
 
     " every popup hands its result over through z2ui5_if_popup_result
-    DATA(popup) = CAST z2ui5_if_popup_result( client->get_app_prev( ) ).
+    DATA temp3 TYPE REF TO z2ui5_if_popup_result.
+    DATA popup LIKE temp3.
+    temp3 ?= client->get_app_prev( ).
+
+    popup = temp3.
     IF popup->check_confirmed( ) = abap_false.
       RETURN.
     ENDIF.

@@ -11,7 +11,8 @@ ENDCLASS.
 CLASS ltcl_test IMPLEMENTATION.
 
   METHOD test_factory.
-    DATA(lo_pop) = z2ui5_cl_popup_js_loader=>factory(
+    DATA lo_pop TYPE REF TO z2ui5_cl_popup_js_loader.
+    lo_pop = z2ui5_cl_popup_js_loader=>factory(
       i_js     = `console.log("hello");`
       i_result = `DONE` ).
 
@@ -21,20 +22,23 @@ CLASS ltcl_test IMPLEMENTATION.
   ENDMETHOD.
 
   METHOD test_factory_open_ui5.
-    DATA(lo_pop) = z2ui5_cl_popup_js_loader=>factory_check_open_ui5( ).
+    DATA lo_pop TYPE REF TO z2ui5_cl_popup_js_loader.
+    lo_pop = z2ui5_cl_popup_js_loader=>factory_check_open_ui5( ).
 
     cl_abap_unit_assert=>assert_bound( lo_pop ).
   ENDMETHOD.
 
   METHOD test_result_initial.
-    DATA(lo_pop) = z2ui5_cl_popup_js_loader=>factory( `alert(1);` ).
+    DATA lo_pop TYPE REF TO z2ui5_cl_popup_js_loader.
+    lo_pop = z2ui5_cl_popup_js_loader=>factory( `alert(1);` ).
 
     cl_abap_unit_assert=>assert_equals( exp = `LOADED`
                                         act = lo_pop->result( ) ).
   ENDMETHOD.
 
   METHOD test_open_ui5_flag_init.
-    DATA(lo_pop) = z2ui5_cl_popup_js_loader=>factory_check_open_ui5( ).
+    DATA lo_pop TYPE REF TO z2ui5_cl_popup_js_loader.
+    lo_pop = z2ui5_cl_popup_js_loader=>factory_check_open_ui5( ).
 
     cl_abap_unit_assert=>assert_false( lo_pop->mv_is_open_ui5 ).
   ENDMETHOD.
@@ -84,9 +88,11 @@ CLASS ltcl_test_roundtrip IMPLEMENTATION.
 
   METHOD client_create.
 
-    mo_action = NEW #( NEW z2ui5_cl_ui5_handler( `` ) ).
+    DATA temp1 TYPE REF TO z2ui5_cl_ui5_handler.
+    CREATE OBJECT temp1 TYPE z2ui5_cl_ui5_handler EXPORTING VAL = ``.
+    CREATE OBJECT mo_action EXPORTING VAL = temp1.
     mo_action->mo_app->mo_app = io_app.
-    mi_client = NEW z2ui5_cl_ui5_client( mo_action ).
+    CREATE OBJECT mi_client TYPE z2ui5_cl_ui5_client EXPORTING ACTION = mo_action.
 
   ENDMETHOD.
 
@@ -104,7 +110,8 @@ CLASS ltcl_test_roundtrip IMPLEMENTATION.
     " i_js is not run any more (abap2UI5 has no path for raw JavaScript):
     " no popup with a dead script element, no timer - the app leaves at
     " once and still answers i_result
-    DATA(lo_pop) = z2ui5_cl_popup_js_loader=>factory( `console.log('x');` ).
+    DATA lo_pop TYPE REF TO z2ui5_cl_popup_js_loader.
+    lo_pop = z2ui5_cl_popup_js_loader=>factory( `console.log('x');` ).
     client_create( lo_pop ).
 
     lo_pop->z2ui5_if_app~main( mi_client ).
@@ -119,7 +126,8 @@ CLASS ltcl_test_roundtrip IMPLEMENTATION.
 
   METHOD test_timer_finished.
 
-    DATA(lo_pop) = z2ui5_cl_popup_js_loader=>factory( `console.log('x');` ).
+    DATA lo_pop TYPE REF TO z2ui5_cl_popup_js_loader.
+    lo_pop = z2ui5_cl_popup_js_loader=>factory( `console.log('x');` ).
     roundtrip_event( io_app   = lo_pop
                      iv_event = `TIMER_FINISHED` ).
 
@@ -134,7 +142,8 @@ CLASS ltcl_test_roundtrip IMPLEMENTATION.
 
     " the UI5 runtime arrives with the request - the check answers on the
     " first roundtrip and leaves without ever showing a popup
-    DATA(lo_pop) = z2ui5_cl_popup_js_loader=>factory_check_open_ui5( ).
+    DATA lo_pop TYPE REF TO z2ui5_cl_popup_js_loader.
+    lo_pop = z2ui5_cl_popup_js_loader=>factory_check_open_ui5( ).
     client_create( lo_pop ).
     mo_action->mo_handler->ms_request-s_front-s_ui5-gav = `com.sap.ui5.dist:OPENUI5:zip`.
 
@@ -150,7 +159,8 @@ CLASS ltcl_test_roundtrip IMPLEMENTATION.
 
   METHOD test_info_sap_ui5.
 
-    DATA(lo_pop) = z2ui5_cl_popup_js_loader=>factory_check_open_ui5( ).
+    DATA lo_pop TYPE REF TO z2ui5_cl_popup_js_loader.
+    lo_pop = z2ui5_cl_popup_js_loader=>factory_check_open_ui5( ).
     client_create( lo_pop ).
     mo_action->mo_handler->ms_request-s_front-s_ui5-gav = `com.sap.ui5.dist:sapui5:zip`.
 
@@ -163,7 +173,8 @@ CLASS ltcl_test_roundtrip IMPLEMENTATION.
 
   METHOD popup_xml.
 
-    LOOP AT mo_action->ms_next-t_action_front INTO DATA(ls_action)
+    DATA ls_action LIKE LINE OF mo_action->ms_next-t_action_front.
+    LOOP AT mo_action->ms_next-t_action_front INTO ls_action
          WHERE slot = z2ui5_if_client=>cs_view-popup AND method = `display`.
       result = ls_action-xml.
     ENDLOOP.
@@ -172,7 +183,8 @@ CLASS ltcl_test_roundtrip IMPLEMENTATION.
 
   METHOD follow_up_actions.
 
-    LOOP AT mo_action->ms_next-s_action-t_custom INTO DATA(ls_action).
+    DATA ls_action LIKE LINE OF mo_action->ms_next-s_action-t_custom.
+    LOOP AT mo_action->ms_next-s_action-t_custom INTO ls_action.
       INSERT ls_action-o_json->stringify( ) INTO TABLE result.
     ENDLOOP.
 
@@ -180,8 +192,13 @@ CLASS ltcl_test_roundtrip IMPLEMENTATION.
 
   METHOD popup_destroyed.
 
-    result = xsdbool( line_exists( mo_action->ms_next-t_action_front[ slot   = z2ui5_if_client=>cs_view-popup
-                                                                      method = `destroy` ] ) ).
+    DATA temp1 LIKE sy-subrc.
+    DATA temp2 TYPE xsdboolean.
+    READ TABLE mo_action->ms_next-t_action_front WITH KEY slot = z2ui5_if_client=>cs_view-popup method = `destroy` TRANSPORTING NO FIELDS.
+    temp1 = sy-subrc.
+
+    temp2 = boolc( temp1 = 0 ).
+    result = temp2.
 
   ENDMETHOD.
 
@@ -208,21 +225,37 @@ CLASS ltcl_popup_result IMPLEMENTATION.
 
   METHOD roundtrip_init.
 
-    mo_action = NEW #( NEW z2ui5_cl_ui5_handler( `` ) ).
+    DATA temp3 TYPE REF TO z2ui5_cl_ui5_handler.
+    DATA temp2 TYPE REF TO z2ui5_cl_ui5_client.
+    CREATE OBJECT temp3 TYPE z2ui5_cl_ui5_handler EXPORTING VAL = ``.
+    CREATE OBJECT mo_action EXPORTING VAL = temp3.
     mo_action->mo_app->mo_app = io_app.
-    io_app->main( NEW z2ui5_cl_ui5_client( mo_action ) ).
+
+    CREATE OBJECT temp2 TYPE z2ui5_cl_ui5_client EXPORTING ACTION = mo_action.
+    io_app->main( temp2 ).
 
   ENDMETHOD.
 
   METHOD test_script_loaded.
 
-    DATA(lo_pop) = z2ui5_cl_popup_js_loader=>factory( `console.log( 1 );` ).
-    DATA(li_result) = CAST z2ui5_if_popup_result( lo_pop ).
+    DATA lo_pop TYPE REF TO z2ui5_cl_popup_js_loader.
+    DATA temp3 TYPE REF TO z2ui5_if_popup_result.
+    DATA li_result LIKE temp3.
+    DATA temp4 TYPE REF TO string.
+    DATA lr_value LIKE temp4.
+    lo_pop = z2ui5_cl_popup_js_loader=>factory( `console.log( 1 );` ).
+
+    temp3 ?= lo_pop.
+
+    li_result = temp3.
 
     cl_abap_unit_assert=>assert_true( li_result->check_confirmed( ) ).
     cl_abap_unit_assert=>assert_equals( exp = `LOADED`
                                         act = li_result->value_string( ) ).
-    DATA(lr_value) = CAST string( li_result->value( ) ).
+
+    temp4 ?= li_result->value( ).
+
+    lr_value = temp4.
     cl_abap_unit_assert=>assert_equals( exp = `LOADED`
                                         act = lr_value->* ).
 
@@ -230,12 +263,23 @@ CLASS ltcl_popup_result IMPLEMENTATION.
 
   METHOD test_check_open_ui5.
 
-    DATA(lo_pop) = z2ui5_cl_popup_js_loader=>factory_check_open_ui5( ).
+    DATA lo_pop TYPE REF TO z2ui5_cl_popup_js_loader.
+    DATA temp5 TYPE REF TO z2ui5_if_popup_result.
+    DATA li_result LIKE temp5.
+    DATA temp6 TYPE REF TO abap_bool.
+    DATA lr_value LIKE temp6.
+    lo_pop = z2ui5_cl_popup_js_loader=>factory_check_open_ui5( ).
     roundtrip_init( lo_pop ).
-    DATA(li_result) = CAST z2ui5_if_popup_result( lo_pop ).
+
+    temp5 ?= lo_pop.
+
+    li_result = temp5.
 
     cl_abap_unit_assert=>assert_true( li_result->check_confirmed( ) ).
-    DATA(lr_value) = CAST abap_bool( li_result->value( ) ).
+
+    temp6 ?= li_result->value( ).
+
+    lr_value = temp6.
     cl_abap_unit_assert=>assert_equals( exp = lo_pop->mv_is_open_ui5
                                         act = lr_value->* ).
     cl_abap_unit_assert=>assert_equals( exp = lo_pop->ui5_gav

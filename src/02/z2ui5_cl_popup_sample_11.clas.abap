@@ -20,7 +20,11 @@ CLASS z2ui5_cl_popup_sample_11 IMPLEMENTATION.
 
     " every popup hands its result over through z2ui5_if_popup_result -
     " value_string( ) of the upload is the content of the last file as text
-    DATA(popup) = CAST z2ui5_if_popup_result( client->get_app_prev( ) ).
+    DATA temp1 TYPE REF TO z2ui5_if_popup_result.
+    DATA popup LIKE temp1.
+    temp1 ?= client->get_app_prev( ).
+
+    popup = temp1.
     IF popup->check_confirmed( ) = abap_true.
       client->message_box_display( |the input is { popup->value_string( ) }| ).
     ENDIF.
@@ -30,7 +34,8 @@ CLASS z2ui5_cl_popup_sample_11 IMPLEMENTATION.
 
   METHOD view_display.
 
-    DATA(view) = z2ui5_cl_ui5_view_builder=>factory(
+    DATA view TYPE REF TO z2ui5_cl_ui5_view_builder.
+    view = z2ui5_cl_ui5_view_builder=>factory(
                      )->ele( n = `View` ns = `mvc`
                      )->a( n = `xmlns` v = `sap.m`
                      )->a( n = `xmlns:mvc` v = `sap.ui.core.mvc`
@@ -51,9 +56,11 @@ CLASS z2ui5_cl_popup_sample_11 IMPLEMENTATION.
 
 
   METHOD on_event.
+      DATA lo_app TYPE REF TO z2ui5_cl_popup_file_ul.
 
     IF client->get( )-event = `POPUP`.
-      DATA(lo_app) = z2ui5_cl_popup_file_ul=>factory( ).
+
+      lo_app = z2ui5_cl_popup_file_ul=>factory( ).
       client->nav_app_call( lo_app ).
     ENDIF.
 
@@ -64,11 +71,11 @@ CLASS z2ui5_cl_popup_sample_11 IMPLEMENTATION.
 
     me->client = client.
 
-    IF client->check_on_navigated( ).
+    IF client->check_on_navigated( ) IS NOT INITIAL.
       view_display( ).
       " true only on the way back from the popup - not on the first start
       " or on a restore, where get_app_prev( ) is no popup
-      IF client->check_on_nav_back( ).
+      IF client->check_on_nav_back( ) IS NOT INITIAL.
         on_navigation( ).
       ENDIF.
       RETURN.

@@ -111,9 +111,16 @@ ENDCLASS.
 CLASS z2ui5_cl_popup_calculator IMPLEMENTATION.
 
   METHOD factory.
+    DATA temp6 TYPE string.
 
-    r_result = NEW #( ).
-    r_result->title               = COND #( WHEN i_title IS INITIAL THEN `Calculator` ELSE i_title ).
+    CREATE OBJECT r_result.
+
+    IF i_title IS INITIAL.
+      temp6 = `Calculator`.
+    ELSE.
+      temp6 = i_title.
+    ENDIF.
+    r_result->title               = temp6.
     r_result->button_text_confirm = i_button_text_confirm.
     r_result->button_text_cancel  = i_button_text_cancel.
     " any numeric start value - packed, integer, float - is taken over
@@ -135,9 +142,9 @@ CLASS z2ui5_cl_popup_calculator IMPLEMENTATION.
 
     me->client = client.
 
-    IF client->check_on_navigated( ).
+    IF client->check_on_navigated( ) IS NOT INITIAL.
       view_display( ).
-    ELSEIF client->check_on_event( ).
+    ELSEIF client->check_on_event( ) IS NOT INITIAL.
       on_event( ).
     ENDIF.
 
@@ -146,12 +153,17 @@ CLASS z2ui5_cl_popup_calculator IMPLEMENTATION.
 
   METHOD view_display.
 
-    DATA(popup) = z2ui5_cl_ui5_view_builder=>factory(
+    DATA popup TYPE REF TO z2ui5_cl_ui5_view_builder.
+    DATA dialog TYPE REF TO z2ui5_cl_ui5_view_builder.
+    DATA box TYPE REF TO z2ui5_cl_ui5_view_builder.
+    DATA grid TYPE REF TO z2ui5_cl_ui5_view_builder.
+    popup = z2ui5_cl_ui5_view_builder=>factory(
         )->ele( n = `FragmentDefinition` ns = `core`
             )->a( n = `xmlns`        v = `sap.m`
             )->a( n = `xmlns:core`   v = `sap.ui.core`
             )->a( n = `xmlns:layout` v = `sap.ui.layout` ).
-    DATA(dialog) = popup->ele( `Dialog`
+
+    dialog = popup->ele( `Dialog`
         )->a( n = `title`      t = title
         )->a( n = `afterClose` v = client->_event( `BUTTON_CANCEL` ) ).
 
@@ -159,7 +171,8 @@ CLASS z2ui5_cl_popup_calculator IMPLEMENTATION.
     " escapes the braces of the CSS so UI5 does not read them as a binding.
     " A Button's height and font size are not properties, so the own key
     " class reaches into the button's inner elements
-    DATA(box) = dialog->ele( `content`
+
+    box = dialog->ele( `content`
         )->tag( n = `HTML` ns = `core`
             )->a( n = `content` t = get_style( )
         )->ele( `VBox`
@@ -179,7 +192,8 @@ CLASS z2ui5_cl_popup_calculator IMPLEMENTATION.
         )->a( n = `class`     v = |{ css_prefix }Display sapUiSmallMarginBottom| ).
 
     " four keys per row on every screen size - S3 is a quarter of the 12 columns
-    DATA(grid) = box->ele( n = `Grid` ns = `layout`
+
+    grid = box->ele( n = `Grid` ns = `layout`
         )->a( n = `defaultSpan` v = `XL3 L3 M3 S3`
         )->a( n = `hSpacing`    v = `0.5`
         )->a( n = `vSpacing`    v = `0.5` ).
@@ -250,7 +264,8 @@ CLASS z2ui5_cl_popup_calculator IMPLEMENTATION.
   METHOD key_add.
 
     " an empty attribute is rendered as it is - text or icon, never both
-    DATA(key) = grid->ele( `Button` ).
+    DATA key TYPE REF TO z2ui5_cl_ui5_view_builder.
+    key = grid->ele( `Button` ).
     IF icon IS INITIAL.
       key->a( n = `text` v = text ).
     ELSE.
@@ -375,12 +390,14 @@ CLASS z2ui5_cl_popup_calculator IMPLEMENTATION.
 
 
   METHOD on_equals.
+    DATA line TYPE string.
 
     IF operator IS INITIAL.
       RETURN.
     ENDIF.
 
-    DATA(line) = |{ history } { display } =|.
+
+    line = |{ history } { display } =|.
 
     IF calculate( ) = abap_false.
       RETURN.
@@ -406,12 +423,14 @@ CLASS z2ui5_cl_popup_calculator IMPLEMENTATION.
 
 
   METHOD on_backspace.
+    DATA length TYPE i.
 
     IF new_input = abap_true.
       RETURN.
     ENDIF.
 
-    DATA(length) = strlen( display ) - 1.
+
+    length = strlen( display ) - 1.
     IF length > 0.
       display = display(length).
     ELSE.
@@ -446,7 +465,8 @@ CLASS z2ui5_cl_popup_calculator IMPLEMENTATION.
 
   METHOD calculate.
 
-    DATA(value) = display_get( ).
+    DATA value TYPE decfloat34.
+    value = display_get( ).
 
     TRY.
         CASE operator.
@@ -541,7 +561,7 @@ CLASS z2ui5_cl_popup_calculator IMPLEMENTATION.
 
   METHOD z2ui5_if_popup_result~value.
 
-    result = REF #( ms_result-value ).
+    GET REFERENCE OF ms_result-value INTO result.
 
   ENDMETHOD.
 

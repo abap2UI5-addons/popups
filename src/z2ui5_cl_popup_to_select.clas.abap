@@ -67,7 +67,7 @@ CLASS z2ui5_cl_popup_to_select DEFINITION PUBLIC.
     "! the index in mr_tab_popup_backup of every row of mr_tab_popup - a
     "! search leaves a part of the rows on screen. Protected, not private:
     "! the draft of the app reaches no private attribute
-    DATA mt_visible TYPE STANDARD TABLE OF i WITH EMPTY KEY.
+    DATA mt_visible TYPE STANDARD TABLE OF i WITH DEFAULT KEY.
 
   PRIVATE SECTION.
     "! mt_visible for the rows on screen, after mr_tab_popup was set anew
@@ -82,12 +82,18 @@ ENDCLASS.
 CLASS z2ui5_cl_popup_to_select IMPLEMENTATION.
 
   METHOD factory.
+    DATA temp42 TYPE string.
 
-    r_result = NEW #( ).
-    r_result->title = COND #(
-      WHEN i_title IS NOT INITIAL THEN i_title
-      WHEN i_multiselect = abap_true THEN `Multi Select`
-      ELSE `Single Select` ).
+    CREATE OBJECT r_result.
+
+    IF i_title IS NOT INITIAL.
+      temp42 = i_title.
+    ELSEIF i_multiselect = abap_true.
+      temp42 = `Multi Select`.
+    ELSE.
+      temp42 = `Single Select`.
+    ENDIF.
+    r_result->title = temp42.
 
     r_result->sort_field        = i_sort_field.
     r_result->descending        = i_descending.
@@ -107,14 +113,32 @@ CLASS z2ui5_cl_popup_to_select IMPLEMENTATION.
   METHOD display.
 
     FIELD-SYMBOLS <tab_out> TYPE STANDARD TABLE.
+    DATA popup TYPE REF TO z2ui5_cl_ui5_view_builder.
+    DATA temp43 TYPE string_table.
+    DATA tab TYPE REF TO z2ui5_cl_ui5_view_builder.
+    DATA lt_comp TYPE abap_component_tab.
+    DATA list TYPE REF TO z2ui5_cl_ui5_view_builder.
+    DATA cells TYPE REF TO z2ui5_cl_ui5_view_builder.
+    DATA ls_comp LIKE LINE OF lt_comp.
+    DATA columns TYPE REF TO z2ui5_cl_ui5_view_builder.
+      DATA temp45 TYPE z2ui5_cl_popup_context=>ty_s_data_element_text-medium.
+      DATA data_element_name TYPE string.
+      DATA medium_label TYPE z2ui5_cl_popup_context=>ty_s_data_element_text-medium.
+      DATA text LIKE temp45.
 
     ASSIGN mr_tab_popup->* TO <tab_out>.
 
-    DATA(popup) = z2ui5_cl_ui5_view_builder=>factory(
+
+    popup = z2ui5_cl_ui5_view_builder=>factory(
                       )->ele( n = `FragmentDefinition` ns = `core`
                       )->a( n = `xmlns` v = `sap.m`
                       )->a( n = `xmlns:core` v = `sap.ui.core` ).
-    DATA(tab) = popup->ele( `TableSelectDialog`
+
+    CLEAR temp43.
+    INSERT `${$parameters>/value}` INTO TABLE temp43.
+    INSERT `${$parameters>/clearButtonPressed}` INTO TABLE temp43.
+
+    tab = popup->ele( `TableSelectDialog`
                     )->a( n = `items` v = |\{path:'|
                           && client->_bind_path( <tab_out> )
                           && |', sorter : \{ path : '{ to_upper( sort_field ) }', descending : |
@@ -123,7 +147,7 @@ CLASS z2ui5_cl_popup_to_select IMPLEMENTATION.
                     )->a( n = `cancel` v = client->_event( `CANCEL` )
                     )->a( n = `search` v = client->_event(
                                val   = `SEARCH`
-                               t_arg = VALUE #( ( `${$parameters>/value}` ) ( `${$parameters>/clearButtonPressed}` ) ) )
+                               t_arg = temp43 )
                     " the selection comes with the model (ZZSELKZ), not as an argument
                     )->a( n = `confirm` v = client->_event( `CONFIRM` )
                     )->a( n = `growing` b = abap_true
@@ -133,27 +157,38 @@ CLASS z2ui5_cl_popup_to_select IMPLEMENTATION.
                     )->a( n = `title` t = title
                     )->a( n = `multiSelect` b = multiselect ).
 
-    DATA(lt_comp) = z2ui5_cl_popup_context=>rtti_get_t_attri_by_any( <tab_out> ).
+
+    lt_comp = z2ui5_cl_popup_context=>rtti_get_t_attri_by_any( <tab_out> ).
     DELETE lt_comp WHERE name = `ZZSELKZ`.
 
-    DATA(list) = tab->ele( `ColumnListItem`
+
+    list = tab->ele( `ColumnListItem`
                      )->a( n = `vAlign` v = `Top`
                      )->a( n = `selected` v = `{ZZSELKZ}` ).
-    DATA(cells) = list->ele( `cells` ).
 
-    LOOP AT lt_comp INTO DATA(ls_comp).
+    cells = list->ele( `cells` ).
+
+
+    LOOP AT lt_comp INTO ls_comp.
       cells->tag( `Text`
           )->a( n = `text` v = |\{{ z2ui5_cl_ui5_view_builder=>component_path( ls_comp-name ) }\}| ).
     ENDLOOP.
 
-    DATA(columns) = tab->ele( `columns` ).
+
+    columns = tab->ele( `columns` ).
     LOOP AT lt_comp INTO ls_comp.
-      DATA(text) = COND #(
-                     LET data_element_name = z2ui5_cl_popup_context=>rtti_get_ddic_type_name( ls_comp-type )
-                         medium_label = z2ui5_cl_popup_context=>rtti_get_data_element_texts( data_element_name )-medium IN
-                     WHEN medium_label IS NOT INITIAL
-                     THEN medium_label
-                     ELSE ls_comp-name ).
+
+
+      data_element_name = z2ui5_cl_popup_context=>rtti_get_ddic_type_name( ls_comp-type ).
+
+      medium_label = z2ui5_cl_popup_context=>rtti_get_data_element_texts( data_element_name )-medium.
+      IF medium_label IS NOT INITIAL.
+        temp45 = medium_label.
+      ELSE.
+        temp45 = ls_comp-name.
+      ENDIF.
+
+      text = temp45.
       columns->ele( `Column`
           )->a( n = `width` v = `8rem`
           )->ele( `header`
@@ -169,11 +204,11 @@ CLASS z2ui5_cl_popup_to_select IMPLEMENTATION.
 
     me->client = client.
 
-    IF client->check_on_init( ).
+    IF client->check_on_init( ) IS NOT INITIAL.
       set_output_table( ).
       display( ).
       RETURN.
-    ELSEIF client->check_on_navigated( ).
+    ELSEIF client->check_on_navigated( ) IS NOT INITIAL.
       " a restored draft (browser Forward, a reload): the popup went with
       " the page - show it again
       display( ).
@@ -219,10 +254,12 @@ CLASS z2ui5_cl_popup_to_select IMPLEMENTATION.
     FIELD-SYMBOLS <row>      TYPE any.
     FIELD-SYMBOLS <row2>     TYPE any.
     FIELD-SYMBOLS <field>    TYPE any.
+    DATA ls_sel_tab_type TYPE z2ui5_cl_popup_context=>ty_s_sel_tab_type.
 
     ASSIGN mr_tab->* TO <tab>.
 
-    DATA(ls_sel_tab_type) = z2ui5_cl_popup_context=>rtti_create_sel_tab_type( ir_tab = mr_tab
+
+    ls_sel_tab_type = z2ui5_cl_popup_context=>rtti_create_sel_tab_type( ir_tab = mr_tab
                                                                      add_sel_field      = abap_true ).
     check_table_line = ls_sel_tab_type-check_table_line.
 
@@ -330,6 +367,8 @@ CLASS z2ui5_cl_popup_to_select IMPLEMENTATION.
     FIELD-SYMBOLS <tab_backup> TYPE STANDARD TABLE.
     FIELD-SYMBOLS <row>        TYPE any.
     FIELD-SYMBOLS <row_backup> TYPE any.
+    DATA lv_from TYPE i.
+        DATA lv_index LIKE sy-tabix.
 
     ASSIGN mr_tab_popup->* TO <tab_out>.
     ASSIGN mr_tab_popup_backup->* TO <tab_backup>.
@@ -337,10 +376,12 @@ CLASS z2ui5_cl_popup_to_select IMPLEMENTATION.
     " the rows on screen are the rows of the backup the search left, in the
     " order of the backup - each one is the next equal row there
     CLEAR mt_visible.
-    DATA(lv_from) = 1.
+
+    lv_from = 1.
     LOOP AT <tab_out> ASSIGNING <row>.
       LOOP AT <tab_backup> ASSIGNING <row_backup> FROM lv_from.
-        DATA(lv_index) = sy-tabix.
+
+        lv_index = sy-tabix.
         lv_from = lv_index + 1.
         IF <row_backup> = <row>.
           INSERT lv_index INTO TABLE mt_visible.
@@ -359,6 +400,9 @@ CLASS z2ui5_cl_popup_to_select IMPLEMENTATION.
     FIELD-SYMBOLS <row_backup>   TYPE any.
     FIELD-SYMBOLS <selkz>        TYPE any.
     FIELD-SYMBOLS <selkz_backup> TYPE any.
+      DATA temp46 TYPE i.
+      DATA temp47 TYPE i.
+      DATA lv_index LIKE temp46.
 
     ASSIGN mr_tab_popup->* TO <tab_out>.
     ASSIGN mr_tab_popup_backup->* TO <tab_backup>.
@@ -373,12 +417,20 @@ CLASS z2ui5_cl_popup_to_select IMPLEMENTATION.
     ENDIF.
 
     LOOP AT <tab_out> ASSIGNING <row>.
-      DATA(lv_index) = VALUE i( mt_visible[ sy-tabix ] OPTIONAL ).
+
+      CLEAR temp46.
+
+      READ TABLE mt_visible INTO temp47 INDEX sy-tabix.
+      IF sy-subrc = 0.
+        temp46 = temp47.
+      ENDIF.
+
+      lv_index = temp46.
       IF lv_index <= 0.
         CONTINUE.
       ENDIF.
       UNASSIGN <row_backup>.
-      ASSIGN <tab_backup>[ lv_index ] TO <row_backup>.
+      READ TABLE <tab_backup> INDEX lv_index ASSIGNING <row_backup>.
       IF <row_backup> IS NOT ASSIGNED.
         CONTINUE.
       ENDIF.

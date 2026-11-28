@@ -27,19 +27,30 @@ CLASS ltcl_popup_result IMPLEMENTATION.
 
     " a roundtrip with an event, after the first one - as the button press
     " of the user
-    mo_action = NEW #( NEW z2ui5_cl_ui5_handler( `` ) ).
+    DATA temp2 TYPE REF TO z2ui5_cl_ui5_handler.
+    DATA temp1 TYPE REF TO z2ui5_cl_ui5_client.
+    CREATE OBJECT temp2 TYPE z2ui5_cl_ui5_handler EXPORTING VAL = ``.
+    CREATE OBJECT mo_action EXPORTING VAL = temp2.
     mo_action->mo_app->mo_app = io_app.
     mo_action->mo_app->mv_check_initialized = abap_true.
     mo_action->ms_actual-event = iv_event.
     mo_action->ms_actual-t_event_arg = it_arg.
-    io_app->main( NEW z2ui5_cl_ui5_client( mo_action ) ).
+
+    CREATE OBJECT temp1 TYPE z2ui5_cl_ui5_client EXPORTING ACTION = mo_action.
+    io_app->main( temp1 ).
 
   ENDMETHOD.
 
   METHOD test_initial_not_confirmed.
 
-    DATA(lo_pop) = z2ui5_cl_popup_dtel_srch=>factory( ).
-    DATA(li_result) = CAST z2ui5_if_popup_result( lo_pop ).
+    DATA lo_pop TYPE REF TO z2ui5_cl_popup_dtel_srch.
+    DATA temp2 TYPE REF TO z2ui5_if_popup_result.
+    DATA li_result LIKE temp2.
+    lo_pop = z2ui5_cl_popup_dtel_srch=>factory( ).
+
+    temp2 ?= lo_pop.
+
+    li_result = temp2.
 
     cl_abap_unit_assert=>assert_false( li_result->check_confirmed( ) ).
 
@@ -47,17 +58,40 @@ CLASS ltcl_popup_result IMPLEMENTATION.
 
   METHOD test_confirmed.
 
-    DATA(lo_pop) = z2ui5_cl_popup_dtel_srch=>factory( ).
-    lo_pop->mt_result = VALUE #( ( rollname = `MARA` )
-                                 ( selkz = abap_true rollname = `MATNR` description = `Material` ) ).
+    DATA lo_pop TYPE REF TO z2ui5_cl_popup_dtel_srch.
+    DATA temp3 TYPE z2ui5_cl_popup_dtel_srch=>ty_t_row.
+    DATA temp4 LIKE LINE OF temp3.
+    DATA temp5 TYPE REF TO z2ui5_if_popup_result.
+    DATA li_result LIKE temp5.
+    DATA temp6 TYPE REF TO z2ui5_cl_popup_dtel_srch=>ty_s_result.
+    DATA lr_value LIKE temp6.
+    lo_pop = z2ui5_cl_popup_dtel_srch=>factory( ).
+
+    CLEAR temp3.
+
+    CLEAR temp4.
+    temp4-rollname = `MARA`.
+    INSERT temp4 INTO TABLE temp3.
+    CLEAR temp4.
+    temp4-selkz = abap_true.
+    temp4-rollname = `MATNR`.
+    temp4-description = `Material`.
+    INSERT temp4 INTO TABLE temp3.
+    lo_pop->mt_result = temp3.
     roundtrip( io_app   = lo_pop
                iv_event = `CONFIRM` ).
-    DATA(li_result) = CAST z2ui5_if_popup_result( lo_pop ).
+
+    temp5 ?= lo_pop.
+
+    li_result = temp5.
 
     cl_abap_unit_assert=>assert_true( li_result->check_confirmed( ) ).
     cl_abap_unit_assert=>assert_equals( exp = `MATNR`
                                         act = li_result->value_string( ) ).
-    DATA(lr_value) = CAST z2ui5_cl_popup_dtel_srch=>ty_s_result( li_result->value( ) ).
+
+    temp6 ?= li_result->value( ).
+
+    lr_value = temp6.
     cl_abap_unit_assert=>assert_equals( exp = `Material`
                                         act = lr_value->description ).
 
@@ -65,10 +99,16 @@ CLASS ltcl_popup_result IMPLEMENTATION.
 
   METHOD test_cancelled.
 
-    DATA(lo_pop) = z2ui5_cl_popup_dtel_srch=>factory( ).
+    DATA lo_pop TYPE REF TO z2ui5_cl_popup_dtel_srch.
+    DATA temp7 TYPE REF TO z2ui5_if_popup_result.
+    DATA li_result LIKE temp7.
+    lo_pop = z2ui5_cl_popup_dtel_srch=>factory( ).
     roundtrip( io_app   = lo_pop
                iv_event = `CANCEL` ).
-    DATA(li_result) = CAST z2ui5_if_popup_result( lo_pop ).
+
+    temp7 ?= lo_pop.
+
+    li_result = temp7.
 
     cl_abap_unit_assert=>assert_false( li_result->check_confirmed( ) ).
 
@@ -76,11 +116,24 @@ CLASS ltcl_popup_result IMPLEMENTATION.
 
   METHOD test_confirm_without_row.
 
-    DATA(lo_pop) = z2ui5_cl_popup_dtel_srch=>factory( ).
-    lo_pop->mt_result = VALUE #( ( rollname = `MATNR` ) ).
+    DATA lo_pop TYPE REF TO z2ui5_cl_popup_dtel_srch.
+    DATA temp8 TYPE z2ui5_cl_popup_dtel_srch=>ty_t_row.
+    DATA temp9 LIKE LINE OF temp8.
+    DATA temp10 TYPE REF TO z2ui5_if_popup_result.
+    DATA li_result LIKE temp10.
+    lo_pop = z2ui5_cl_popup_dtel_srch=>factory( ).
+
+    CLEAR temp8.
+
+    temp9-rollname = `MATNR`.
+    INSERT temp9 INTO TABLE temp8.
+    lo_pop->mt_result = temp8.
     roundtrip( io_app   = lo_pop
                iv_event = `CONFIRM` ).
-    DATA(li_result) = CAST z2ui5_if_popup_result( lo_pop ).
+
+    temp10 ?= lo_pop.
+
+    li_result = temp10.
 
     cl_abap_unit_assert=>assert_false( li_result->check_confirmed( ) ).
 
@@ -128,17 +181,20 @@ CLASS ltcl_display IMPLEMENTATION.
 
   METHOD init_popup.
 
-    mo_action = NEW #( NEW z2ui5_cl_ui5_handler( `` ) ).
+    DATA temp3 TYPE REF TO z2ui5_cl_ui5_handler.
+    CREATE OBJECT temp3 TYPE z2ui5_cl_ui5_handler EXPORTING VAL = ``.
+    CREATE OBJECT mo_action EXPORTING VAL = temp3.
     mo_pop = z2ui5_cl_popup_dtel_srch=>factory( ).
     mo_action->mo_app->mo_app = mo_pop.
     mo_action->mo_app->mv_check_initialized = abap_true.
-    mo_pop->client = NEW z2ui5_cl_ui5_client( mo_action ).
+    CREATE OBJECT mo_pop->client TYPE z2ui5_cl_ui5_client EXPORTING ACTION = mo_action.
 
   ENDMETHOD.
 
   METHOD front_xml.
 
-    LOOP AT mo_action->ms_next-t_action_front INTO DATA(ls_action)
+    DATA ls_action LIKE LINE OF mo_action->ms_next-t_action_front.
+    LOOP AT mo_action->ms_next-t_action_front INTO ls_action
          WHERE method = iv_method.
       result = |{ result }{ ls_action-slot }:{ ls_action-xml }|.
     ENDLOOP.
@@ -182,17 +238,23 @@ CLASS ltcl_display IMPLEMENTATION.
 
   METHOD test_embedded.
 
-    DATA(lo_page) = z2ui5_cl_ui5_view_builder=>factory( )->ele( `Page` ).
+    DATA lo_page TYPE REF TO z2ui5_cl_ui5_view_builder.
+    DATA temp11 TYPE REF TO z2ui5_if_app.
+    DATA lv_xml TYPE string.
+    lo_page = z2ui5_cl_ui5_view_builder=>factory( )->ele( `Page` ).
     mo_pop->z2ui5_if_popup_embed~mo_parent_view = lo_page.
 
-    CAST z2ui5_if_app( mo_pop )->main( mo_pop->client ).
+
+    temp11 ?= mo_pop.
+    temp11->main( mo_pop->client ).
 
     " no popup, no navigation - the host displays its page
     cl_abap_unit_assert=>assert_initial( front_xml( `display` ) ).
     cl_abap_unit_assert=>assert_not_bound( mo_action->ms_next-o_app_leave ).
     cl_abap_unit_assert=>assert_true( mo_pop->z2ui5_if_popup_embed~mv_view_display ).
 
-    DATA(lv_xml) = lo_page->stringify( ).
+
+    lv_xml = lo_page->stringify( ).
     cl_abap_unit_assert=>assert_char_cp( act = lv_xml
                                          exp = `<Page><VBox class="sapUiSmallMargin"><MessageStrip *` ).
     cl_abap_unit_assert=>assert_char_cp( act = lv_xml
@@ -205,22 +267,42 @@ CLASS ltcl_display IMPLEMENTATION.
   ENDMETHOD.
 
   METHOD test_embedded_events.
+    DATA temp12 TYPE REF TO z2ui5_if_app.
+    DATA temp4 TYPE string_table.
+    DATA temp13 LIKE temp4.
+    DATA lv_event LIKE LINE OF temp13.
+      DATA temp14 TYPE REF TO z2ui5_if_app.
+      DATA temp15 TYPE REF TO z2ui5_if_popup_result.
 
     mo_pop->z2ui5_if_popup_embed~mo_parent_view = z2ui5_cl_ui5_view_builder=>factory( )->ele( `Page` ).
-    CAST z2ui5_if_app( mo_pop )->main( mo_pop->client ).
+
+    temp12 ?= mo_pop.
+    temp12->main( mo_pop->client ).
     CLEAR mo_pop->z2ui5_if_popup_embed~mv_view_display.
 
     " a later roundtrip with an event of the host, then CANCEL and CONFIRM:
     " embedded, the app never leaves and never asks for a new display
-    LOOP AT VALUE string_table( ( `HOST_EVENT` ) ( `CANCEL` ) ( `CONFIRM` ) ) INTO DATA(lv_event).
+
+    CLEAR temp4.
+    INSERT `HOST_EVENT` INTO TABLE temp4.
+    INSERT `CANCEL` INTO TABLE temp4.
+    INSERT `CONFIRM` INTO TABLE temp4.
+
+    temp13 = temp4.
+
+    LOOP AT temp13 INTO lv_event.
       init_popup( ).
       mo_pop->z2ui5_if_popup_embed~mo_parent_view = z2ui5_cl_ui5_view_builder=>factory( )->ele( `Page` ).
       mo_pop->embed_initialized = abap_true.
       mo_action->ms_actual-event = lv_event.
-      CAST z2ui5_if_app( mo_pop )->main( mo_pop->client ).
+
+      temp14 ?= mo_pop.
+      temp14->main( mo_pop->client ).
       cl_abap_unit_assert=>assert_not_bound( mo_action->ms_next-o_app_leave ).
       cl_abap_unit_assert=>assert_false( mo_pop->z2ui5_if_popup_embed~mv_view_display ).
-      cl_abap_unit_assert=>assert_false( CAST z2ui5_if_popup_result( mo_pop )->check_confirmed( ) ).
+
+      temp15 ?= mo_pop.
+      cl_abap_unit_assert=>assert_false( temp15->check_confirmed( ) ).
       cl_abap_unit_assert=>assert_initial( front_xml( `display` ) ).
     ENDLOOP.
 
@@ -230,26 +312,105 @@ CLASS ltcl_display IMPLEMENTATION.
 
     " T002C flags other languages only (seen on a system): English and
     " German are offered all the same, and first
-    DATA(lt_langu) = mo_pop->get_language_list(
-        t002t     = VALUE #( ( sprsl = `A` sptxt = `Albanian` )
-                             ( sprsl = `D` sptxt = `German` )
-                             ( sprsl = `E` sptxt = `English` )
-                             ( sprsl = `P` sptxt = `Portuguese` )
-                             ( sprsl = `Q` sptxt = `Other` ) )
-        installed = VALUE #( ( `P` ) ( `A` ) ) ).
+    DATA temp16 TYPE z2ui5_cl_popup_dtel_srch=>ty_t_t002t.
+    DATA temp17 LIKE LINE OF temp16.
+    DATA temp6 TYPE string_table.
+    DATA lt_langu TYPE z2ui5_cl_popup_dtel_srch=>ty_t_langu.
+    FIELD-SYMBOLS <temp18> LIKE LINE OF lt_langu.
+    DATA temp19 LIKE sy-tabix.
+    FIELD-SYMBOLS <temp20> LIKE LINE OF lt_langu.
+    DATA temp21 LIKE sy-tabix.
+    FIELD-SYMBOLS <temp22> LIKE LINE OF lt_langu.
+    DATA temp23 LIKE sy-tabix.
+    FIELD-SYMBOLS <temp24> LIKE LINE OF lt_langu.
+    DATA temp25 LIKE sy-tabix.
+    FIELD-SYMBOLS <temp26> LIKE LINE OF lt_langu.
+    DATA temp27 LIKE sy-tabix.
+      DATA temp1 TYPE xsdboolean.
+      DATA temp2 LIKE sy-subrc.
+    CLEAR temp16.
 
+    temp17-sprsl = `A`.
+    temp17-sptxt = `Albanian`.
+    INSERT temp17 INTO TABLE temp16.
+    temp17-sprsl = `D`.
+    temp17-sptxt = `German`.
+    INSERT temp17 INTO TABLE temp16.
+    temp17-sprsl = `E`.
+    temp17-sptxt = `English`.
+    INSERT temp17 INTO TABLE temp16.
+    temp17-sprsl = `P`.
+    temp17-sptxt = `Portuguese`.
+    INSERT temp17 INTO TABLE temp16.
+    temp17-sprsl = `Q`.
+    temp17-sptxt = `Other`.
+    INSERT temp17 INTO TABLE temp16.
+
+    CLEAR temp6.
+    INSERT `P` INTO TABLE temp6.
+    INSERT `A` INTO TABLE temp6.
+
+    lt_langu = mo_pop->get_language_list(
+        t002t     = temp16
+        installed = temp6 ).
+
+
+
+    temp19 = sy-tabix.
+    READ TABLE lt_langu INDEX 1 ASSIGNING <temp18>.
+    sy-tabix = temp19.
+    IF sy-subrc <> 0.
+      ASSERT 1 = 0.
+    ENDIF.
     cl_abap_unit_assert=>assert_equals( exp = `E`
-                                        act = lt_langu[ 1 ]-key ).
+                                        act = <temp18>-key ).
+
+
+    temp21 = sy-tabix.
+    READ TABLE lt_langu INDEX 1 ASSIGNING <temp20>.
+    sy-tabix = temp21.
+    IF sy-subrc <> 0.
+      ASSERT 1 = 0.
+    ENDIF.
     cl_abap_unit_assert=>assert_equals( exp = `English (E)`
-                                        act = lt_langu[ 1 ]-text ).
+                                        act = <temp20>-text ).
+
+
+    temp23 = sy-tabix.
+    READ TABLE lt_langu INDEX 2 ASSIGNING <temp22>.
+    sy-tabix = temp23.
+    IF sy-subrc <> 0.
+      ASSERT 1 = 0.
+    ENDIF.
     cl_abap_unit_assert=>assert_equals( exp = `D`
-                                        act = lt_langu[ 2 ]-key ).
+                                        act = <temp22>-key ).
+
+
+    temp25 = sy-tabix.
+    READ TABLE lt_langu INDEX 3 ASSIGNING <temp24>.
+    sy-tabix = temp25.
+    IF sy-subrc <> 0.
+      ASSERT 1 = 0.
+    ENDIF.
     cl_abap_unit_assert=>assert_equals( exp = `A`
-                                        act = lt_langu[ 3 ]-key ).
+                                        act = <temp24>-key ).
+
+
+    temp27 = sy-tabix.
+    READ TABLE lt_langu INDEX 4 ASSIGNING <temp26>.
+    sy-tabix = temp27.
+    IF sy-subrc <> 0.
+      ASSERT 1 = 0.
+    ENDIF.
     cl_abap_unit_assert=>assert_equals( exp = `P`
-                                        act = lt_langu[ 4 ]-key ).
+                                        act = <temp26>-key ).
     IF sy-langu <> `Q`.
-      cl_abap_unit_assert=>assert_false( xsdbool( line_exists( lt_langu[ key = `Q` ] ) ) ).
+
+
+      READ TABLE lt_langu WITH KEY key = `Q` TRANSPORTING NO FIELDS.
+      temp2 = sy-subrc.
+      temp1 = boolc( temp2 = 0 ).
+      cl_abap_unit_assert=>assert_false( temp1 ).
     ENDIF.
 
   ENDMETHOD.
@@ -257,65 +418,214 @@ CLASS ltcl_display IMPLEMENTATION.
   METHOD test_languages_no_filter.
 
     " T002C not readable: every language of T002T, English and German first
-    DATA(lt_langu) = mo_pop->get_language_list(
-        t002t     = VALUE #( ( sprsl = `A` sptxt = `Albanian` )
-                             ( sprsl = `D` sptxt = `German` )
-                             ( sprsl = `E` sptxt = `English` )
-                             ( sprsl = `Q` sptxt = `Other` ) )
-        installed = VALUE #( ) ).
+    DATA temp28 TYPE z2ui5_cl_popup_dtel_srch=>ty_t_t002t.
+    DATA temp29 LIKE LINE OF temp28.
+    DATA temp8 TYPE string_table.
+    DATA lt_langu TYPE z2ui5_cl_popup_dtel_srch=>ty_t_langu.
+    FIELD-SYMBOLS <temp30> LIKE LINE OF lt_langu.
+    DATA temp31 LIKE sy-tabix.
+    FIELD-SYMBOLS <temp32> LIKE LINE OF lt_langu.
+    DATA temp33 LIKE sy-tabix.
+    FIELD-SYMBOLS <temp34> LIKE LINE OF lt_langu.
+    DATA temp35 LIKE sy-tabix.
+    FIELD-SYMBOLS <temp36> LIKE LINE OF lt_langu.
+    DATA temp37 LIKE sy-tabix.
+    CLEAR temp28.
 
+    temp29-sprsl = `A`.
+    temp29-sptxt = `Albanian`.
+    INSERT temp29 INTO TABLE temp28.
+    temp29-sprsl = `D`.
+    temp29-sptxt = `German`.
+    INSERT temp29 INTO TABLE temp28.
+    temp29-sprsl = `E`.
+    temp29-sptxt = `English`.
+    INSERT temp29 INTO TABLE temp28.
+    temp29-sprsl = `Q`.
+    temp29-sptxt = `Other`.
+    INSERT temp29 INTO TABLE temp28.
+
+    CLEAR temp8.
+
+    lt_langu = mo_pop->get_language_list(
+        t002t     = temp28
+        installed = temp8 ).
+
+
+
+    temp31 = sy-tabix.
+    READ TABLE lt_langu INDEX 1 ASSIGNING <temp30>.
+    sy-tabix = temp31.
+    IF sy-subrc <> 0.
+      ASSERT 1 = 0.
+    ENDIF.
     cl_abap_unit_assert=>assert_equals( exp = `E`
-                                        act = lt_langu[ 1 ]-key ).
+                                        act = <temp30>-key ).
+
+
+    temp33 = sy-tabix.
+    READ TABLE lt_langu INDEX 2 ASSIGNING <temp32>.
+    sy-tabix = temp33.
+    IF sy-subrc <> 0.
+      ASSERT 1 = 0.
+    ENDIF.
     cl_abap_unit_assert=>assert_equals( exp = `D`
-                                        act = lt_langu[ 2 ]-key ).
+                                        act = <temp32>-key ).
+
+
+    temp35 = sy-tabix.
+    READ TABLE lt_langu INDEX 3 ASSIGNING <temp34>.
+    sy-tabix = temp35.
+    IF sy-subrc <> 0.
+      ASSERT 1 = 0.
+    ENDIF.
     cl_abap_unit_assert=>assert_equals( exp = `A`
-                                        act = lt_langu[ 3 ]-key ).
+                                        act = <temp34>-key ).
+
+
+    temp37 = sy-tabix.
+    READ TABLE lt_langu INDEX 4 ASSIGNING <temp36>.
+    sy-tabix = temp37.
+    IF sy-subrc <> 0.
+      ASSERT 1 = 0.
+    ENDIF.
     cl_abap_unit_assert=>assert_equals( exp = `Q`
-                                        act = lt_langu[ 4 ]-key ).
+                                        act = <temp36>-key ).
 
   ENDMETHOD.
 
   METHOD test_languages_no_texts.
+    DATA temp38 TYPE z2ui5_cl_popup_dtel_srch=>ty_t_t002t.
+    DATA temp9 TYPE string_table.
+    DATA lt_langu TYPE z2ui5_cl_popup_dtel_srch=>ty_t_langu.
+    FIELD-SYMBOLS <temp39> LIKE LINE OF lt_langu.
+    DATA temp40 LIKE sy-tabix.
+    FIELD-SYMBOLS <temp41> LIKE LINE OF lt_langu.
+    DATA temp42 LIKE sy-tabix.
+    DATA temp2 TYPE xsdboolean.
+    DATA temp3 LIKE sy-subrc.
 
     " neither T002T nor T002C readable: the selected languages still have an
     " entry, so selectedKey always matches
     mo_pop->mv_langu  = `F`.
     mo_pop->mv_langu2 = `D`.
-    DATA(lt_langu) = mo_pop->get_language_list( t002t     = VALUE #( )
-                                                installed = VALUE #( ) ).
 
+    CLEAR temp38.
+
+    CLEAR temp9.
+
+    lt_langu = mo_pop->get_language_list( t002t     = temp38
+                                                installed = temp9 ).
+
+
+
+    temp40 = sy-tabix.
+    READ TABLE lt_langu INDEX 1 ASSIGNING <temp39>.
+    sy-tabix = temp40.
+    IF sy-subrc <> 0.
+      ASSERT 1 = 0.
+    ENDIF.
     cl_abap_unit_assert=>assert_equals( exp = `English (E)`
-                                        act = lt_langu[ 1 ]-text ).
+                                        act = <temp39>-text ).
+
+
+    temp42 = sy-tabix.
+    READ TABLE lt_langu INDEX 2 ASSIGNING <temp41>.
+    sy-tabix = temp42.
+    IF sy-subrc <> 0.
+      ASSERT 1 = 0.
+    ENDIF.
     cl_abap_unit_assert=>assert_equals( exp = `German (D)`
-                                        act = lt_langu[ 2 ]-text ).
-    cl_abap_unit_assert=>assert_true( xsdbool( line_exists( lt_langu[ key = `F` ] ) ) ).
+                                        act = <temp41>-text ).
+
+
+    READ TABLE lt_langu WITH KEY key = `F` TRANSPORTING NO FIELDS.
+    temp3 = sy-subrc.
+    temp2 = boolc( temp3 = 0 ).
+    cl_abap_unit_assert=>assert_true( temp2 ).
 
   ENDMETHOD.
 
   METHOD test_languages_filter.
+    DATA temp43 TYPE z2ui5_cl_popup_dtel_srch=>ty_t_t002t.
+    DATA temp44 LIKE LINE OF temp43.
+    DATA temp10 TYPE string_table.
+    DATA lt_langu TYPE z2ui5_cl_popup_dtel_srch=>ty_t_langu.
+    FIELD-SYMBOLS <temp45> LIKE LINE OF lt_langu.
+    DATA temp46 LIKE sy-tabix.
+    FIELD-SYMBOLS <temp47> LIKE LINE OF lt_langu.
+    DATA temp48 LIKE sy-tabix.
+    FIELD-SYMBOLS <temp49> LIKE LINE OF lt_langu.
+    DATA temp50 LIKE sy-tabix.
 
     " T002C flags D, E and F: exactly those stay - the filter of 9383ad7
     " (DELETE TABLE ... FROM on a table WITH EMPTY KEY) removed the wrong rows
     IF sy-langu <> `E` AND sy-langu <> `D` AND sy-langu <> `F`.
       RETURN.
     ENDIF.
-    DATA(lt_langu) = mo_pop->get_language_list(
-        t002t     = VALUE #( ( sprsl = `A` sptxt = `Albanian` )
-                             ( sprsl = `D` sptxt = `German` )
-                             ( sprsl = `E` sptxt = `English` )
-                             ( sprsl = `F` sptxt = `French` )
-                             ( sprsl = `H` sptxt = `Hungarian` )
-                             ( sprsl = `Q` sptxt = `Other` ) )
-        installed = VALUE #( ( `D` ) ( `E` ) ( `F` ) ) ).
+
+    CLEAR temp43.
+
+    temp44-sprsl = `A`.
+    temp44-sptxt = `Albanian`.
+    INSERT temp44 INTO TABLE temp43.
+    temp44-sprsl = `D`.
+    temp44-sptxt = `German`.
+    INSERT temp44 INTO TABLE temp43.
+    temp44-sprsl = `E`.
+    temp44-sptxt = `English`.
+    INSERT temp44 INTO TABLE temp43.
+    temp44-sprsl = `F`.
+    temp44-sptxt = `French`.
+    INSERT temp44 INTO TABLE temp43.
+    temp44-sprsl = `H`.
+    temp44-sptxt = `Hungarian`.
+    INSERT temp44 INTO TABLE temp43.
+    temp44-sprsl = `Q`.
+    temp44-sptxt = `Other`.
+    INSERT temp44 INTO TABLE temp43.
+
+    CLEAR temp10.
+    INSERT `D` INTO TABLE temp10.
+    INSERT `E` INTO TABLE temp10.
+    INSERT `F` INTO TABLE temp10.
+
+    lt_langu = mo_pop->get_language_list(
+        t002t     = temp43
+        installed = temp10 ).
 
     cl_abap_unit_assert=>assert_equals( exp = 3
                                         act = lines( lt_langu ) ).
+
+
+    temp46 = sy-tabix.
+    READ TABLE lt_langu INDEX 1 ASSIGNING <temp45>.
+    sy-tabix = temp46.
+    IF sy-subrc <> 0.
+      ASSERT 1 = 0.
+    ENDIF.
     cl_abap_unit_assert=>assert_equals( exp = `E`
-                                        act = lt_langu[ 1 ]-key ).
+                                        act = <temp45>-key ).
+
+
+    temp48 = sy-tabix.
+    READ TABLE lt_langu INDEX 2 ASSIGNING <temp47>.
+    sy-tabix = temp48.
+    IF sy-subrc <> 0.
+      ASSERT 1 = 0.
+    ENDIF.
     cl_abap_unit_assert=>assert_equals( exp = `D`
-                                        act = lt_langu[ 2 ]-key ).
+                                        act = <temp47>-key ).
+
+
+    temp50 = sy-tabix.
+    READ TABLE lt_langu INDEX 3 ASSIGNING <temp49>.
+    sy-tabix = temp50.
+    IF sy-subrc <> 0.
+      ASSERT 1 = 0.
+    ENDIF.
     cl_abap_unit_assert=>assert_equals( exp = `French (F)`
-                                        act = lt_langu[ 3 ]-text ).
+                                        act = <temp49>-text ).
 
   ENDMETHOD.
 

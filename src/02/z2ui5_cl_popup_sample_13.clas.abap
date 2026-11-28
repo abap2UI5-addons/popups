@@ -70,7 +70,8 @@ CLASS z2ui5_cl_popup_sample_13 IMPLEMENTATION.
 
   METHOD view_display.
 
-    DATA(view) = z2ui5_cl_ui5_view_builder=>factory(
+    DATA view TYPE REF TO z2ui5_cl_ui5_view_builder.
+    view = z2ui5_cl_ui5_view_builder=>factory(
                      )->ele( n = `View` ns = `mvc`
                      )->a( n = `xmlns` v = `sap.m`
                      )->a( n = `xmlns:mvc` v = `sap.ui.core.mvc`
@@ -91,10 +92,14 @@ CLASS z2ui5_cl_popup_sample_13 IMPLEMENTATION.
 
 
   METHOD on_event.
+      DATA lv_pdf TYPE string.
+      DATA lo_app TYPE REF TO z2ui5_cl_popup_pdf.
 
     IF client->get( )-event = `POPUP`.
-      DATA(lv_pdf) = get_example_pdf( ).
-      DATA(lo_app) = z2ui5_cl_popup_pdf=>factory( lv_pdf ).
+
+      lv_pdf = get_example_pdf( ).
+
+      lo_app = z2ui5_cl_popup_pdf=>factory( lv_pdf ).
       client->nav_app_call( lo_app ).
     ENDIF.
 
@@ -105,11 +110,11 @@ CLASS z2ui5_cl_popup_sample_13 IMPLEMENTATION.
 
     me->client = client.
 
-    IF client->check_on_navigated( ).
+    IF client->check_on_navigated( ) IS NOT INITIAL.
       view_display( ).
       " true only on the way back from the popup - not on the first start
       " or on a restore, where get_app_prev( ) is no popup
-      IF client->check_on_nav_back( ).
+      IF client->check_on_nav_back( ) IS NOT INITIAL.
         on_navigation( ).
       ENDIF.
       RETURN.

@@ -21,7 +21,7 @@ CLASS z2ui5_cl_popup_messages DEFINITION PUBLIC.
         message_v4 TYPE string,
         group      TYPE string,
       END OF ty_s_msg.
-    TYPES ty_t_msg TYPE STANDARD TABLE OF ty_s_msg WITH EMPTY KEY.
+    TYPES ty_t_msg TYPE STANDARD TABLE OF ty_s_msg WITH DEFAULT KEY.
 
     DATA mt_msg TYPE ty_t_msg.
 
@@ -45,14 +45,25 @@ ENDCLASS.
 CLASS z2ui5_cl_popup_messages IMPLEMENTATION.
 
   METHOD factory.
+    DATA temp22 TYPE z2ui5_cl_popup_msgpopover=>ty_t_msg.
+    DATA temp2 LIKE LINE OF temp22.
+    DATA lr_row LIKE REF TO temp2.
+      DATA temp23 TYPE ty_s_msg.
 
-    r_result = NEW #( ).
+    CREATE OBJECT r_result.
     " the items of the message popover - a message without a message class
     " has no subtitle there, here it showed ` 000`
-    LOOP AT z2ui5_cl_popup_msgpopover=>msg_get_t( i_messages ) REFERENCE INTO DATA(lr_row).
-      INSERT VALUE ty_s_msg( type     = lr_row->type
-                             title    = lr_row->title
-                             subtitle = lr_row->subtitle ) INTO TABLE r_result->mt_msg.
+
+    temp22 = z2ui5_cl_popup_msgpopover=>msg_get_t( i_messages ).
+
+
+    LOOP AT temp22 REFERENCE INTO lr_row.
+
+      CLEAR temp23.
+      temp23-type = lr_row->type.
+      temp23-title = lr_row->title.
+      temp23-subtitle = lr_row->subtitle.
+      INSERT temp23 INTO TABLE r_result->mt_msg.
     ENDLOOP.
 
     r_result->title = i_title.
@@ -61,7 +72,8 @@ CLASS z2ui5_cl_popup_messages IMPLEMENTATION.
 
   METHOD view_display.
 
-    DATA(popup) = z2ui5_cl_ui5_view_builder=>factory(
+    DATA popup TYPE REF TO z2ui5_cl_ui5_view_builder.
+    popup = z2ui5_cl_ui5_view_builder=>factory(
                       )->ele( n = `FragmentDefinition` ns = `core`
                       )->a( n = `xmlns` v = `sap.m`
                       )->a( n = `xmlns:core` v = `sap.ui.core` ).
@@ -93,14 +105,14 @@ CLASS z2ui5_cl_popup_messages IMPLEMENTATION.
 
     me->client = client.
 
-    IF client->check_on_init( ).
+    IF client->check_on_init( ) IS NOT INITIAL.
       view_display( ).
       RETURN.
-    ELSEIF client->check_on_navigated( ).
+    ELSEIF client->check_on_navigated( ) IS NOT INITIAL.
       view_display( ).
     ENDIF.
 
-    IF client->check_on_event( `BUTTON_CONTINUE` ).
+    IF client->check_on_event( `BUTTON_CONTINUE` ) IS NOT INITIAL.
       client->popup_destroy( ).
       client->nav_app_leave( ).
     ENDIF.
@@ -116,7 +128,7 @@ CLASS z2ui5_cl_popup_messages IMPLEMENTATION.
 
   METHOD z2ui5_if_popup_result~value.
 
-    result = REF #( mt_msg ).
+    GET REFERENCE OF mt_msg INTO result.
 
   ENDMETHOD.
 

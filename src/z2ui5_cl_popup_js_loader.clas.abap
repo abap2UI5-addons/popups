@@ -51,14 +51,14 @@ CLASS z2ui5_cl_popup_js_loader IMPLEMENTATION.
 
   METHOD factory.
 
-    r_result = NEW #( ).
+    CREATE OBJECT r_result.
     r_result->js           = i_js.
     r_result->user_command = i_result.
 
   ENDMETHOD.
 
   METHOD factory_check_open_ui5.
-    r_result = NEW #( ).
+    CREATE OBJECT r_result.
     r_result->check_open_ui5 = abap_true.
   ENDMETHOD.
 
@@ -79,23 +79,26 @@ CLASS z2ui5_cl_popup_js_loader IMPLEMENTATION.
   ENDMETHOD.
 
   METHOD z2ui5_if_app~main.
+        DATA temp1 TYPE xsdboolean.
 
     me->client = client.
 
-    IF client->check_on_init( ).
+    IF client->check_on_init( ) IS NOT INITIAL.
 
       IF check_open_ui5 = abap_true.
         " the frontend reports the UI5 runtime with the request itself, so
         " the answer is known right away - no popup, no extra roundtrip
         ui5_gav = client->get( )-s_ui5-gav.
-        mv_is_open_ui5 = xsdbool( ui5_gav CS `OPEN` ).
+
+        temp1 = boolc( ui5_gav CS `OPEN` ).
+        mv_is_open_ui5 = temp1.
         client->nav_app_leave( ).
         RETURN.
       ENDIF.
 
       view_display( ).
       RETURN.
-    ELSEIF client->check_on_navigated( ).
+    ELSEIF client->check_on_navigated( ) IS NOT INITIAL.
       " a restored draft (browser Forward, a reload)
       view_display( ).
       RETURN.
@@ -119,9 +122,9 @@ CLASS z2ui5_cl_popup_js_loader IMPLEMENTATION.
   METHOD z2ui5_if_popup_result~value.
 
     IF check_open_ui5 = abap_true.
-      result = REF #( mv_is_open_ui5 ).
+      GET REFERENCE OF mv_is_open_ui5 INTO result.
     ELSE.
-      result = REF #( user_command ).
+      GET REFERENCE OF user_command INTO result.
     ENDIF.
 
   ENDMETHOD.

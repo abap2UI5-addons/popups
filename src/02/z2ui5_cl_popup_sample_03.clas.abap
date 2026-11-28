@@ -19,9 +19,11 @@ ENDCLASS.
 CLASS z2ui5_cl_popup_sample_03 IMPLEMENTATION.
 
   METHOD on_event.
+      DATA lo_app TYPE REF TO z2ui5_cl_popup_image_edit.
 
     IF client->get( )-event = `POPUP`.
-      DATA(lo_app) = z2ui5_cl_popup_image_edit=>factory( mv_image ).
+
+      lo_app = z2ui5_cl_popup_image_edit=>factory( mv_image ).
       client->nav_app_call( lo_app ).
     ENDIF.
 
@@ -29,12 +31,14 @@ CLASS z2ui5_cl_popup_sample_03 IMPLEMENTATION.
 
 
   METHOD view_display.
+    DATA view TYPE REF TO z2ui5_cl_ui5_view_builder.
 
     IF mv_image IS INITIAL.
       mv_image = `https://raw.githubusercontent.com/abap2UI5/abap2UI5/main/docs/images/logo.png`.
     ENDIF.
 
-    DATA(view) = z2ui5_cl_ui5_view_builder=>factory(
+
+    view = z2ui5_cl_ui5_view_builder=>factory(
                      )->ele( n = `View` ns = `mvc`
                      )->a( n = `xmlns` v = `sap.m`
                      )->a( n = `xmlns:mvc` v = `sap.ui.core.mvc`
@@ -61,11 +65,11 @@ CLASS z2ui5_cl_popup_sample_03 IMPLEMENTATION.
 
     me->client = client.
 
-    IF client->check_on_navigated( ).
+    IF client->check_on_navigated( ) IS NOT INITIAL.
       view_display( ).
       " true only on the way back from the popup - not on the first start
       " or on a restore, where get_app_prev( ) is no popup
-      IF client->check_on_nav_back( ).
+      IF client->check_on_nav_back( ) IS NOT INITIAL.
         on_navigation( ).
       ENDIF.
       RETURN.
@@ -79,7 +83,11 @@ CLASS z2ui5_cl_popup_sample_03 IMPLEMENTATION.
   METHOD on_navigation.
 
     " every popup hands its result over through z2ui5_if_popup_result
-    DATA(popup) = CAST z2ui5_if_popup_result( client->get_app_prev( ) ).
+    DATA temp1 TYPE REF TO z2ui5_if_popup_result.
+    DATA popup LIKE temp1.
+    temp1 ?= client->get_app_prev( ).
+
+    popup = temp1.
     IF popup->check_confirmed( ) = abap_true AND popup->value_string( ) IS NOT INITIAL.
       mv_image = popup->value_string( ).
       client->message_toast_display( `image saved` ).

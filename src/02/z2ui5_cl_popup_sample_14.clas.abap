@@ -12,7 +12,7 @@ CLASS z2ui5_cl_popup_sample_14 DEFINITION PUBLIC.
         storage_location TYPE string,
         quantity         TYPE i,
       END OF ty_s_tab.
-    TYPES ty_t_table TYPE STANDARD TABLE OF ty_s_tab WITH EMPTY KEY.
+    TYPES ty_t_table TYPE STANDARD TABLE OF ty_s_tab WITH DEFAULT KEY.
 
     DATA mt_table TYPE ty_t_table.
 
@@ -46,13 +46,47 @@ CLASS z2ui5_cl_popup_sample_14 IMPLEMENTATION.
 
   METHOD set_data.
 
-    mt_table = VALUE #(
-        ( product = `table`    create_date = `01.01.2023` create_by = `Peter` storage_location = `AREA_001` quantity = 400 )
-        ( product = `chair`    create_date = `01.01.2023` create_by = `Peter` storage_location = `AREA_001` quantity = 400 )
-        ( product = `sofa`     create_date = `01.01.2023` create_by = `Peter` storage_location = `AREA_001` quantity = 400 )
-        ( product = `computer` create_date = `01.01.2023` create_by = `Peter` storage_location = `AREA_001` quantity = 400 )
-        ( product = `oven`     create_date = `01.01.2023` create_by = `Peter` storage_location = `AREA_001` quantity = 400 )
-        ( product = `table2`   create_date = `01.01.2023` create_by = `Peter` storage_location = `AREA_001` quantity = 400 ) ).
+    DATA temp1 TYPE z2ui5_cl_popup_sample_14=>ty_t_table.
+    DATA temp2 LIKE LINE OF temp1.
+    CLEAR temp1.
+
+    temp2-product = `table`.
+    temp2-create_date = `01.01.2023`.
+    temp2-create_by = `Peter`.
+    temp2-storage_location = `AREA_001`.
+    temp2-quantity = 400.
+    INSERT temp2 INTO TABLE temp1.
+    temp2-product = `chair`.
+    temp2-create_date = `01.01.2023`.
+    temp2-create_by = `Peter`.
+    temp2-storage_location = `AREA_001`.
+    temp2-quantity = 400.
+    INSERT temp2 INTO TABLE temp1.
+    temp2-product = `sofa`.
+    temp2-create_date = `01.01.2023`.
+    temp2-create_by = `Peter`.
+    temp2-storage_location = `AREA_001`.
+    temp2-quantity = 400.
+    INSERT temp2 INTO TABLE temp1.
+    temp2-product = `computer`.
+    temp2-create_date = `01.01.2023`.
+    temp2-create_by = `Peter`.
+    temp2-storage_location = `AREA_001`.
+    temp2-quantity = 400.
+    INSERT temp2 INTO TABLE temp1.
+    temp2-product = `oven`.
+    temp2-create_date = `01.01.2023`.
+    temp2-create_by = `Peter`.
+    temp2-storage_location = `AREA_001`.
+    temp2-quantity = 400.
+    INSERT temp2 INTO TABLE temp1.
+    temp2-product = `table2`.
+    temp2-create_date = `01.01.2023`.
+    temp2-create_by = `Peter`.
+    temp2-storage_location = `AREA_001`.
+    temp2-quantity = 400.
+    INSERT temp2 INTO TABLE temp1.
+    mt_table = temp1.
 
     z2ui5_cl_popup_context=>filter_itab(
       EXPORTING
@@ -65,7 +99,12 @@ CLASS z2ui5_cl_popup_sample_14 IMPLEMENTATION.
 
   METHOD view_display.
 
-    DATA(view) = z2ui5_cl_ui5_view_builder=>factory(
+    DATA view TYPE REF TO z2ui5_cl_ui5_view_builder.
+    DATA vbox TYPE REF TO z2ui5_cl_ui5_view_builder.
+    DATA tab TYPE REF TO z2ui5_cl_ui5_view_builder.
+    DATA lo_columns TYPE REF TO z2ui5_cl_ui5_view_builder.
+    DATA lo_cells TYPE REF TO z2ui5_cl_ui5_view_builder.
+    view = z2ui5_cl_ui5_view_builder=>factory(
                      )->ele( n = `View` ns = `mvc`
                      )->a( n = `xmlns` v = `sap.m`
                      )->a( n = `xmlns:mvc` v = `sap.ui.core.mvc`
@@ -79,9 +118,11 @@ CLASS z2ui5_cl_popup_sample_14 IMPLEMENTATION.
                          )->a( n = `navButtonPress` v = client->_event_nav_app_leave( )
                          )->a( n = `showNavButton` b = client->check_app_prev_stack( ) ).
 
-    DATA(vbox) = view->ele( `VBox` ).
 
-    DATA(tab) = vbox->ele( `Table`
+    vbox = view->ele( `VBox` ).
+
+
+    tab = vbox->ele( `Table`
                     )->a( n = `items` v = client->_bind( val = mt_table )
                     )->ele( `headerToolbar`
                     )->ele( `OverflowToolbar`
@@ -97,7 +138,8 @@ CLASS z2ui5_cl_popup_sample_14 IMPLEMENTATION.
                     )->end(
                     )->end( ).
 
-    DATA(lo_columns) = tab->ele( `columns` ).
+
+    lo_columns = tab->ele( `columns` ).
     lo_columns->ele( `Column`
         )->tag( `Text`
         )->a( n = `text` v = `Product` ).
@@ -114,7 +156,8 @@ CLASS z2ui5_cl_popup_sample_14 IMPLEMENTATION.
         )->tag( `Text`
         )->a( n = `text` v = `Quantity` ).
 
-    DATA(lo_cells) = tab->ele( `items`
+
+    lo_cells = tab->ele( `items`
                          )->ele( `ColumnListItem` ).
     lo_cells->tag( `Text`
         )->a( n = `text` v = `{PRODUCT}` ).
@@ -133,28 +176,38 @@ CLASS z2ui5_cl_popup_sample_14 IMPLEMENTATION.
 
 
   METHOD z2ui5_if_app~main.
+      DATA temp3 TYPE REF TO z2ui5_if_popup_result.
+      DATA popup LIKE temp3.
+        DATA temp4 TYPE REF TO z2ui5_cl_popup_context=>ty_t_filter_multi.
+        DATA lr_filter LIKE temp4.
 
     me->client = client.
 
-    IF client->check_on_init( ).
+    IF client->check_on_init( ) IS NOT INITIAL.
 
       mt_filter = z2ui5_cl_popup_context=>filter_get_multi_by_data( mt_table ).
       DELETE mt_filter WHERE name = `SELKZ`.
       view_display( ).
 
-    ELSEIF client->check_on_nav_back( ).
+    ELSEIF client->check_on_nav_back( ) IS NOT INITIAL.
 
       " back from the filter popup: every popup hands its result over through
       " z2ui5_if_popup_result, value( ) is a reference to the ranges per field
-      DATA(popup) = CAST z2ui5_if_popup_result( client->get_app_prev( ) ).
+
+      temp3 ?= client->get_app_prev( ).
+
+      popup = temp3.
       IF popup->check_confirmed( ) = abap_true.
-        DATA(lr_filter) = CAST z2ui5_cl_popup_context=>ty_t_filter_multi( popup->value( ) ).
+
+        temp4 ?= popup->value( ).
+
+        lr_filter = temp4.
         mt_filter = lr_filter->*.
         set_data( ).
       ENDIF.
       view_display( ).
 
-    ELSEIF client->check_on_navigated( ).
+    ELSEIF client->check_on_navigated( ) IS NOT INITIAL.
       " a restored draft - the view is shown again
       view_display( ).
 

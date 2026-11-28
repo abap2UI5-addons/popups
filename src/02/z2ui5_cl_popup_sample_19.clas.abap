@@ -12,7 +12,7 @@ CLASS z2ui5_cl_popup_sample_19 DEFINITION PUBLIC.
         storage_location TYPE string,
         quantity         TYPE i,
       END OF ty_s_tab.
-    TYPES ty_t_table TYPE STANDARD TABLE OF ty_s_tab WITH EMPTY KEY.
+    TYPES ty_t_table TYPE STANDARD TABLE OF ty_s_tab WITH DEFAULT KEY.
 
     DATA mt_table TYPE ty_t_table.
     DATA mt_token TYPE z2ui5_cl_popup_context=>ty_t_token.
@@ -38,6 +38,10 @@ CLASS z2ui5_cl_popup_sample_19 IMPLEMENTATION.
 
 
   METHOD on_event.
+        DATA ls_token LIKE LINE OF mt_tokens_removed.
+          DATA temp1 TYPE z2ui5_cl_popup_context=>ty_s_token.
+        DATA temp2 TYPE z2ui5_cl_popup_context=>ty_t_token.
+        DATA temp3 TYPE z2ui5_cl_popup_context=>ty_t_token.
 
     CASE client->get( )-event.
 
@@ -45,16 +49,27 @@ CLASS z2ui5_cl_popup_sample_19 IMPLEMENTATION.
         set_data( ).
 
       WHEN `UPDATE_TOKENS`.
-        LOOP AT mt_tokens_removed INTO DATA(ls_token).
+
+        LOOP AT mt_tokens_removed INTO ls_token.
           DELETE mt_token WHERE key = ls_token-key.
         ENDLOOP.
 
         LOOP AT mt_tokens_added INTO ls_token.
-          INSERT VALUE #( key = ls_token-key text = ls_token-text visible = abap_true editable = abap_true ) INTO TABLE mt_token.
+
+          CLEAR temp1.
+          temp1-key = ls_token-key.
+          temp1-text = ls_token-text.
+          temp1-visible = abap_true.
+          temp1-editable = abap_true.
+          INSERT temp1 INTO TABLE mt_token.
         ENDLOOP.
 
-        mt_tokens_removed = VALUE #( ).
-        mt_tokens_added   = VALUE #( ).
+
+        CLEAR temp2.
+        mt_tokens_removed = temp2.
+
+        CLEAR temp3.
+        mt_tokens_added   = temp3.
 
         mt_range = z2ui5_cl_popup_context=>filter_get_range_t_by_token_t( mt_token ).
         set_data( ).
@@ -68,13 +83,47 @@ CLASS z2ui5_cl_popup_sample_19 IMPLEMENTATION.
 
   METHOD set_data.
 
-    mt_table = VALUE #(
-        ( product = `table`    create_date = `01.01.2023` create_by = `Peter` storage_location = `AREA_001` quantity = 400 )
-        ( product = `chair`    create_date = `01.01.2023` create_by = `Peter` storage_location = `AREA_001` quantity = 400 )
-        ( product = `sofa`     create_date = `01.01.2023` create_by = `Peter` storage_location = `AREA_001` quantity = 400 )
-        ( product = `computer` create_date = `01.01.2023` create_by = `Peter` storage_location = `AREA_001` quantity = 400 )
-        ( product = `oven`     create_date = `01.01.2023` create_by = `Peter` storage_location = `AREA_001` quantity = 400 )
-        ( product = `table2`   create_date = `01.01.2023` create_by = `Peter` storage_location = `AREA_001` quantity = 400 ) ).
+    DATA temp4 TYPE z2ui5_cl_popup_sample_19=>ty_t_table.
+    DATA temp5 LIKE LINE OF temp4.
+    CLEAR temp4.
+
+    temp5-product = `table`.
+    temp5-create_date = `01.01.2023`.
+    temp5-create_by = `Peter`.
+    temp5-storage_location = `AREA_001`.
+    temp5-quantity = 400.
+    INSERT temp5 INTO TABLE temp4.
+    temp5-product = `chair`.
+    temp5-create_date = `01.01.2023`.
+    temp5-create_by = `Peter`.
+    temp5-storage_location = `AREA_001`.
+    temp5-quantity = 400.
+    INSERT temp5 INTO TABLE temp4.
+    temp5-product = `sofa`.
+    temp5-create_date = `01.01.2023`.
+    temp5-create_by = `Peter`.
+    temp5-storage_location = `AREA_001`.
+    temp5-quantity = 400.
+    INSERT temp5 INTO TABLE temp4.
+    temp5-product = `computer`.
+    temp5-create_date = `01.01.2023`.
+    temp5-create_by = `Peter`.
+    temp5-storage_location = `AREA_001`.
+    temp5-quantity = 400.
+    INSERT temp5 INTO TABLE temp4.
+    temp5-product = `oven`.
+    temp5-create_date = `01.01.2023`.
+    temp5-create_by = `Peter`.
+    temp5-storage_location = `AREA_001`.
+    temp5-quantity = 400.
+    INSERT temp5 INTO TABLE temp4.
+    temp5-product = `table2`.
+    temp5-create_date = `01.01.2023`.
+    temp5-create_by = `Peter`.
+    temp5-storage_location = `AREA_001`.
+    temp5-quantity = 400.
+    INSERT temp5 INTO TABLE temp4.
+    mt_table = temp4.
 
     DELETE mt_table WHERE product NOT IN mt_range.
 
@@ -83,7 +132,12 @@ CLASS z2ui5_cl_popup_sample_19 IMPLEMENTATION.
 
   METHOD view_display.
 
-    DATA(view) = z2ui5_cl_ui5_view_builder=>factory(
+    DATA view TYPE REF TO z2ui5_cl_ui5_view_builder.
+    DATA vbox TYPE REF TO z2ui5_cl_ui5_view_builder.
+    DATA tab TYPE REF TO z2ui5_cl_ui5_view_builder.
+    DATA lo_columns TYPE REF TO z2ui5_cl_ui5_view_builder.
+    DATA lo_cells TYPE REF TO z2ui5_cl_ui5_view_builder.
+    view = z2ui5_cl_ui5_view_builder=>factory(
                      )->ele( n = `View` ns = `mvc`
                      )->a( n = `xmlns` v = `sap.m`
                      )->a( n = `xmlns:mvc` v = `sap.ui.core.mvc`
@@ -99,14 +153,16 @@ CLASS z2ui5_cl_popup_sample_19 IMPLEMENTATION.
                          )->a( n = `navButtonPress` v = client->_event_nav_app_leave( )
                          )->a( n = `showNavButton` b = client->check_app_prev_stack( ) ).
 
-    DATA(vbox) = view->ele( `VBox` ).
+
+    vbox = view->ele( `VBox` ).
     vbox->tag( n = `MultiInputExt` ns = `z2ui5`
         )->a( n = `addedTokens` v = client->_bind( mt_tokens_added )
         )->a( n = `removedTokens` v = client->_bind( mt_tokens_removed )
         )->a( n = `change` v = client->_event( `UPDATE_TOKENS` )
         )->a( n = `MultiInputId` v = `MultiInput` ).
 
-    DATA(tab) = vbox->ele( `Table`
+
+    tab = vbox->ele( `Table`
                     )->a( n = `items` v = client->_bind( val = mt_table )
                     )->ele( `headerToolbar`
                     )->ele( `OverflowToolbar`
@@ -137,7 +193,8 @@ CLASS z2ui5_cl_popup_sample_19 IMPLEMENTATION.
                     )->end(
                     )->end( ).
 
-    DATA(lo_columns) = tab->ele( `columns` ).
+
+    lo_columns = tab->ele( `columns` ).
     lo_columns->ele( `Column`
         )->tag( `Text`
         )->a( n = `text` v = `Product` ).
@@ -154,7 +211,8 @@ CLASS z2ui5_cl_popup_sample_19 IMPLEMENTATION.
         )->tag( `Text`
         )->a( n = `text` v = `Quantity` ).
 
-    DATA(lo_cells) = tab->ele( `items`
+
+    lo_cells = tab->ele( `items`
                          )->ele( `ColumnListItem` ).
     lo_cells->tag( `Text`
         )->a( n = `text` v = `{PRODUCT}` ).
@@ -173,23 +231,33 @@ CLASS z2ui5_cl_popup_sample_19 IMPLEMENTATION.
 
 
   METHOD z2ui5_if_app~main.
+      DATA temp6 TYPE REF TO z2ui5_if_popup_result.
+      DATA popup LIKE temp6.
+        DATA temp7 TYPE REF TO z2ui5_cl_popup_context=>ty_t_range.
+        DATA lr_range LIKE temp7.
 
     me->client = client.
 
-    IF client->check_on_nav_back( ).
+    IF client->check_on_nav_back( ) IS NOT INITIAL.
 
       " back from the range popup: every popup hands its result over through
       " z2ui5_if_popup_result, value( ) is a reference to the range
-      DATA(popup) = CAST z2ui5_if_popup_result( client->get_app_prev( ) ).
+
+      temp6 ?= client->get_app_prev( ).
+
+      popup = temp6.
       IF popup->check_confirmed( ) = abap_true.
-        DATA(lr_range) = CAST z2ui5_cl_popup_context=>ty_t_range( popup->value( ) ).
+
+        temp7 ?= popup->value( ).
+
+        lr_range = temp7.
         mt_range = lr_range->*.
         mt_token = z2ui5_cl_popup_context=>filter_get_token_t_by_range_t( mt_range ).
         set_data( ).
       ENDIF.
       view_display( ).
 
-    ELSEIF client->check_on_navigated( ).
+    ELSEIF client->check_on_navigated( ) IS NOT INITIAL.
       " the first start, or a restored draft
       view_display( ).
 

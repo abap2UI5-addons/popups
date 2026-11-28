@@ -22,13 +22,13 @@ CLASS z2ui5_cl_popup_sample_22 IMPLEMENTATION.
 
     me->client = client.
 
-    IF client->check_on_init( ).
+    IF client->check_on_init( ) IS NOT INITIAL.
       amount = `12.50`.
       view_display( ).
-    ELSEIF client->check_on_navigated( ).
+    ELSEIF client->check_on_navigated( ) IS NOT INITIAL.
       on_navigated( ).
       view_display( ).
-    ELSEIF client->check_on_event( ).
+    ELSEIF client->check_on_event( ) IS NOT INITIAL.
       on_event( ).
     ENDIF.
 
@@ -37,13 +37,16 @@ CLASS z2ui5_cl_popup_sample_22 IMPLEMENTATION.
 
   METHOD view_display.
 
-    DATA(view) = z2ui5_cl_ui5_view_builder=>factory(
+    DATA view TYPE REF TO z2ui5_cl_ui5_view_builder.
+    DATA page TYPE REF TO z2ui5_cl_ui5_view_builder.
+    view = z2ui5_cl_ui5_view_builder=>factory(
         )->ele( n = `View` ns = `mvc`
             )->a( n = `xmlns`        v = `sap.m`
             )->a( n = `xmlns:mvc`    v = `sap.ui.core.mvc`
             )->a( n = `displayBlock` v = `true`
             )->a( n = `height`       v = `100%` ).
-    DATA(page) = view->ele( `Shell`
+
+    page = view->ele( `Shell`
         )->ele( `Page`
             )->a( n = `title`          v = `abap2UI5 - Popup Calculator`
             )->a( n = `navButtonPress` v = client->_event_nav_app_leave( )
@@ -68,10 +71,13 @@ CLASS z2ui5_cl_popup_sample_22 IMPLEMENTATION.
 
 
   METHOD on_event.
+      DATA temp1 TYPE decfloat34.
 
     IF client->get_event( ) = `CALCULATOR`.
       " the calculator computes in DECFLOAT34 - the amount is packed
-      client->nav_app_call( z2ui5_cl_popup_calculator=>factory( i_value = CONV decfloat34( amount )
+
+      temp1 = amount.
+      client->nav_app_call( z2ui5_cl_popup_calculator=>factory( i_value = temp1
                                                                 i_title = `Calculate Amount` ) ).
     ENDIF.
 
@@ -79,14 +85,21 @@ CLASS z2ui5_cl_popup_sample_22 IMPLEMENTATION.
 
 
   METHOD on_navigated.
+        DATA temp2 TYPE REF TO z2ui5_cl_popup_calculator.
+        DATA calculator LIKE temp2.
+    DATA result TYPE z2ui5_cl_popup_calculator=>ty_s_result.
 
     TRY.
-        DATA(calculator) = CAST z2ui5_cl_popup_calculator( client->get_app_prev( ) ).
+
+        temp2 ?= client->get_app_prev( ).
+
+        calculator = temp2.
       CATCH cx_sy_move_cast_error.
         RETURN.
     ENDTRY.
 
-    DATA(result) = calculator->result( ).
+
+    result = calculator->result( ).
     IF result-check_confirmed = abap_false.
       RETURN.
     ENDIF.

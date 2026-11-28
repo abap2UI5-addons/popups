@@ -17,7 +17,7 @@ CLASS z2ui5_cl_popup_get_range DEFINITION PUBLIC.
         key    TYPE string,
       END OF ty_s_filter_pop.
 
-    DATA mt_filter TYPE STANDARD TABLE OF ty_s_filter_pop WITH EMPTY KEY.
+    DATA mt_filter TYPE STANDARD TABLE OF ty_s_filter_pop WITH DEFAULT KEY.
 
     CLASS-METHODS factory
       IMPORTING
@@ -70,13 +70,16 @@ ENDCLASS.
 CLASS z2ui5_cl_popup_get_range IMPLEMENTATION.
 
   METHOD factory.
+    DATA temp39 TYPE z2ui5_cl_popup_context=>ty_s_range.
 
-    r_result = NEW #( ).
+    CREATE OBJECT r_result.
 
     z2ui5_cl_popup_context=>itab_corresponding( EXPORTING val = t_range
                                        CHANGING  tab             = r_result->ms_result-t_range ).
 
-    INSERT VALUE #( ) INTO TABLE r_result->ms_result-t_range.
+
+    CLEAR temp39.
+    INSERT temp39 INTO TABLE r_result->ms_result-t_range.
 
   ENDMETHOD.
 
@@ -88,7 +91,11 @@ CLASS z2ui5_cl_popup_get_range IMPLEMENTATION.
 
   METHOD view_display.
 
-    DATA(lo_popup) = z2ui5_cl_ui5_view_builder=>factory(
+    DATA lo_popup TYPE REF TO z2ui5_cl_ui5_view_builder.
+    DATA vbox TYPE REF TO z2ui5_cl_ui5_view_builder.
+    DATA item TYPE REF TO z2ui5_cl_ui5_view_builder.
+    DATA grid TYPE REF TO z2ui5_cl_ui5_view_builder.
+    lo_popup = z2ui5_cl_ui5_view_builder=>factory(
                          )->ele( n = `FragmentDefinition` ns = `core`
                          )->a( n = `xmlns` v = `sap.m`
                          )->a( n = `xmlns:core` v = `sap.ui.core`
@@ -100,16 +107,19 @@ CLASS z2ui5_cl_popup_get_range IMPLEMENTATION.
                    )->a( n = `contentWidth` v = `50%`
                    )->a( n = `title` v = `Define Filter Conditions` ).
 
-    DATA(vbox) = lo_popup->ele( `VBox`
+
+    vbox = lo_popup->ele( `VBox`
                      )->a( n = `height` v = `100%`
                      )->a( n = `justifyContent` v = `SpaceBetween` ).
 
-    DATA(item) = vbox->ele( `List`
+
+    item = vbox->ele( `List`
                      )->a( n = `noDataText` v = `No conditions defined`
                      )->a( n = `items` v = client->_bind( mt_filter )
                      )->ele( `CustomListItem` ).
 
-    DATA(grid) = item->ele( n = `Grid` ns = `layout`
+
+    grid = item->ele( n = `Grid` ns = `layout`
                      )->a( n = `defaultSpan` v = `L2 M4 S12` ).
 
     grid->ele( `Select`
@@ -165,20 +175,28 @@ CLASS z2ui5_cl_popup_get_range IMPLEMENTATION.
   ENDMETHOD.
 
   METHOD z2ui5_if_app~main.
+      DATA temp40 LIKE LINE OF ms_result-t_range.
+      DATA lr_range LIKE REF TO temp40.
+        DATA temp41 LIKE LINE OF mt_filter.
+        DATA lr_filter LIKE REF TO temp41.
+          DATA ls_range TYPE z2ui5_cl_popup_context=>ty_s_range.
+        DATA temp42 TYPE z2ui5_cl_popup_get_range=>ty_s_filter_pop.
 
     me->client = client.
 
-    IF client->check_on_init( ).
+    IF client->check_on_init( ) IS NOT INITIAL.
       mt_mapping = z2ui5_cl_popup_context=>filter_get_token_range_mapping( ).
 
       CLEAR mt_filter.
-      LOOP AT ms_result-t_range REFERENCE INTO DATA(lr_range).
+
+
+      LOOP AT ms_result-t_range REFERENCE INTO lr_range.
         INSERT filter_of_range( lr_range->* ) INTO TABLE mt_filter.
       ENDLOOP.
 
       view_display( ).
       RETURN.
-    ELSEIF client->check_on_navigated( ).
+    ELSEIF client->check_on_navigated( ) IS NOT INITIAL.
       " a restored draft (browser Forward, a reload): the popup went with
       " the page - show it again
       view_display( ).
@@ -190,8 +208,11 @@ CLASS z2ui5_cl_popup_get_range IMPLEMENTATION.
       WHEN `BUTTON_CONFIRM`.
 
         CLEAR ms_result-t_range.
-        LOOP AT mt_filter REFERENCE INTO DATA(lr_filter).
-          DATA(ls_range) = range_of_filter( lr_filter->* ).
+
+
+        LOOP AT mt_filter REFERENCE INTO lr_filter.
+
+          ls_range = range_of_filter( lr_filter->* ).
           IF ls_range IS NOT INITIAL.
             INSERT ls_range INTO TABLE ms_result-t_range.
           ENDIF.
@@ -206,7 +227,10 @@ CLASS z2ui5_cl_popup_get_range IMPLEMENTATION.
         client->nav_app_leave( ).
 
       WHEN `POPUP_ADD`.
-        INSERT VALUE #( key = z2ui5_cl_popup_context=>uuid_get_c32( ) ) INTO TABLE mt_filter.
+
+        CLEAR temp42.
+        temp42-key = z2ui5_cl_popup_context=>uuid_get_c32( ).
+        INSERT temp42 INTO TABLE mt_filter.
 
       WHEN `POPUP_DELETE`.
         DELETE mt_filter WHERE key = client->get_event_arg( ).
@@ -219,12 +243,20 @@ CLASS z2ui5_cl_popup_get_range IMPLEMENTATION.
   ENDMETHOD.
 
   METHOD filter_of_range.
+    DATA temp5 TYPE z2ui5_cl_popup_get_range=>ty_s_filter_pop-sign.
 
-    result = VALUE #( sign   = COND #( WHEN range-sign = `E` THEN `E` ELSE `I` )
-                      option = range-option
-                      low    = range-low
-                      high   = range-high
-                      key    = z2ui5_cl_popup_context=>uuid_get_c32( ) ).
+    CLEAR result.
+
+    IF range-sign = `E`.
+      temp5 = `E`.
+    ELSE.
+      temp5 = `I`.
+    ENDIF.
+    result-sign = temp5.
+    result-option = range-option.
+    result-low = range-low.
+    result-high = range-high.
+    result-key = z2ui5_cl_popup_context=>uuid_get_c32( ).
 
     IF range-low IS INITIAL AND range-high IS INITIAL.
       CASE range-option.
@@ -238,6 +270,8 @@ CLASS z2ui5_cl_popup_get_range IMPLEMENTATION.
   ENDMETHOD.
 
   METHOD range_of_filter.
+        DATA temp43 TYPE z2ui5_cl_popup_context=>ty_s_range-option.
+    DATA temp44 TYPE z2ui5_cl_popup_context=>ty_s_range-sign.
 
     CASE filter-option.
 
@@ -252,7 +286,13 @@ CLASS z2ui5_cl_popup_get_range IMPLEMENTATION.
           RETURN.
         ENDIF.
         " a condition without an option compares like the token it shows
-        result-option = COND #( WHEN filter-option IS INITIAL THEN `EQ` ELSE filter-option ).
+
+        IF filter-option IS INITIAL.
+          temp43 = `EQ`.
+        ELSE.
+          temp43 = filter-option.
+        ENDIF.
+        result-option = temp43.
         result-low    = filter-low.
         " HIGH only where the option has one - it stays in the row when the
         " user switches from BT to another option
@@ -264,7 +304,13 @@ CLASS z2ui5_cl_popup_get_range IMPLEMENTATION.
 
     " the sign as chosen - a confirmed popup turned every excluding row into
     " an including one
-    result-sign = COND #( WHEN filter-sign = `E` THEN `E` ELSE `I` ).
+
+    IF filter-sign = `E`.
+      temp44 = `E`.
+    ELSE.
+      temp44 = `I`.
+    ENDIF.
+    result-sign = temp44.
 
   ENDMETHOD.
 
@@ -276,7 +322,7 @@ CLASS z2ui5_cl_popup_get_range IMPLEMENTATION.
 
   METHOD z2ui5_if_popup_result~value.
 
-    result = REF #( ms_result-t_range ).
+    GET REFERENCE OF ms_result-t_range INTO result.
 
   ENDMETHOD.
 

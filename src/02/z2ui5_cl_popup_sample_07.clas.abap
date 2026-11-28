@@ -19,7 +19,7 @@ CLASS z2ui5_cl_popup_sample_07 DEFINITION PUBLIC.
     METHODS on_navigation.
 
   PROTECTED SECTION.
-    DATA mt_tab TYPE STANDARD TABLE OF ty_s_row WITH EMPTY KEY.
+    DATA mt_tab TYPE STANDARD TABLE OF ty_s_row WITH DEFAULT KEY.
     DATA client TYPE REF TO z2ui5_if_client.
 
   PRIVATE SECTION.
@@ -29,25 +29,53 @@ ENDCLASS.
 CLASS z2ui5_cl_popup_sample_07 IMPLEMENTATION.
 
   METHOD on_event.
+        DATA temp1 LIKE mt_tab.
+        DATA temp2 LIKE LINE OF temp1.
+        DATA temp3 TYPE string.
+        DATA lo_app TYPE REF TO z2ui5_cl_popup_to_select.
+        DATA temp4 TYPE abap_bool.
 
     CASE client->get( )-event.
 
       WHEN `POPUP`.
 
-        mt_tab = VALUE #( descr = `this is a description`
-             ( zzselkz = mv_preselect title = `title_01`  value = `value_01` )
-             ( zzselkz = mv_preselect title = `title_02`  value = `value_02` )
-             ( zzselkz = mv_preselect title = `title_03`  value = `value_03` )
-             ( zzselkz = mv_preselect title = `title_04`  value = `value_04` )
-             ( zzselkz = mv_preselect title = `title_05`  value = `value_05` ) ).
 
-        DATA(lo_app) = z2ui5_cl_popup_to_select=>factory(
+        CLEAR temp1.
+
+        temp2-descr = `this is a description`.
+        temp2-zzselkz = mv_preselect.
+        temp2-title = `title_01`.
+        temp2-value = `value_01`.
+        INSERT temp2 INTO TABLE temp1.
+        temp2-zzselkz = mv_preselect.
+        temp2-title = `title_02`.
+        temp2-value = `value_02`.
+        INSERT temp2 INTO TABLE temp1.
+        temp2-zzselkz = mv_preselect.
+        temp2-title = `title_03`.
+        temp2-value = `value_03`.
+        INSERT temp2 INTO TABLE temp1.
+        temp2-zzselkz = mv_preselect.
+        temp2-title = `title_04`.
+        temp2-value = `value_04`.
+        INSERT temp2 INTO TABLE temp1.
+        temp2-zzselkz = mv_preselect.
+        temp2-title = `title_05`.
+        temp2-value = `value_05`.
+        INSERT temp2 INTO TABLE temp1.
+        mt_tab = temp1.
+
+
+        IF mv_multiselect = abap_true.
+          temp3 = `Multi Select`.
+        ELSE.
+          temp3 = `Single Select`.
+        ENDIF.
+
+        lo_app = z2ui5_cl_popup_to_select=>factory(
                            i_tab         = mt_tab
                            i_multiselect = mv_multiselect
-                           i_title       = COND #(
-                                             WHEN mv_multiselect = abap_true
-                                             THEN `Multi Select`
-                                             ELSE `Single Select` ) ).
+                           i_title       = temp3 ).
         " the tag tells the return of this popup from the return of the
         " table popup below, which has none
         client->nav_app_call( app = lo_app
@@ -55,9 +83,13 @@ CLASS z2ui5_cl_popup_sample_07 IMPLEMENTATION.
 
       WHEN `MULTISELECT_TOGGLE`.
 
-        mv_preselect = COND #( WHEN mv_multiselect = abap_false
-                               THEN abap_false
-                               ELSE mv_preselect ).
+
+        IF mv_multiselect = abap_false.
+          temp4 = abap_false.
+        ELSE.
+          temp4 = mv_preselect.
+        ENDIF.
+        mv_preselect = temp4.
 
     ENDCASE.
 
@@ -66,7 +98,8 @@ CLASS z2ui5_cl_popup_sample_07 IMPLEMENTATION.
 
   METHOD view_display.
 
-    DATA(view) = z2ui5_cl_ui5_view_builder=>factory(
+    DATA view TYPE REF TO z2ui5_cl_ui5_view_builder.
+    view = z2ui5_cl_ui5_view_builder=>factory(
                      )->ele( n = `View` ns = `mvc`
                      )->a( n = `xmlns` v = `sap.m`
                      )->a( n = `xmlns:mvc` v = `sap.ui.core.mvc`
@@ -106,9 +139,9 @@ CLASS z2ui5_cl_popup_sample_07 IMPLEMENTATION.
 
     me->client = client.
 
-    IF client->check_on_nav_back( ).
+    IF client->check_on_nav_back( ) IS NOT INITIAL.
       on_navigation( ).
-    ELSEIF client->check_on_navigated( ).
+    ELSEIF client->check_on_navigated( ) IS NOT INITIAL.
       view_display( ).
     ELSE.
       on_event( ).
@@ -121,6 +154,9 @@ CLASS z2ui5_cl_popup_sample_07 IMPLEMENTATION.
 
     FIELD-SYMBOLS <row> TYPE ty_s_row.
     FIELD-SYMBOLS <table> TYPE STANDARD TABLE.
+    DATA temp5 TYPE REF TO z2ui5_if_popup_result.
+    DATA popup LIKE temp5.
+    DATA lr_value TYPE REF TO data.
 
     " back from the table of the selected rows - nothing to read
     IF client->get_nav_tag( ) <> `SELECT`.
@@ -128,14 +164,18 @@ CLASS z2ui5_cl_popup_sample_07 IMPLEMENTATION.
     ENDIF.
 
     " every popup hands its result over through z2ui5_if_popup_result
-    DATA(popup) = CAST z2ui5_if_popup_result( client->get_app_prev( ) ).
+
+    temp5 ?= client->get_app_prev( ).
+
+    popup = temp5.
     IF popup->check_confirmed( ) = abap_false.
       client->message_box_display( `Popup was cancelled` ).
       RETURN.
     ENDIF.
 
     " value( ) is the chosen row, with multiselect the chosen rows
-    DATA(lr_value) = popup->value( ).
+
+    lr_value = popup->value( ).
     IF mv_multiselect = abap_false.
 
       ASSIGN lr_value->* TO <row>.
